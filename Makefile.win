@@ -4,7 +4,7 @@
 
 include Makefile
 
-override CC      := x86_64-w64-mingw32-gcc
+override CC      := gcc
 override LINK    := $(CC)
 override PKG_CONFIG := pkg-config
 override CFLAGS  += -mms-bitfields
