@@ -12,13 +12,13 @@
 #
 #######################################################################################
 
-GPIO=ON
+GPIO=OFF
 MIDI=ON
 SATURN=ON
 USBOZY=OFF
 SOAPYSDR=OFF
 STEMLAB=OFF
-AUDIO=PULSE
+AUDIO=PORTAUDIO
 EXTENDED_NR=OFF
 
 #######################################################################################
