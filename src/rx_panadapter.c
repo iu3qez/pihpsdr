@@ -24,7 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <semaphore.h>
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 
 #include "actions.h"
 #include "agc.h"

@@ -51,7 +51,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
 
 #include "message.h"
 #include "radio.h"

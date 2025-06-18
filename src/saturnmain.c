@@ -46,9 +46,15 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
+#ifndef _WIN32
 #include <net/if.h>
+#endif
 #include <semaphore.h>
 #include <sys/stat.h>
 

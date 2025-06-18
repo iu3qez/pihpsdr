@@ -25,8 +25,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <net/if.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <string.h>
 #include <unistd.h>
 #include <curl/curl.h>

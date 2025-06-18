@@ -24,12 +24,22 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <netdb.h>
+#ifndef _WIN32
 #include <net/if_arp.h>
+#endif
+#ifndef _WIN32
 #include <net/if.h>
+#endif
+#ifndef _WIN32
 #include <ifaddrs.h>
+#endif
 
 #include "appearance.h"
 #include "discovered.h"

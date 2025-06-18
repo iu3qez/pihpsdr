@@ -25,8 +25,12 @@
 #include <string.h>
 #include <semaphore.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <sys/stat.h>
 
 #include "actions.h"

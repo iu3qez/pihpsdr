@@ -26,8 +26,12 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <netdb.h>
 #include <termios.h>
 

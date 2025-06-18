@@ -25,7 +25,9 @@
 #include <gdk/gdk.h>
 
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <netinet/tcp.h>
 #include <ctype.h>
 

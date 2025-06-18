@@ -26,7 +26,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
 
 //
 // tts_send: send broadcast UDP packet containing a string
