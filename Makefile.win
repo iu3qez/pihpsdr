@@ -1,0 +1,14 @@
+# Wrapper Makefile for cross compiling piHPSDR with MinGW-w64
+# It relies on the normal Makefile but overrides compiler and
+# linker settings for the Windows toolchain.
+
+include Makefile
+
+override CC      := x86_64-w64-mingw32-gcc
+override LINK    := $(CC)
+override PKG_CONFIG := x86_64-w64-mingw32-pkg-config
+override CFLAGS  += -mms-bitfields
+override LDFLAGS += -mwindows
+override SYSLIBS := -lwinpthread
+
+
