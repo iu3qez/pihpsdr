@@ -20,6 +20,7 @@
 #include <gdk/gdk.h>
 #include <math.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <semaphore.h>

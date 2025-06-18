@@ -44,6 +44,7 @@
 #endif
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "discovered.h"
 #include "discovery.h"

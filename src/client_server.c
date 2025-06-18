@@ -69,6 +69,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <strings.h>
+#include <unistd.h>
 #ifndef __APPLE__
   #include <endian.h>
 #endif

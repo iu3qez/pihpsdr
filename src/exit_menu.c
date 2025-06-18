@@ -21,6 +21,7 @@
 #include <semaphore.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "actions.h"
 #include "discovery.h"

@@ -19,6 +19,7 @@
 
 #include <gtk/gtk.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "actions.h"
 #include "agc.h"
