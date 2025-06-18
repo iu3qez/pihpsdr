@@ -6,7 +6,7 @@ include Makefile
 
 override CC      := x86_64-w64-mingw32-gcc
 override LINK    := $(CC)
-override PKG_CONFIG := x86_64-w64-mingw32-pkg-config
+override PKG_CONFIG := pkg-config
 override CFLAGS  += -mms-bitfields
 override LDFLAGS += -mwindows
 override SYSLIBS := -lwinpthread
