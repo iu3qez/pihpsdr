@@ -35,9 +35,13 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
 #include <unistd.h>
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <math.h>
 #ifdef __APPLE__
   #include "MacOS.h"  // emulate clock_gettime on old MacOS systems

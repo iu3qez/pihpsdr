@@ -56,10 +56,16 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
 #include <netinet/ip.h>
+#ifndef _WIN32
 #include <net/if.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <netdb.h>
 #include <string.h>
 #include <strings.h>

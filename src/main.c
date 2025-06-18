@@ -27,8 +27,12 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 

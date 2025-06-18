@@ -35,7 +35,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/socket.h>
-#include <arpa/inet.h> //inet_addr
+#ifndef _WIN32
+#include <arpa/inet.h>
+#endif //inet_addr
 #include <netinet/tcp.h>
 
 #include "actions.h"

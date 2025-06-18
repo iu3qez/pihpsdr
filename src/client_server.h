@@ -22,7 +22,9 @@
 
 #include <gtk/gtk.h>
 #include <stdint.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
 
 #include "mode.h"
 #include "receiver.h"

@@ -23,8 +23,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <wdsp.h>             // only needed for GetWDSPVersion
 
 #include "about_menu.h"

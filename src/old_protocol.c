@@ -24,13 +24,23 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <netdb.h>
+#ifndef _WIN32
 #include <net/if_arp.h>
+#endif
+#ifndef _WIN32
 #include <net/if.h>
+#endif
 #include <netinet/ip.h>
+#ifndef _WIN32
 #include <ifaddrs.h>
+#endif
 #include <semaphore.h>
 #include <string.h>
 #include <errno.h>

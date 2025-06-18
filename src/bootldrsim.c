@@ -46,8 +46,12 @@
 #include <pcap.h>
 #include <errno.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
+#ifndef _WIN32
 #include <arpa/inet.h>
+#endif
 #include <netinet/if_ether.h>
 #include <fcntl.h>
 #include <net/if_dl.h>

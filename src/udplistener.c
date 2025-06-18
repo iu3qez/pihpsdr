@@ -49,7 +49,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
 
 int main() {
   int optval;
