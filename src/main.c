@@ -19,12 +19,32 @@
 #include <gtk/gtk.h>
 #include <locale.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <semaphore.h>
+
+#ifdef _WIN32
+#include "../Windows/windows_compat.h"
+#include <sys/types.h>
+// Windows doesn't have utsname, so we'll define a simple version
+struct utsname {
+    char sysname[256];
+    char nodename[256];
+    char release[256];
+    char version[256];
+    char machine[256];
+};
+#else
+#include <unistd.h>
+#endif
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 
@@ -290,12 +310,27 @@ int main(int argc, char **argv) {
   int rc;
   char name[1024];
 
+#ifdef _WIN32
+  // Initialize Windows Sockets
+  if (init_winsock() != 0) {
+    fprintf(stderr, "Failed to initialize Windows Sockets\n");
+    return 1;
+  }
+#endif
+
   //
   // If invoked with -V, print version and FPGA firmware compatibility information
   //
   if (argc >= 2 && !strcmp("-V", argv[1])) {
     fprintf(stderr, "piHPSDR version %s(%s); built %s\n", build_version, build_commit, build_date);
     fprintf(stderr, "Compile-time options      : %sAudioModule=%s\n", build_options, build_audio);
+#ifdef SATURN
+    fprintf(stderr, "SATURN min:max minor FPGA : %d:%d\n", saturn_minor_version_min(), saturn_minor_version_max());
+    fprintf(stderr, "SATURN min:max major FPGA : %d:%d\n", saturn_major_version_min(), saturn_major_version_max());
+#endif
+#ifdef _WIN32
+    cleanup_winsock();
+#endif
     exit(0);
   }
 
@@ -324,18 +359,27 @@ int main(int argc, char **argv) {
   //
   startup(argv[0]);
   setlocale(LC_ALL, "C");  // make a decimal point a decimal point
+#ifndef _WIN32
   rc = getpriority(PRIO_PROCESS, 0);
   t_print("%s: Base priority on startup: %d\n", __FUNCTION__, rc);
   setpriority(PRIO_PROCESS, 0, -10);
   rc = getpriority(PRIO_PROCESS, 0);
   t_print("%s: Base priority after adjustment: %d\n", __FUNCTION__, rc);
+#endif
+#ifdef _WIN32
+  snprintf(name, sizeof(name), "org.g0orx.pihpsdr.pid%d", GetCurrentProcessId());
+#else
   snprintf(name, sizeof(name), "org.g0orx.pihpsdr.pid%d", getpid());
+#endif
   gtk_disable_setlocale();  // keep having a decimal point as a decimal point
   pihpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(pihpsdr, "activate", G_CALLBACK(activate_pihpsdr), NULL);
   rc = g_application_run(G_APPLICATION(pihpsdr), argc, argv);
   t_print("%s: exiting ...\n", __FUNCTION__);
   g_object_unref(pihpsdr);
+#ifdef _WIN32
+  cleanup_winsock();
+#endif
   return rc;
 }
 

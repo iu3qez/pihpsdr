@@ -50,6 +50,17 @@ TTS=ON
 UNAME_S := $(shell uname -s)
 UNAME_R := $(shell uname -r)
 
+# Detect MinGW/Windows environment
+ifeq ($(OS),Windows_NT)
+    UNAME_S := Windows
+endif
+ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
+    UNAME_S := Windows
+endif
+ifeq ($(findstring MSYS,$(UNAME_S)),MSYS)
+    UNAME_S := Windows
+endif
+
 # Get git commit version and date
 GIT_DATE := $(firstword $(shell git --no-pager show --date=short --format="%ai" --name-only))
 GIT_VERSION := $(shell git describe --abbrev=0 --tags --always --dirty)
@@ -111,13 +122,18 @@ CPP_INCLUDE +=$(WDSP_INCLUDE)
 
 ##############################################################################
 #
-# disable GPIO and SATURN for MacOS, simply because it is not there
+# disable GPIO and SATURN for MacOS and Windows, simply because it is not there
 #
 ##############################################################################
 
 ifeq ($(UNAME_S), Darwin)
 GPIO=
 SATURN=
+endif
+
+ifeq ($(UNAME_S), Windows)
+GPIO=OFF
+SATURN=OFF
 endif
 
 ##############################################################################
@@ -140,10 +156,16 @@ MIDI_SOURCES= src/alsa_midi.c src/midi2.c src/midi3.c src/midi_menu.c
 MIDI_OBJS= src/alsa_midi.o src/midi2.o src/midi3.o src/midi_menu.o
 MIDI_LIBS= -lasound
 endif
+ifeq ($(UNAME_S), Windows)
+MIDI_SOURCES= Windows/windows_midi.c src/midi2.c src/midi3.c src/midi_menu.c
+MIDI_OBJS= Windows/windows_midi.o src/midi2.o src/midi3.o src/midi_menu.o
+MIDI_LIBS= -lwinmm
+endif
 endif
 CPP_DEFINES += -DMIDI
 CPP_SOURCES += src/mac_midi.c src/midi2.c src/midi3.c src/midi_menu.c
 CPP_SOURCES += src/alsa_midi.c src/midi2.c src/midi3.c src/midi_menu.c
+CPP_SOURCES += Windows/windows_midi.c src/midi2.c src/midi3.c src/midi_menu.c
 
 ##############################################################################
 #
@@ -164,6 +186,13 @@ TTS_OPTIONS=-D TTS
 TTS_HEADERS= src/tts.h src/MacTTS.h
 TTS_SOURCES= src/tts.c
 TTS_OBJS= src/tts.o
+endif
+ifeq ($(UNAME_S), Windows)
+TTS_OPTIONS=-D TTS
+TTS_HEADERS= src/tts.h
+TTS_SOURCES= src/tts.c
+TTS_OBJS= src/tts.o
+TTS_LIBS= -lsapi
 endif
 endif
 CPP_DEFINES += -DTTS
@@ -294,6 +323,7 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libcurl`
 # Options for audio module
 #  - MacOS: only PORTAUDIO
 #  - Linux: either PULSEAUDIO (default) or ALSA (upon request)
+#  - Windows: only PORTAUDIO
 #
 ##############################################################################
 
@@ -304,6 +334,9 @@ ifeq ($(UNAME_S), Linux)
   ifneq ($(AUDIO) , ALSA)
     AUDIO=PULSE
   endif
+endif
+ifeq ($(UNAME_S), Windows)
+  AUDIO=PORTAUDIO
 endif
 
 ##############################################################################
@@ -403,6 +436,11 @@ ifeq ($(UNAME_S), Darwin)
 SYSLIBS=-framework IOKit
 endif
 
+ifeq ($(UNAME_S), Windows)
+SYSLIBS=-lws2_32 -lwsock32 -lole32 -loleaut32 -luuid
+WINDOWS_INCLUDE=-I./Windows -include ./Windows/auto_compat.h
+endif
+
 ##############################################################################
 #
 # All the command-line options to compile the *.c files
@@ -419,7 +457,7 @@ OPTIONS=$(MIDI_OPTIONS) $(USBOZY_OPTIONS) \
 	$(AUDIO_OPTIONS) $(EXTNR_OPTIONS) $(TCI_OPTIONS) \
 	-D GIT_DATE='"$(GIT_DATE)"' -D GIT_VERSION='"$(GIT_VERSION)"' -D GIT_COMMIT='"$(GIT_COMMIT)"'
 
-INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(OPENSSL_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE)
+INCLUDES=$(GTKINCLUDE) $(WDSP_INCLUDE) $(OPENSSL_INCLUDE) $(AUDIO_INCLUDE) $(STEMLAB_INCLUDE) $(WINDOWS_INCLUDE)
 COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
 
 .c.o:
@@ -427,6 +465,17 @@ COMPILE=$(CC) $(CFLAGS) $(OPTIONS) $(INCLUDES)
 
 .m.o:
 	$(COMPILE) -c -o $@ $<
+
+##############################################################################
+#
+# Special compilation rules for Windows files
+#
+##############################################################################
+
+ifeq ($(UNAME_S), Windows)
+Windows/%.o: Windows/%.c
+	$(COMPILE) -c -o $@ $<
+endif
 
 ##############################################################################
 #
@@ -532,7 +581,8 @@ src/vfo_menu.c \
 src/vox.c \
 src/vox_menu.c \
 src/waterfall.c \
-src/xvtr_menu.c
+src/xvtr_menu.c \
+Windows/windows_compat.c
 
 ##############################################################################
 #
@@ -624,7 +674,8 @@ src/vfo_menu.h \
 src/vox.h \
 src/vox_menu.h \
 src/waterfall.h \
-src/xvtr_menu.h
+src/xvtr_menu.h \
+Windows/windows_compat.h
 
 ##############################################################################
 #
@@ -713,7 +764,8 @@ src/vfo_menu.o \
 src/vox.o \
 src/vox_menu.o \
 src/xvtr_menu.o \
-src/waterfall.o
+src/waterfall.o \
+Windows/windows_compat.o
 
 ##############################################################################
 #
