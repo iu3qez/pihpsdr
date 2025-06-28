@@ -42,27 +42,33 @@
 #include "agc.h"
 #include "andromeda.h"
 #include "band.h"
+#include "band_menu.h"
 #include "bandstack.h"
 #include "channel.h"
 #include "ext.h"
 #include "filter.h"
+#include "filter_menu.h"
 #include "g2panel.h"
 #include "g2panel_menu.h"
 #include "iambic.h"
 #include "main.h"
 #include "message.h"
 #include "mode.h"
+#include "new_menu.h"
 #include "new_protocol.h"
+#include "noise_menu.h"
 #include "old_protocol.h"
 #include "property.h"
 #include "radio.h"
 #include "receiver.h"
 #include "rigctl.h"
+#include "rigctl_menu.h"
 #include "sliders.h"
 #include "store.h"
 #include "toolbar.h"
 #include "transmitter.h"
 #include "vfo.h"
+#include "zoompan.h"
 
 
 unsigned int rigctl_tcp_port = 19090;
@@ -140,11 +146,23 @@ SERIALPORT SerialPorts[MAX_SERIAL];
 
 static gpointer rigctl_client (gpointer data);
 
+//
+// This macro handles cases where RX2 is referred to but might not
+// exist. These macros lead to an action only  if the RX exists.
+// RXCHECK_ERR sets an error flag if RX is non-exisiting.
+// RXCHECK     just silently ignores the command
+//
+#define RXCHECK_ERR(id, what) if (id >= 0 && id < receivers) { what; } else { implemented = FALSE; }
+#define RXCHECK(id, what)     if (id >= 0 && id < receivers) { what; }
+
 int rigctl_tcp_running() {
   return (server_socket >= 0);
 }
 
 void shutdown_tcp_rigctl() {
+  struct linger linger = { 0 };
+  linger.l_onoff = 1;
+  linger.l_linger = 0;
   t_print("%s: server_socket=%d\n", __FUNCTION__, server_socket);
   tcp_running = 0;
 
@@ -152,8 +170,6 @@ void shutdown_tcp_rigctl() {
   // Gracefully terminate all active TCP connections
   //
   for (int id = 0; id < MAX_TCP_CLIENTS; id++) {
-    tcp_client[id].running = 0;
-
     if (tcp_client[id].andromeda_timer != 0) {
       g_source_remove(tcp_client[id].andromeda_timer);
       tcp_client[id].andromeda_timer = 0;
@@ -164,9 +180,14 @@ void shutdown_tcp_rigctl() {
       tcp_client[id].auto_timer = 0;
     }
 
+    tcp_client[id].running = 0;
+
     if (tcp_client[id].fd != -1) {
+      if (setsockopt(tcp_client[id].fd, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
+        t_perror("setsockopt(...,SO_LINGER,...) failed for client:");
+      }
+
       t_print("%s: closing client socket: %d\n", __FUNCTION__, tcp_client[id].fd);
-      shutdown(tcp_client[id].fd, SHUT_RDWR);
       close(tcp_client[id].fd);
       tcp_client[id].fd = -1;
     }
@@ -181,17 +202,17 @@ void shutdown_tcp_rigctl() {
   // Close server socket
   //
   if (server_socket >= 0) {
+    if (setsockopt(server_socket, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
+      t_perror("setsockopt(...,SO_LINGER,...) failed for server:");
+    }
+
     t_print("%s: closing server_socket: %d\n", __FUNCTION__, server_socket);
-    shutdown(server_socket, SHUT_RDWR);
     close(server_socket);
     server_socket = -1;
   }
 
-  if (rigctl_server_thread_id != NULL) {
-    g_thread_join(rigctl_server_thread_id);
-    rigctl_server_thread_id = NULL;
-  }
-
+  // TODO: join with the server thread, but this requires to make the accept() there
+  //       non-blocking (use select())
 }
 
 //
@@ -218,9 +239,9 @@ static void send_dash() {
   if (cw_key_hit) { return; }
 
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  tx_queue_cw_event(1, 0);             // immediate key-down
-  tx_queue_cw_event(0, dashsamples);   // wait a dash length, then key-up
-  tx_queue_cw_event(0, dotsamples);    // wait a dot length, then key-up
+  tx_queue_cw_event(1, 0);
+  tx_queue_cw_event(0, dashsamples);
+  tx_queue_cw_event(0, dotsamples);
   ts.tv_nsec += (dashsamples + dotsamples) * 20833;
 
   while (ts.tv_nsec > NSEC_PER_SEC) {
@@ -237,9 +258,9 @@ static void send_dot() {
   if (cw_key_hit) { return; }
 
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  tx_queue_cw_event(1, 0);            // immediate key-down
-  tx_queue_cw_event(0, dotsamples);   // wait dot length, then key-up
-  tx_queue_cw_event(0, dotsamples);   // wait dash length, then key-up
+  tx_queue_cw_event(1, 0);
+  tx_queue_cw_event(0, dotsamples);
+  tx_queue_cw_event(0, dotsamples);
   ts.tv_nsec += (2 * dotsamples) * 20833;
 
   while (ts.tv_nsec > NSEC_PER_SEC) {
@@ -256,7 +277,7 @@ static void send_space(int len) {
   if (cw_key_hit) { return; }
 
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  tx_queue_cw_event(0, len * dotsamples);  // wait, then key-up
+  tx_queue_cw_event(0, len * dotsamples);
   ts.tv_nsec += (len * dotsamples) * 20833;
 
   while (ts.tv_nsec > NSEC_PER_SEC) {
@@ -572,6 +593,7 @@ static gpointer rigctl_cw_thread(gpointer data) {
     // Take one character from the ring buffer
     //
     cwchar = cw_buf[cw_buf_out];
+    t_print("CWCHAR=%c\n", cwchar);
     i = cw_buf_out + 1;
 
     if (i >= CW_BUF_SIZE) { i = 0; }
@@ -635,7 +657,7 @@ static gpointer rigctl_cw_thread(gpointer data) {
 
     if (!mox) {
       // activate PTT
-      g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(1));
+      g_idle_add(ext_set_mox, GINT_TO_POINTER(1));
       // have to wait until it is really there
       // Note that if out-of-band, we would wait
       // forever here, so allow at most 200 msec
@@ -696,7 +718,7 @@ static gpointer rigctl_cw_thread(gpointer data) {
       if (!radio_is_remote) { schedule_transmit_specific(); }
 
       if (!cw_key_hit && !radio_ptt) {
-        g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(0));
+        g_idle_add(ext_set_mox, GINT_TO_POINTER(0));
         // wait up to 500 msec for MOX having gone
         // otherwise there might be a race condition when sending
         // the next character really soon
@@ -720,7 +742,7 @@ static gpointer rigctl_cw_thread(gpointer data) {
 
     if (!radio_is_remote) { schedule_transmit_specific(); }
 
-    g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(0));
+    g_idle_add(ext_set_mox, GINT_TO_POINTER(0));
   }
 
   rigctl_cw_thread_id = NULL;
@@ -957,7 +979,7 @@ static gboolean andromeda_handler(gpointer data) {
         break;
 
       case 3:
-        new = can_transmit ? transmitter->tune : 0;
+        new = tune;
         break;
 
       case 4:
@@ -1012,7 +1034,7 @@ static gboolean andromeda_handler(gpointer data) {
         break;
 
       case 2:
-        new = can_transmit ? transmitter->tune : 0;
+        new = tune;
         break;
 
       case 3:
@@ -1086,7 +1108,7 @@ static gpointer rigctl_server(gpointer data) {
   // bind to listening port
   memset(&server_address, 0, sizeof(server_address));
   server_address.sin_family = AF_INET;
-  server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+  server_address.sin_addr.s_addr = INADDR_ANY;
   server_address.sin_port = htons(port);
 
   if (bind(server_socket, (struct sockaddr * )&server_address, sizeof(server_address)) < 0) {
@@ -1143,7 +1165,7 @@ static gpointer rigctl_server(gpointer data) {
                                   &tcp_client[spare].address_length);
 
     if (tcp_client[spare].fd < 0) {
-      // no error reporting, this could be because rigtcl is being shut down
+      t_perror("rigctl_server: client accept failed");
       tcp_client[spare].fd = -1;
       continue;
     }
@@ -1259,9 +1281,14 @@ static gpointer rigctl_client (gpointer data) {
   // If rigctl is disabled via the GUI, the connections are closed by shutdown_rigctl_ports()
   // but even the we should decrement cat_control
   //
-  client->running = 0;
-
   if (client->fd != -1) {
+    struct linger linger = { 0 };
+    linger.l_onoff = 1;
+    linger.l_linger = 0;
+
+    if (setsockopt(client->fd, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
+      t_perror("setsockopt(...,SO_LINGER,...) failed for client:");
+    }
 
     if (client->andromeda_timer != 0) {
       g_source_remove(client->andromeda_timer);
@@ -1273,7 +1300,7 @@ static gpointer rigctl_client (gpointer data) {
       client->auto_timer = 0;
     }
 
-    shutdown(client->fd, SHUT_RDWR);
+    client->running = 0;
     close(client->fd);
     client->fd = -1;
   }
@@ -1382,17 +1409,14 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         send_resp(client->fd, reply) ;
       } else {
         int gain = atoi(&command[4]);
-        double volume;
 
         if (gain < 2) {
-          volume = -40.0;
+          receiver[0]->volume = -40.0;
         } else {
-          volume = 20.0 * log10(0.01 * (double) gain);
+          receiver[0]->volume = 20.0 * log10(0.01 * (double) gain);
         }
 
-        suppress_popup_sliders++;
-        radio_set_af_gain(0, volume);
-        suppress_popup_sliders--;
+        set_af_gain(0, receiver[0]->volume);
       }
 
       break;
@@ -1440,9 +1464,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         send_resp(client->fd, reply) ;
       } else {
         int threshold = atoi(&command[4]);
-        suppress_popup_sliders++;
-        radio_set_agc_gain(VFO_A, (double)threshold);
-        suppress_popup_sliders--;
+        set_agc_gain(VFO_A, (double)threshold);
       }
 
       break;
@@ -1456,16 +1478,14 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //RESP      ZZASxxxx;
       //NOTE      x -20...120, must contain + or - sign.
       //ENDDEF
-      if (receivers > 1) {
+      if (receivers == 2) {
         if (command[4] == ';') {
           // send reply back
           snprintf(reply,  sizeof(reply), "ZZAS%+04d;", (int)(receiver[1]->agc_gain));
           send_resp(client->fd, reply) ;
         } else {
           int threshold = atoi(&command[4]);
-          suppress_popup_sliders++;
-          radio_set_agc_gain(VFO_B, (double)threshold);
-          suppress_popup_sliders--;
+          set_agc_gain(VFO_B, (double)threshold);
         }
       } else {
         implemented = FALSE;
@@ -1506,7 +1526,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //NOTE      Wraps from lowest to highest band.
       //ENDDEF
       if (command[4] == ';') {
-        if (receivers > 1) {
+        if (receivers == 2) {
           band_minus(receiver[1]->id);
         } else {
           implemented = FALSE;
@@ -1523,7 +1543,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //NOTE      Wraps from highest to lowest band.
       //ENDDEF
       if (command[4] == ';') {
-        if (receivers > 1) {
+        if (receivers == 2) {
           band_plus(receiver[1]->id);
         } else {
           implemented = FALSE;
@@ -1833,16 +1853,16 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
       break;
 
-    //    case 'P': //ZZCP
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read compander
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZCP%d;", 0);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
+    case 'P': //ZZCP
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read compander
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZCP%d;", 0);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
 
     default:
       implemented = FALSE;
@@ -1853,112 +1873,113 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
   case 'D': //ZZDx
     switch (command[3]) {
-    //    case 'B': //ZZDB
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read RX Reference
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZDB%d;", 0); // currently always 0
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'C': //ZZDC
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/get diversity gain
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZDC%04d;", (int)div_gain);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'D': //ZZDD
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/get diversity phase
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZDD%04d;", (int)div_phase);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'M': //ZZDM
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read Display Mode
-    //      if (command[4] == ';') {
-    //        int v = 0;
-    //
-    //        if (receiver[0]->display_waterfall) {
-    //          v = 8;
-    //        } else {
-    //          v = 2;
-    //        }
-    //
-    //        snprintf(reply,  sizeof(reply), "ZZDM%d;", v);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'N': //ZZDN
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read waterfall low
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZDN%+4d;", receiver[0]->waterfall_low);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'O': //ZZDO
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read waterfall high
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZDO%+4d;", receiver[0]->waterfall_high);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'P': //ZZDP
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read panadapter high
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZDP%+4d;", receiver[0]->panadapter_high);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'Q': //ZZDQ
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read panadapter low
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZDQ%+4d;", receiver[0]->panadapter_low);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'R': //ZZDR
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read panadapter step
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZDR%2d;", receiver[0]->panadapter_step);
-    //        send_resp(client->fd, reply) ;
-    //      }
-    //
-    //      break;
+    case 'B': //ZZDB
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read RX Reference
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZDB%d;", 0); // currently always 0
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
+    case 'C': //ZZDC
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/get diversity gain
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZDC%04d;", (int)div_gain);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
+    case 'D': //ZZDD
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/get diversity phase
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZDD%04d;", (int)div_phase);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
+    case 'M': //ZZDM
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read Display Mode
+      if (command[4] == ';') {
+        int v = 0;
+
+        if (receiver[0]->display_waterfall) {
+          v = 8;
+        } else {
+          v = 2;
+        }
+
+        snprintf(reply,  sizeof(reply), "ZZDM%d;", v);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
+    case 'N': //ZZDN
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read waterfall low
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZDN%+4d;", receiver[0]->waterfall_low);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
+    case 'O': //ZZDO
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read waterfall high
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZDO%+4d;", receiver[0]->waterfall_high);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
+    case 'P': //ZZDP
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read panadapter high
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZDP%+4d;", receiver[0]->panadapter_high);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
+    case 'Q': //ZZDQ
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read panadapter low
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZDQ%+4d;", receiver[0]->panadapter_low);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
+    case 'R': //ZZDR
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read panadapter step
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZDR%2d;", receiver[0]->panadapter_step);
+        send_resp(client->fd, reply) ;
+      }
+
+      break;
+
     default:
       implemented = FALSE;
       break;
@@ -1968,33 +1989,34 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
   case 'E': //ZZEx
     switch (command[3]) {
-    //    case 'R': //ZZER
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read rx equaliser
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZER%d;", receiver[0]->eq_enable);
-    //        send_resp(client->fd, reply) ;
-    //      } else if (command[5] == ';') {
-    //        receiver[0]->eq_enable = SET(atoi(&command[4]));
-    //      }
-    //
-    //      break;
-    //
-    //    case 'T': //ZZET
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read tx equaliser
-    //      if (can_transmit) {
-    //        if (command[4] == ';') {
-    //          snprintf(reply,  sizeof(reply), "ZZET%d;", transmitter->eq_enable);
-    //          send_resp(client->fd, reply) ;
-    //        } else if (command[5] == ';') {
-    //          transmitter->eq_enable = SET(atoi(&command[4]));
-    //        }
-    //      }
-    //
-    //      break;
+    case 'R': //ZZER
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read rx equaliser
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZER%d;", receiver[0]->eq_enable);
+        send_resp(client->fd, reply) ;
+      } else if (command[5] == ';') {
+        receiver[0]->eq_enable = SET(atoi(&command[4]));
+      }
+
+      break;
+
+    case 'T': //ZZET
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read tx equaliser
+      if (can_transmit) {
+        if (command[4] == ';') {
+          snprintf(reply,  sizeof(reply), "ZZET%d;", transmitter->eq_enable);
+          send_resp(client->fd, reply) ;
+        } else if (command[5] == ';') {
+          transmitter->eq_enable = SET(atoi(&command[4]));
+        }
+      }
+
+      break;
+
     default:
       implemented = FALSE;
       break;
@@ -2054,25 +2076,25 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
       break;
 
-    //    case 'D': //ZZFD
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZFD%d;", vfo[VFO_A].deviation == 2500 ? 0 : 1);
-    //        send_resp(client->fd, reply) ;
-    //      } else if (command[5] == ';') {
-    //        int d = atoi(&command[4]);
-    //        vfo[VFO_A].deviation = d ? 5000 : 2500;
-    //        rx_set_filter(receiver[0]);
-    //
-    //        if (can_transmit) {
-    //          tx_set_filter(transmitter);
-    //        }
-    //
-    //        g_idle_add(ext_vfo_update, NULL);
-    //      }
-    //
-    //      break;
+    case 'D': //ZZFD
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZFD%d;", vfo[VFO_A].deviation == 2500 ? 0 : 1);
+        send_resp(client->fd, reply) ;
+      } else if (command[5] == ';') {
+        int d = atoi(&command[4]);
+        vfo[VFO_A].deviation = d ? 5000 : 2500;
+        rx_set_filter(receiver[0]);
+
+        if (can_transmit) {
+          tx_set_filter(transmitter);
+        }
+
+        g_idle_add(ext_vfo_update, NULL);
+      }
+
+      break;
 
     case 'H': //ZZFH
 
@@ -2107,31 +2129,31 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
       break;
 
-    //    case 'I': //ZZFI
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZFI%02d;", vfo[VFO_A].filter);
-    //        send_resp(client->fd, reply) ;
-    //      } else if (command[6] == ';') {
-    //        int filter = atoi(&command[4]);
-    //        vfo_id_filter_changed(VFO_A, filter);
-    //      }
-    //
-    //      break;
+    case 'I': //ZZFI
 
-    //    case 'J': //ZZFJ
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZFJ%02d;", vfo[VFO_B].filter);
-    //        send_resp(client->fd, reply) ;
-    //      } else if (command[6] == ';') {
-    //        int filter = atoi(&command[4]);
-    //        vfo_id_filter_changed(VFO_B, filter);
-    //      }
-    //
-    //      break;
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZFI%02d;", vfo[VFO_A].filter);
+        send_resp(client->fd, reply) ;
+      } else if (command[6] == ';') {
+        int filter = atoi(&command[4]);
+        vfo_id_filter_changed(VFO_A, filter);
+      }
+
+      break;
+
+    case 'J': //ZZFJ
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZFJ%02d;", vfo[VFO_B].filter);
+        send_resp(client->fd, reply) ;
+      } else if (command[6] == ';') {
+        int filter = atoi(&command[4]);
+        vfo_id_filter_changed(VFO_B, filter);
+      }
+
+      break;
 
     case 'L': //ZZFL
 
@@ -2198,7 +2220,6 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       break;
 
     case 'U': //ZZGU
-
       //CATDEF    ZZGU
       //DESCR     Set/Read RX2 AGC
       //SET       ZZGUx;
@@ -2206,19 +2227,20 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //RESP      ZZGUx;
       //NOTE      x=0: AGC OFF, x=1: LONG, x=2: SLOW, x=3: MEDIUM, x=4: FAST
       //ENDDEF
-      if (receivers > 1) {
-        if (command[4] == ';') {
-          snprintf(reply,  sizeof(reply), "ZZGU%d;", receiver[1]->agc);
-          send_resp(client->fd, reply) ;
-        } else if (command[5] == ';') {
-          int agc = atoi(&command[4]);
-          // update RX2 AGC
-          receiver[1]->agc = agc;
-          rx_set_agc(receiver[1]);
-          g_idle_add(ext_vfo_update, NULL);
-        }
+      RXCHECK(1,
+      if (command[4] == ';') {
+      snprintf(reply,  sizeof(reply), "ZZGU%d;", receiver[1]->agc);
+        send_resp(client->fd, reply) ;
+      } else if (command[5] == ';') {
+      int agc = atoi(&command[4]);
+        // update RX2 AGC
+        RXCHECK(1,
+                receiver[1]->agc = agc;
+                rx_set_agc(receiver[1]);
+                g_idle_add(ext_vfo_update, NULL);
+               )
       }
-
+             )
       break;
 
     default:
@@ -2251,24 +2273,20 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         send_resp(client->fd, reply) ;
       } else {
         int gain = atoi(&command[4]);
-        double volume;
 
         // gain is 0..100
         if (gain < 2) {
-          volume = -40.0;
+          receiver[0]->volume = -40.0;
         } else {
-          volume = 20.0 * log10(0.01 * (double) gain);
+          receiver[0]->volume = 20.0 * log10(0.01 * (double) gain);
         }
 
-        suppress_popup_sliders++;
-        radio_set_af_gain(0, volume);
-        suppress_popup_sliders--;
+        set_af_gain(0, receiver[0]->volume);
       }
 
       break;
 
     case 'C': //ZZLC
-
       //CATDEF    ZZLC
       //DESCR     Set/Read RX2 volume (AF slider)
       //SET       ZZLCxxx;
@@ -2276,28 +2294,24 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //RESP      ZZLCxxx;
       //NOTE      x = 0...100, mapped logarithmically to -40 ... 0 dB.
       //ENDDEF
-      if (receivers > 1) {
-        if (command[4] == ';') {
-          // send reply back
-          snprintf(reply,  sizeof(reply), "ZZLC%03d;", (int)(255.0 * pow(10.0, 0.05 * receiver[1]->volume)));
-          send_resp(client->fd, reply) ;
+      RXCHECK(1,
+      if (command[4] == ';') {
+      // send reply back
+      snprintf(reply,  sizeof(reply), "ZZLC%03d;", (int)(255.0 * pow(10.0, 0.05 * receiver[1]->volume)));
+        send_resp(client->fd, reply) ;
+      } else {
+        int gain = atoi(&command[4]);
+
+        // gain is 0..100
+        if (gain < 2) {
+          receiver[1]->volume = -40.0;
         } else {
-          int gain = atoi(&command[4]);
-          double volume;
-
-          // gain is 0..100
-          if (gain < 2) {
-            volume = -40.0;
-          } else {
-            volume = 20.0 * log10(0.01 * (double) gain);
-          }
-
-          suppress_popup_sliders++;
-          radio_set_af_gain(1, volume);
-          suppress_popup_sliders--;
+          receiver[1]->volume = 20.0 * log10(0.01 * (double) gain);
         }
-      }
 
+        set_af_gain(1, receiver[1]->volume);
+      }
+             )
       break;
 
     case 'I': //ZZLI
@@ -2353,7 +2367,6 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       break;
 
     case 'B': //ZZMB
-
       //CATDEF    ZZMB
       //DESCR     Mute/Unmute RX2
       //SET       ZZMBx;
@@ -2361,16 +2374,15 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //RESP      ZZMBx;
       //NOTE      x=0: RX2 not muted, x=1: muted.
       //ENDDEF
-      if (receivers > 1) {
-        if (command[4] == ';') {
-          snprintf(reply,  sizeof(reply), "ZZMA%d;", receiver[1]->mute_radio);
-          send_resp(client->fd, reply) ;
-        } else {
-          int mute = atoi(&command[4]);
-          receiver[1]->mute_radio = mute;
-        }
+      RXCHECK(1,
+      if (command[4] == ';') {
+      snprintf(reply,  sizeof(reply), "ZZMA%d;", receiver[1]->mute_radio);
+        send_resp(client->fd, reply) ;
+      } else {
+        int mute = atoi(&command[4]);
+        receiver[1]->mute_radio = mute;
       }
-
+             )
       break;
 
     case 'D': //ZZMD
@@ -2426,9 +2438,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           send_resp(client->fd, reply);
         } else if (command[7] == ';') {
           int val = atoi(&command[4]);
-          suppress_popup_sliders++;
-          radio_set_mic_gain(((double) val * 0.8857) - 12.0);
-          suppress_popup_sliders--;
+          set_mic_gain(((double) val * 0.8857) - 12.0);
         }
       } else {
         implemented = FALSE;
@@ -2436,61 +2446,61 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
       break;
 
-    //    case 'L': //ZZML
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply),
-    //                 "ZZML LSB00: USB01: DSB02: CWL03: CWU04: FMN05:  AM06:DIGU07:SPEC08:DIGL09: SAM10: DRM11;");
-    //        send_resp(client->fd, reply);
-    //      }
-    //
-    //      break;
-    //
-    //    case 'O': //ZZMO
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      // set/read MON status
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZMO%d;", 0);
-    //        send_resp(client->fd, reply);
-    //      }
-    //
-    //      break;
-    //
-    //    case 'R': //ZZMR
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZMR%d;", active_receiver->smetermode + 1);
-    //        send_resp(client->fd, reply);
-    //      } else if (command[5] == ';') {
-    //        int val = atoi(&command[4]) - 1;
-    //
-    //        switch (val) {
-    //        case 0:
-    //          active_receiver->smetermode = SMETER_PEAK;
-    //          break;
-    //
-    //        case 1:
-    //          active_receiver->smetermode = SMETER_AVERAGE;
-    //          break;
-    //        }
-    //      }
-    //
-    //      break;
-    //
-    //    case 'T': //ZZMT
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZMT%02d;", 1); // forward power
-    //        send_resp(client->fd, reply);
-    //      } else {
-    //      }
-    //
-    //      break;
-    //
+    case 'L': //ZZML
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply),
+                 "ZZML LSB00: USB01: DSB02: CWL03: CWU04: FMN05:  AM06:DIGU07:SPEC08:DIGL09: SAM10: DRM11;");
+        send_resp(client->fd, reply);
+      }
+
+      break;
+
+    case 'O': //ZZMO
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      // set/read MON status
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZMO%d;", 0);
+        send_resp(client->fd, reply);
+      }
+
+      break;
+
+    case 'R': //ZZMR
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZMR%d;", active_receiver->smetermode + 1);
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        int val = atoi(&command[4]) - 1;
+
+        switch (val) {
+        case 0:
+          active_receiver->smetermode = SMETER_PEAK;
+          break;
+
+        case 1:
+          active_receiver->smetermode = SMETER_AVERAGE;
+          break;
+        }
+      }
+
+      break;
+
+    case 'T': //ZZMT
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZMT%02d;", 1); // forward power
+        send_resp(client->fd, reply);
+      } else {
+      }
+
+      break;
+
     default:
       implemented = FALSE;
       break;
@@ -2499,390 +2509,381 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
     break;
 
   case 'N': //ZZNx
-    implemented = FALSE;
-    break;
+    switch (command[3]) {
+    case 'A': //ZZNA
 
-  //    switch (command[3]) {
-  //    case 'A': //ZZNA
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZNA%d;", (receiver[0]->nb == 1));
-  //        send_resp(client->fd, reply);
-  //      } else if (command[5] == ';') {
-  //        if (atoi(&command[4])) { receiver[0]->nb = 1; }
-  //
-  //        rx_set_noise(receiver[0]);
-  //      }
-  //
-  //      break;
-  //
-  //    case 'B': //ZZNB
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZNB%d;", (receiver[0]->nb == 2));
-  //        send_resp(client->fd, reply);
-  //      } else if (command[5] == ';') {
-  //        if (atoi(&command[4])) { receiver[0]->nb = 2; }
-  //
-  //        rx_set_noise(receiver[0]);
-  //      }
-  //
-  //      break;
-  //
-  //    case 'C': //ZZNC
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (receivers > 1) {
-  //        if (command[4] == ';') {
-  //          snprintf(reply,  sizeof(reply), "ZZNC%d;", (receiver[1]->nb == 1));
-  //          send_resp(client->fd, reply);
-  //        } else if (command[5] == ';') {
-  //          if (atoi(&command[4])) { receiver[1]->nb = 1; }
-  //
-  //          rx_set_noise(receiver[1]);
-  //        }
-  //      } else {
-  //        implemented = FALSE;
-  //      }
-  //
-  //      break;
-  //
-  //    case 'D': //ZZND
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (receivers > 1) {
-  //        if (command[4] == ';') {
-  //          snprintf(reply,  sizeof(reply), "ZZND%d;", (receiver[1]->nb == 2));
-  //          send_resp(client->fd, reply);
-  //        } else if (command[5] == ';') {
-  //          if (atoi(&command[4])) { receiver[1]->nb = 2; }
-  //
-  //          rx_set_noise(receiver[1]);
-  //        }
-  //      } else {
-  //        implemented = FALSE;
-  //      }
-  //
-  //      break;
-  //
-  //    case 'N': //ZZNN
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZNN%d;", receiver[0]->snb);
-  //        send_resp(client->fd, reply);
-  //      } else if (command[5] == ';') {
-  //        receiver[0]->snb = atoi(&command[4]);
-  //        rx_set_noise(receiver[0]);
-  //      }
-  //
-  //      break;
-  //
-  //    case 'O': //ZZNO
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (receivers > 1) {
-  //        if (command[4] == ';') {
-  //          snprintf(reply,  sizeof(reply), "ZZNO%d;", receiver[1]->snb);
-  //          send_resp(client->fd, reply);
-  //        } else if (command[5] == ';') {
-  //          receiver[1]->snb = atoi(&command[4]);
-  //          rx_set_noise(receiver[1]);
-  //        }
-  //      } else {
-  //        implemented = FALSE;
-  //      }
-  //
-  //      break;
-  //
-  //    case 'R': //ZZNR
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (receivers == 2) {
-  //        if (command[4] == ';') {
-  //          snprintf(reply,  sizeof(reply), "ZZNR%d;", (receiver[0]->nr == 1));
-  //          send_resp(client->fd, reply);
-  //        } else if (command[5] == ';') {
-  //          if (atoi(&command[4])) { receiver[0]->nr = 1; }
-  //
-  //          rx_set_noise(receiver[0]);
-  //        }
-  //      }
-  //
-  //      break;
-  //
-  //    case 'S': //ZZNS
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZNS%d;", (receiver[0]->nr == 2));
-  //        send_resp(client->fd, reply);
-  //      } else if (command[5] == ';') {
-  //        if (atoi(&command[4])) { receiver[0]->nr = 2; }
-  //
-  //        rx_set_noise(receiver[0]);
-  //      }
-  //
-  //      break;
-  //
-  //    case 'T': //ZZNT
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZNT%d;", receiver[0]->anf);
-  //        send_resp(client->fd, reply);
-  //      } else if (command[5] == ';') {
-  //        if (atoi(&command[4])) { receiver[0]->anf = 1; }
-  //
-  //        rx_set_noise(receiver[0]);
-  //      }
-  //
-  //      break;
-  //
-  //    case 'U': //ZZNU
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (receivers > 1) {
-  //        if (command[4] == ';') {
-  //          snprintf(reply,  sizeof(reply), "ZZNU%d;", receiver[1]->anf);
-  //          send_resp(client->fd, reply);
-  //        } else if (command[5] == ';') {
-  //          if (atoi(&command[4])) { receiver[1]->anf = 1; }
-  //
-  //          rx_set_noise(receiver[1]);
-  //        }
-  //      } else {
-  //        implemented = FALSE;
-  //      }
-  //
-  //      break;
-  //
-  //    case 'V': //ZZNV
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (receivers > 1) {
-  //        if (command[4] == ';') {
-  //          snprintf(reply,  sizeof(reply), "ZZNV%d;", (receiver[1]->nr == 1));
-  //          send_resp(client->fd, reply);
-  //        } else if (command[5] == ';') {
-  //          if (atoi(&command[4])) { receiver[1]->nr = 1; }
-  //
-  //          rx_set_noise(receiver[1]);
-  //        }
-  //      } else {
-  //        implemented = FALSE;
-  //      }
-  //
-  //      break;
-  //
-  //    case 'W': //ZZNW
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (receivers > 1) {
-  //        if (command[4] == ';') {
-  //          snprintf(reply,  sizeof(reply), "ZZNW%d;", (receiver[1]->nr == 2));
-  //          send_resp(client->fd, reply);
-  //        } else if (command[5] == ';') {
-  //          if (atoi(&command[4])) { receiver[1]->nr = 2; }
-  //
-  //          rx_set_noise(receiver[1]);
-  //        }
-  //      } else {
-  //        implemented = FALSE;
-  //      }
-  //
-  //      break;
-  //
-  //    default:
-  //      implemented = FALSE;
-  //      break;
-  //    }
-  //
-  //    break;
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZNA%d;", (receiver[0]->nb == 1));
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        if (atoi(&command[4])) { receiver[0]->nb = 1; }
+
+        rx_set_noise(receiver[0]);
+      }
+
+      break;
+
+    case 'B': //ZZNB
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZNB%d;", (receiver[0]->nb == 2));
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        if (atoi(&command[4])) { receiver[0]->nb = 2; }
+
+        rx_set_noise(receiver[0]);
+      }
+
+      break;
+
+    case 'C': //ZZNC
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (receivers == 2) {
+        if (command[4] == ';') {
+          snprintf(reply,  sizeof(reply), "ZZNC%d;", (receiver[1]->nb == 1));
+          send_resp(client->fd, reply);
+        } else if (command[5] == ';') {
+          if (atoi(&command[4])) { receiver[1]->nb = 1; }
+
+          rx_set_noise(receiver[1]);
+        }
+      } else {
+        implemented = FALSE;
+      }
+
+      break;
+
+    case 'D': //ZZND
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (receivers == 2) {
+        if (command[4] == ';') {
+          snprintf(reply,  sizeof(reply), "ZZND%d;", (receiver[1]->nb == 2));
+          send_resp(client->fd, reply);
+        } else if (command[5] == ';') {
+          if (atoi(&command[4])) { receiver[1]->nb = 2; }
+
+          rx_set_noise(receiver[1]);
+        }
+      } else {
+        implemented = FALSE;
+      }
+
+      break;
+
+    case 'N': //ZZNN
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZNN%d;", receiver[0]->snb);
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        receiver[0]->snb = atoi(&command[4]);
+        rx_set_noise(receiver[0]);
+      }
+
+      break;
+
+    case 'O': //ZZNO
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (receivers == 2) {
+        if (command[4] == ';') {
+          snprintf(reply,  sizeof(reply), "ZZNO%d;", receiver[1]->snb);
+          send_resp(client->fd, reply);
+        } else if (command[5] == ';') {
+          receiver[1]->snb = atoi(&command[4]);
+          rx_set_noise(receiver[1]);
+        }
+      } else {
+        implemented = FALSE;
+      }
+
+      break;
+
+    case 'R': //ZZNR
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (receivers == 2) {
+        if (command[4] == ';') {
+          snprintf(reply,  sizeof(reply), "ZZNR%d;", (receiver[0]->nr == 1));
+          send_resp(client->fd, reply);
+        } else if (command[5] == ';') {
+          if (atoi(&command[4])) { receiver[0]->nr = 1; }
+
+          rx_set_noise(receiver[0]);
+        }
+      }
+
+      break;
+
+    case 'S': //ZZNS
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZNS%d;", (receiver[0]->nr == 2));
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        if (atoi(&command[4])) { receiver[0]->nr = 2; }
+
+        rx_set_noise(receiver[0]);
+      }
+
+      break;
+
+    case 'T': //ZZNT
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZNT%d;", receiver[0]->anf);
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        if (atoi(&command[4])) { receiver[0]->anf = 1; }
+
+        rx_set_noise(receiver[0]);
+      }
+
+      break;
+
+    case 'U': //ZZNU
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (receivers == 2) {
+        if (command[4] == ';') {
+          snprintf(reply,  sizeof(reply), "ZZNU%d;", receiver[1]->anf);
+          send_resp(client->fd, reply);
+        } else if (command[5] == ';') {
+          if (atoi(&command[4])) { receiver[1]->anf = 1; }
+
+          rx_set_noise(receiver[1]);
+        }
+      } else {
+        implemented = FALSE;
+      }
+
+      break;
+
+    case 'V': //ZZNV
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (receivers == 2) {
+        if (command[4] == ';') {
+          snprintf(reply,  sizeof(reply), "ZZNV%d;", (receiver[1]->nr == 1));
+          send_resp(client->fd, reply);
+        } else if (command[5] == ';') {
+          if (atoi(&command[4])) { receiver[1]->nr = 1; }
+
+          rx_set_noise(receiver[1]);
+        }
+      } else {
+        implemented = FALSE;
+      }
+
+      break;
+
+    case 'W': //ZZNW
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (receivers == 2) {
+        if (command[4] == ';') {
+          snprintf(reply,  sizeof(reply), "ZZNW%d;", (receiver[1]->nr == 2));
+          send_resp(client->fd, reply);
+        } else if (command[5] == ';') {
+          if (atoi(&command[4])) { receiver[1]->nr = 2; }
+
+          rx_set_noise(receiver[1]);
+        }
+      } else {
+        implemented = FALSE;
+      }
+
+      break;
+
+    default:
+      implemented = FALSE;
+      break;
+    }
+
+    break;
 
   case 'O': //ZZOx
     implemented = FALSE;
     break;
 
   case 'P': //ZZPx
-    implemented = FALSE;
-    break;
+    switch (command[3]) {
+    case 'A': //ZZPA
 
-  //  switch (command[3]) {
-  //    case 'A': //ZZPA
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        int a = adc[receiver[0]->adc].attenuation;
-  //
-  //        if (a == 0) {
-  //          a = 1;
-  //        } else if (a <= -30) {
-  //          a = 4;
-  //        } else if (a <= -20) {
-  //          a = 0;
-  //        } else if (a <= -10) {
-  //          a = 2;
-  //        } else {
-  //          a = 3;
-  //        }
-  //
-  //        snprintf(reply,  sizeof(reply), "ZZPA%d;", a);
-  //        send_resp(client->fd, reply);
-  //      } else if (command[5] == ';' && have_rx_att) {
-  //        int a = atoi(&command[4]);
-  //
-  //        switch (a) {
-  //        case 0:
-  //          adc[receiver[0]->adc].attenuation = -20;
-  //          break;
-  //
-  //        case 1:
-  //          adc[receiver[0]->adc].attenuation = 0;
-  //          break;
-  //
-  //        case 2:
-  //          adc[receiver[0]->adc].attenuation = -10;
-  //          break;
-  //
-  //        case 3:
-  //          adc[receiver[0]->adc].attenuation = -20;
-  //          break;
-  //
-  //        case 4:
-  //          adc[receiver[0]->adc].attenuation = -30;
-  //          break;
-  //
-  //        default:
-  //          adc[receiver[0]->adc].attenuation = 0;
-  //          break;
-  //        }
-  //      }
-  //
-  //      break;
-  //
-  //    case 'Y': // ZZPY
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZPY%d;", receiver[0]->zoom);
-  //        send_resp(client->fd, reply);
-  //      } else if (command[7] == ';') {
-  //        int zoom = atoi(&command[4]);
-  //        radio_set_zoom(0, zoom);
-  //      }
-  //
-  //      break;
-  //
-  //    default:
-  //      implemented = FALSE;
-  //      break;
-  //    }
-  //
-  //    break;
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        int a = adc[receiver[0]->adc].attenuation;
+
+        if (a == 0) {
+          a = 1;
+        } else if (a <= -30) {
+          a = 4;
+        } else if (a <= -20) {
+          a = 0;
+        } else if (a <= -10) {
+          a = 2;
+        } else {
+          a = 3;
+        }
+
+        snprintf(reply,  sizeof(reply), "ZZPA%d;", a);
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';' && have_rx_att) {
+        int a = atoi(&command[4]);
+
+        switch (a) {
+        case 0:
+          adc[receiver[0]->adc].attenuation = -20;
+          break;
+
+        case 1:
+          adc[receiver[0]->adc].attenuation = 0;
+          break;
+
+        case 2:
+          adc[receiver[0]->adc].attenuation = -10;
+          break;
+
+        case 3:
+          adc[receiver[0]->adc].attenuation = -20;
+          break;
+
+        case 4:
+          adc[receiver[0]->adc].attenuation = -30;
+          break;
+
+        default:
+          adc[receiver[0]->adc].attenuation = 0;
+          break;
+        }
+      }
+
+      break;
+
+    case 'Y': // ZZPY
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZPY%d;", receiver[0]->zoom);
+        send_resp(client->fd, reply);
+      } else if (command[7] == ';') {
+        int zoom = atoi(&command[4]);
+        set_zoom(0, zoom);
+      }
+
+      break;
+
+    default:
+      implemented = FALSE;
+      break;
+    }
+
+    break;
 
   case 'Q': //ZZQx
     implemented = FALSE;
     break;
 
   case 'R': //ZZRx
-    implemented = FALSE;
-    break;
+    switch (command[3]) {
+    case 'C': //ZZRC
 
-  //    switch (command[3]) {
-  //    case 'C': //ZZRC
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        schedule_action(RIT_CLEAR, PRESSED, 0);
-  //      }
-  //
-  //      break;
-  //
-  //    case 'D': //ZZRD
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        vfo_id_rit_incr(VFO_A, -vfo[VFO_A].rit_step);
-  //      } else if (command[9] == ';') {
-  //        // set RIT frequency
-  //        vfo_id_rit_value(VFO_A, atoi(&command[4]));
-  //      }
-  //
-  //      break;
-  //
-  //    case 'F': //ZZRF
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZRF%+5lld;", vfo[VFO_A].rit);
-  //        send_resp(client->fd, reply);
-  //      } else if (command[9] == ';') {
-  //        vfo_id_rit_value(VFO_A, atoi(&command[4]));
-  //        g_idle_add(ext_vfo_update, NULL);
-  //      }
-  //
-  //      break;
-  //
-  //    case 'M': //ZZRM
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[5] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZRM%d%20d;", active_receiver->smetermode, (int)receiver[0]->meter);
-  //        send_resp(client->fd, reply);
-  //      }
-  //
-  //      break;
-  //
-  //    case 'S': //ZZRS
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZRS%d;", receivers == 2);
-  //        send_resp(client->fd, reply);
-  //      } else if (command[5] == ';') {
-  //        int state = atoi(&command[4]);
-  //
-  //        if (state) {
-  //          radio_change_receivers(2);
-  //        } else {
-  //          radio_change_receivers(1);
-  //        }
-  //      }
-  //
-  //      break;
-  //
-  //    case 'T': //ZZRT
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        snprintf(reply,  sizeof(reply), "ZZRT%d;", vfo[VFO_A].rit_enabled);
-  //        send_resp(client->fd, reply);
-  //      } else if (command[5] == ';') {
-  //        vfo_id_rit_onoff(VFO_A, SET(atoi(&command[4])));
-  //      }
-  //
-  //      break;
-  //
-  //    case 'U': //ZZRU
-  //
-  //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-  //      if (command[4] == ';') {
-  //        vfo_id_rit_incr(VFO_A, vfo[VFO_A].rit_step);
-  //      } else if (command[9] == ';') {
-  //        vfo_id_rit_value(VFO_A,  atoi(&command[4]));
-  //      }
-  //
-  //      break;
-  //
-  //    default:
-  //      implemented = FALSE;
-  //      break;
-  //    }
-  //
-  //    break;
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        schedule_action(RIT_CLEAR, ACTION_PRESSED, 0);
+      }
+
+      break;
+
+    case 'D': //ZZRD
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        vfo_id_rit_incr(VFO_A, -vfo[VFO_A].rit_step);
+      } else if (command[9] == ';') {
+        // set RIT frequency
+        vfo_id_rit_value(VFO_A, atoi(&command[4]));
+      }
+
+      break;
+
+    case 'F': //ZZRF
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZRF%+5lld;", vfo[VFO_A].rit);
+        send_resp(client->fd, reply);
+      } else if (command[9] == ';') {
+        vfo_id_rit_value(VFO_A, atoi(&command[4]));
+        g_idle_add(ext_vfo_update, NULL);
+      }
+
+      break;
+
+    case 'M': //ZZRM
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[5] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZRM%d%20d;", active_receiver->smetermode, (int)receiver[0]->meter);
+        send_resp(client->fd, reply);
+      }
+
+      break;
+
+    case 'S': //ZZRS
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZRS%d;", receivers == 2);
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        int state = atoi(&command[4]);
+
+        if (state) {
+          radio_change_receivers(2);
+        } else {
+          radio_change_receivers(1);
+        }
+      }
+
+      break;
+
+    case 'T': //ZZRT
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZRT%d;", vfo[VFO_A].rit_enabled);
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        vfo_id_rit_onoff(VFO_A, SET(atoi(&command[4])));
+      }
+
+      break;
+
+    case 'U': //ZZRU
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        vfo_id_rit_incr(VFO_A, vfo[VFO_A].rit_step);
+      } else if (command[9] == ';') {
+        vfo_id_rit_value(VFO_A,  atoi(&command[4]));
+      }
+
+      break;
+
+    default:
+      implemented = FALSE;
+      break;
+    }
+
+    break;
 
   case 'S': //ZZSx
     switch (command[3]) {
@@ -2938,50 +2939,50 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
       break;
 
-    //    case 'M': //ZZSM
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[5] == ';') {
-    //        int v = atoi(&command[4]);
-    //
-    //        if (v >= 0 && v < receivers) {
-    //          double m = receiver[v]->meter;
-    //          m = fmax(-140.0, m);
-    //          m = fmin(-10.0, m);
-    //          snprintf(reply,  sizeof(reply), "ZZSM%d%03d;", v, (int)((m + 140.0) * 2));
-    //          send_resp(client->fd, reply);
-    //        } else {
-    //          implemented = FALSE;
-    //        }
-    //      }
-    //
-    //      break;
-    //
-    //    case 'P': //ZZSP
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZSP%d;", split);
-    //        send_resp(client->fd, reply) ;
-    //      } else if (command[5] == ';') {
-    //        int val = atoi(&command[4]);
-    //        radio_set_split(val);
-    //      }
-    //
-    //      break;
-    //
-    //    case 'W': //ZZSW
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZSW%d;", split);
-    //        send_resp(client->fd, reply) ;
-    //      } else if (command[5] == ';') {
-    //        int val = atoi(&command[4]);
-    //        radio_set_split(val);
-    //      }
-    //
-    //      break;
+    case 'M': //ZZSM
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[5] == ';') {
+        int v = atoi(&command[4]);
+
+        if (v >= 0 && v < receivers) {
+          double m = receiver[v]->meter;
+          m = fmax(-140.0, m);
+          m = fmin(-10.0, m);
+          snprintf(reply,  sizeof(reply), "ZZSM%d%03d;", v, (int)((m + 140.0) * 2));
+          send_resp(client->fd, reply);
+        } else {
+          implemented = FALSE;
+        }
+      }
+
+      break;
+
+    case 'P': //ZZSP
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZSP%d;", split);
+        send_resp(client->fd, reply) ;
+      } else if (command[5] == ';') {
+        int val = atoi(&command[4]);
+        radio_set_split(val);
+      }
+
+      break;
+
+    case 'W': //ZZSW
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZSW%d;", split);
+        send_resp(client->fd, reply) ;
+      } else if (command[5] == ';') {
+        int val = atoi(&command[4]);
+        radio_set_split(val);
+      }
+
+      break;
 
     default:
       implemented = FALSE;
@@ -2992,17 +2993,18 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
   case 'T': //ZZTx
     switch (command[3]) {
-    //    case 'U': //ZZTU
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZTU%d;", can_transmit ? transmitter->tune : 0);
-    //        send_resp(client->fd, reply) ;
-    //      } else if (command[5] == ';') {
-    //        radio_set_tune(atoi(&command[4]));
-    //      }
-    //
-    //      break;
+    case 'U': //ZZTU
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZTU%d;", tune);
+        send_resp(client->fd, reply) ;
+      } else if (command[5] == ';') {
+        radio_set_tune(atoi(&command[4]));
+      }
+
+      break;
+
     case 'X': //ZZTX
 
       //CATDEF    ZZTX
@@ -3059,11 +3061,12 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
   case 'V': //ZZVx
     switch (command[3]) {
-    //    case 'L': //ZZVL
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      locked = command[4] == '1';
-    //      g_idle_add(ext_vfo_update, NULL);
-    //      break;
+    case 'L': //ZZVL
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      locked = command[4] == '1';
+      g_idle_add(ext_vfo_update, NULL);
+      break;
+
     case 'S': { //ZZVS
       //CATDEF    ZZVS
       //DESCR     Swap VFO A and B
@@ -3095,122 +3098,123 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
   case 'X': //ZZXx
     switch (command[3]) {
-    //    case 'C': //ZZXC
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      schedule_action(XIT_CLEAR, PRESSED, 0);
-    //      break;
-    //
-    //    case 'F': //ZZXF
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZXT%+05lld;", vfo[vfo_get_tx_vfo()].xit);
-    //        send_resp(client->fd, reply) ;
-    //      } else if (command[9] == ';') {
-    //        vfo_xit_value(atoi(&command[4]));
-    //      }
-    //
-    //      break;
-    //
-    //    case 'N': //ZZXN
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        int status = ((receiver[0]->agc) & 0x03);
-    //        int a = adc[receiver[0]->adc].attenuation;
-    //
-    //        if (a == 0) {
-    //          a = 1;
-    //        } else if (a <= -30) {
-    //          a = 4;
-    //        } else if (a <= -20) {
-    //          a = 0;
-    //        } else if (a <= -10) {
-    //          a = 2;
-    //        } else {
-    //          a = 3;
-    //        }
-    //
-    //        status = status | ((a & 0x03) << 3);
-    //
-    //        if (receiver[0]->squelch_enable) { status |=  0x0040; }
-    //
-    //        if (receiver[0]->nb == 1) { status |=  0x0080; }
-    //
-    //        if (receiver[0]->nb == 2) { status |=  0x0100; }
-    //
-    //        if (receiver[0]->nr == 1) { status |=  0x0200; }
-    //
-    //        if (receiver[0]->nr == 2) { status |=  0x0400; }
-    //
-    //        if (receiver[0]->snb) { status |=  0x0800; }
-    //
-    //        if (receiver[0]->anf) { status |=  0x1000; }
-    //
-    //        snprintf(reply,  sizeof(reply), "ZZXN%04d;", status);
-    //        send_resp(client->fd, reply);
-    //      }
-    //
-    //      break;
-    //
-    //    case 'O': //ZZXO
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (receivers > 1) {
-    //        if (command[4] == ';') {
-    //          int status = ((receiver[1]->agc) & 0x03);
-    //          int a = adc[receiver[1]->adc].attenuation;
-    //
-    //          if (a == 0) {
-    //            a = 1;
-    //          } else if (a <= -30) {
-    //            a = 4;
-    //          } else if (a <= -20) {
-    //            a = 0;
-    //          } else if (a <= -10) {
-    //            a = 2;
-    //          } else {
-    //            a = 3;
-    //          }
-    //
-    //          status = status | ((a & 0x03) << 3);
-    //
-    //          if (receiver[1]->squelch_enable) { status |=  0x0040; }
-    //
-    //          if (receiver[1]->nb == 1) { status |=  0x0080; }
-    //
-    //          if (receiver[1]->nb == 2) { status |=  0x0100; }
-    //
-    //          if (receiver[1]->nr == 1) { status |=  0x0200; }
-    //
-    //          if (receiver[1]->nr == 2) { status |=  0x0400; }
-    //
-    //          if (receiver[1]->snb) { status |=  0x0800; }
-    //
-    //          if (receiver[1]->anf) { status |=  0x1000; }
-    //
-    //          snprintf(reply,  sizeof(reply), "ZZXO%04d;", status);
-    //          send_resp(client->fd, reply);
-    //        }
-    //      } else {
-    //        implemented = FALSE;
-    //      }
-    //
-    //      break;
-    //
-    //    case 'S': //ZZXS
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[4] == ';') {
-    //        snprintf(reply,  sizeof(reply), "ZZXS%d;", vfo[vfo_get_tx_vfo()].xit_enabled);
-    //        send_resp(client->fd, reply);
-    //      } else if (command[5] == ';') {
-    //        vfo[vfo_get_tx_vfo()].xit_enabled = atoi(&command[4]);
-    //        schedule_high_priority();
-    //        g_idle_add(ext_vfo_update, NULL);
-    //      }
-    //
-    //      break;
+    case 'C': //ZZXC
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      schedule_action(XIT_CLEAR, ACTION_PRESSED, 0);
+      break;
+
+    case 'F': //ZZXF
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZXT%+05lld;", vfo[vfo_get_tx_vfo()].xit);
+        send_resp(client->fd, reply) ;
+      } else if (command[9] == ';') {
+        vfo_xit_value(atoi(&command[4]));
+      }
+
+      break;
+
+    case 'N': //ZZXN
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        int status = ((receiver[0]->agc) & 0x03);
+        int a = adc[receiver[0]->adc].attenuation;
+
+        if (a == 0) {
+          a = 1;
+        } else if (a <= -30) {
+          a = 4;
+        } else if (a <= -20) {
+          a = 0;
+        } else if (a <= -10) {
+          a = 2;
+        } else {
+          a = 3;
+        }
+
+        status = status | ((a & 0x03) << 3);
+
+        if (receiver[0]->squelch_enable) { status |=  0x0040; }
+
+        if (receiver[0]->nb == 1) { status |=  0x0080; }
+
+        if (receiver[0]->nb == 2) { status |=  0x0100; }
+
+        if (receiver[0]->nr == 1) { status |=  0x0200; }
+
+        if (receiver[0]->nr == 2) { status |=  0x0400; }
+
+        if (receiver[0]->snb) { status |=  0x0800; }
+
+        if (receiver[0]->anf) { status |=  0x1000; }
+
+        snprintf(reply,  sizeof(reply), "ZZXN%04d;", status);
+        send_resp(client->fd, reply);
+      }
+
+      break;
+
+    case 'O': //ZZXO
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (receivers == 2) {
+        if (command[4] == ';') {
+          int status = ((receiver[1]->agc) & 0x03);
+          int a = adc[receiver[1]->adc].attenuation;
+
+          if (a == 0) {
+            a = 1;
+          } else if (a <= -30) {
+            a = 4;
+          } else if (a <= -20) {
+            a = 0;
+          } else if (a <= -10) {
+            a = 2;
+          } else {
+            a = 3;
+          }
+
+          status = status | ((a & 0x03) << 3);
+
+          if (receiver[1]->squelch_enable) { status |=  0x0040; }
+
+          if (receiver[1]->nb == 1) { status |=  0x0080; }
+
+          if (receiver[1]->nb == 2) { status |=  0x0100; }
+
+          if (receiver[1]->nr == 1) { status |=  0x0200; }
+
+          if (receiver[1]->nr == 2) { status |=  0x0400; }
+
+          if (receiver[1]->snb) { status |=  0x0800; }
+
+          if (receiver[1]->anf) { status |=  0x1000; }
+
+          snprintf(reply,  sizeof(reply), "ZZXO%04d;", status);
+          send_resp(client->fd, reply);
+        }
+      } else {
+        implemented = FALSE;
+      }
+
+      break;
+
+    case 'S': //ZZXS
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[4] == ';') {
+        snprintf(reply,  sizeof(reply), "ZZXS%d;", vfo[vfo_get_tx_vfo()].xit_enabled);
+        send_resp(client->fd, reply);
+      } else if (command[5] == ';') {
+        vfo[vfo_get_tx_vfo()].xit_enabled = atoi(&command[4]);
+        schedule_high_priority();
+        g_idle_add(ext_vfo_update, NULL);
+      }
+
+      break;
+
     case 'V': //ZZXV
 
       //CATDEF    ZZXV
@@ -3251,7 +3255,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           status = status | 0x40;
         }
 
-        if (can_transmit && transmitter->tune) {
+        if (tune) {
           status = status | 0x80;
         }
 
@@ -3290,7 +3294,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         int v = atoi(&command[4]);
 
         if (v >= 0 && v < receivers) {
-          schedule_action(v == 0 ? RX1 : RX2, PRESSED, 0);
+          schedule_action(v == 0 ? RX1 : RX2, ACTION_PRESSED, 0);
         } else {
           implemented = FALSE;
         }
@@ -3330,7 +3334,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           steps *= andromeda_vfo_speedup[31];
         }
 
-        schedule_action(VFO, RELATIVE, -steps);
+        schedule_action(VFO, ACTION_RELATIVE, -steps);
       } else {
         // unexpected command format
         implemented = FALSE;
@@ -3374,7 +3378,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           andromeda_execute_encoder(p, v);
         } else {
           if (g2panel_menu_is_open) {
-            g2panel_change_command(client->andromeda_type, AT_ENC,
+            g2panel_change_command(client->andromeda_type, CONTROLLER_ENCODER,
                                    client->buttonvec, client->encodervec, p);
           } else {
             g2panel_execute_encoder(client->andromeda_type, client->encodervec, p, v);
@@ -3421,9 +3425,9 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         // between a short and a long press but "long" buttons may generate different actions for short
         // and long presses.
         //
-        // "Normal" buttons should generate a "PRESSED" upon tr01 and (if required) a "RELEASED" upon (tr10 || tr20).
-        // "Long" buttons generate a "PRESSED" for the short-press event upon tr10,
-        // and a "PRESSED" for the long-press event upon tr12.
+        // "Normal" buttons should generate a "ACTION_PRESSED" upon tr01 and (if required) a "ACTION_RELEASED" upon (tr10 || tr20).
+        // "Long" buttons generate a "ACTION_PRESSED" for the short-press event upon tr10,
+        // and a "ACTION_PRESSED" for the long-press event upon tr12.
         //
         // ATTENTION: no RELEASE event is ever triggered for a "long" button. Such events are currently required
         //            only for PTT, RIT_PLUS, RIT_MINS, XIT_PLUS, XIT_MINUS, and CW keyer actions, which may be associated
@@ -3461,7 +3465,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
             // It is enough to "fire" this upon initial press
             //
             if (tr01) {
-              g2panel_change_command(client->andromeda_type, AT_BTN,
+              g2panel_change_command(client->andromeda_type, CONTROLLER_SWITCH,
                                      client->buttonvec, client->encodervec, p);
             }
           } else {
@@ -3512,11 +3516,12 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
           client->buttonvec  = g2panel_default_buttons(client->andromeda_type);
           client->encodervec = g2panel_default_encoders(client->andromeda_type);
-          g2panel_restore_state(client->andromeda_type, client->buttonvec, client->encodervec);
+          g2panelRestoreState(client->andromeda_type, client->buttonvec, client->encodervec);
+
           //
           // This takes care the G2panel menu is shown in the main menu
           //
-          have_g2_v2 = 1;
+          if (controller == NO_CONTROLLER) { controller = G2_V2; }
         }
       }
 
@@ -3543,7 +3548,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           steps *= andromeda_vfo_speedup[31];
         }
 
-        schedule_action(VFO, RELATIVE, steps);
+        schedule_action(VFO, ACTION_RELATIVE, steps);
       }
 
       break;
@@ -3580,7 +3585,7 @@ static int parse_cmd(void *data) {
     //SET       \#S;
     //ENDDEF
     if (command[1] == 'S' && command[2] == ';') {
-      radio_shutdown();
+      schedule_action(SHUTDOWN, ACTION_PRESSED, 0);
     } else {
       implemented = FALSE;
     }
@@ -3606,18 +3611,15 @@ static int parse_cmd(void *data) {
       //ENDDEF
       if (command[3] == ';') {
         int id = SET(command[2] == '1');
-
-        if (id >= 0 && id < receivers) {
-          snprintf(reply,  sizeof(reply), "AG%1d%03d;", id, (int)(255.0 * pow(10.0, 0.05 * receiver[id]->volume)));
-          send_resp(client->fd, reply);
-        }
+        RXCHECK(id,
+                snprintf(reply,  sizeof(reply), "AG%1d%03d;", id, (int)(255.0 * pow(10.0, 0.05 * receiver[id]->volume)));
+                send_resp(client->fd, reply);
+               )
       } else if (command[6] == ';') {
         int id = SET(command[2] == '1');
         int gain = atoi(&command[3]);
         double vol = (gain < 3) ? -40.0 : 20.0 * log10((double) gain / 255.0);
-        suppress_popup_sliders++;
-        radio_set_af_gain(id, vol);
-        suppress_popup_sliders--;
+        RXCHECK(id, receiver[id]->volume = vol; set_af_gain(0, receiver[id]->volume));
       }
 
       break;
@@ -3918,11 +3920,7 @@ static int parse_cmd(void *data) {
         send_resp(client->fd, reply) ;
       } else if (command[3] == ';') {
         int id = SET(command[2] == '1');
-
-        if (receivers > id) {
-          schedule_action(id == 0 ? RX1 : RX2, PRESSED, 0);
-        }
-
+        RXCHECK(id, schedule_action(id == 0 ? RX1 : RX2, ACTION_PRESSED, 0));
         g_idle_add(ext_vfo_update, NULL);
       }
 
@@ -4155,17 +4153,17 @@ static int parse_cmd(void *data) {
     }
     break;
 
-    //    case 'S': //IS
-    //
-    //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      if (command[2] == ';') {
-    //        snprintf(reply,  sizeof(reply), "%s", "IS 0000;");
-    //        send_resp(client->fd, reply);
-    //      } else {
-    //        implemented = FALSE;
-    //      }
-    //
-    //      break;
+    case 'S': //IS
+
+      //DO NOT DOCUMENT, THIS WILL BE REMOVED
+      if (command[2] == ';') {
+        snprintf(reply,  sizeof(reply), "%s", "IS 0000;");
+        send_resp(client->fd, reply);
+      } else {
+        implemented = FALSE;
+      }
+
+      break;
 
     default:
       implemented = FALSE;
@@ -4370,9 +4368,7 @@ static int parse_cmd(void *data) {
 
           if (gain > 50.0) { gain = 50.0; }
 
-          suppress_popup_sliders++;
-          radio_set_mic_gain(gain);
-          suppress_popup_sliders--;
+          set_mic_gain(gain);
         }
       } else {
         implemented = FALSE;
@@ -4516,15 +4512,15 @@ static int parse_cmd(void *data) {
       //SET       PAx;
       //READ      PA;
       //RESP      PAx;
-      //NOTE      Applies to the ADC connected with RX1
+      //NOTE      Applies to RX1
       //NOTE      x=0: RX1 preamp off, x=1: on
       //NOTE      newer HPSDR radios do not have a switchable preamp
       //ENDDEF
       if (command[2] == ';') {
-        snprintf(reply,  sizeof(reply), "PA%d0;", adc[receiver[0]->adc].preamp);
+        snprintf(reply,  sizeof(reply), "PA%d0;", receiver[0]->preamp);
         send_resp(client->fd, reply);
       } else if (command[4] == ';') {
-        adc[receiver[0]->adc].preamp = (command[2] == '1');
+        receiver[0]->preamp = command[2] == '1';
       }
 
       break;
@@ -4548,9 +4544,7 @@ static int parse_cmd(void *data) {
           snprintf(reply,  sizeof(reply), "PC%03d;", (int)transmitter->drive);
           send_resp(client->fd, reply);
         } else if (command[5] == ';') {
-          suppress_popup_sliders++;
-          radio_set_drive((double)atoi(&command[2]));
-          suppress_popup_sliders--;
+          set_drive((double)atoi(&command[2]));
         }
       }
 
@@ -4620,7 +4614,7 @@ static int parse_cmd(void *data) {
         int pwrc = atoi(&command[2]);
 
         if ( pwrc == 0 ) {
-          radio_shutdown();
+          schedule_action(SHUTDOWN, ACTION_PRESSED, 0);
         } else {
           // power-on command. Should there be a reply?
           // snprintf(reply,  sizeof(reply), "PS1;");
@@ -4698,17 +4692,13 @@ static int parse_cmd(void *data) {
         if (have_rx_gain) {
           // map 0...99 scale to -12...48
           att = (int)((((double)att / 99.0) * 60.0) - 12.0);
-          suppress_popup_sliders++;
-          radio_set_rf_gain(VFO_A, (double)att);
-          suppress_popup_sliders--;
+          set_rf_gain(VFO_A, (double)att);
         }
 
         if (have_rx_att) {
           // mapp 0...99 scale to 0...31
           att = (int)(((double)att / 99.0) * 31.0);
-          suppress_popup_sliders++;
-          radio_set_attenuation(VFO_A, (double)att);
-          suppress_popup_sliders--;
+          set_attenuation_value((double)att);
         }
       }
 
@@ -5199,17 +5189,14 @@ static int parse_cmd(void *data) {
       //ENDDEF
       if (command[3] == ';') {
         int id = atoi(&command[2]);
+        RXCHECK (id,
+                 int val = (int)((receiver[id]->meter + 127.0) * 0.277778);
 
-        if (id >= 0 && id < receivers) {
-          int val = (int)((receiver[id]->meter + 127.0) * 0.277778);
-
-          if (val > 30) { val = 30; }
-
-          if (val < 0 ) { val = 0; }
-
-          snprintf(reply,  sizeof(reply), "SM%d%04d;", id, val);
-          send_resp(client->fd, reply);
-        }
+        if (val > 30) { val = 30; }
+      if (val < 0 ) { val = 0; }
+      snprintf(reply,  sizeof(reply), "SM%d%04d;", id, val);
+      send_resp(client->fd, reply);
+              )
       }
 
       break;
@@ -5226,18 +5213,17 @@ static int parse_cmd(void *data) {
       //ENDDEF
       if (command[3] == ';') {
         int id = atoi(&command[2]);
-
-        if (id >= 0 && id < receivers) {
-          snprintf(reply,  sizeof(reply), "SQ%d%03d;", id, (int)((double)receiver[id]->squelch / 100.0 * 255.0 + 0.5));
-          send_resp(client->fd, reply);
-        }
+        RXCHECK(id,
+                snprintf(reply,  sizeof(reply), "SQ%d%03d;", id, (int)((double)receiver[id]->squelch / 100.0 * 255.0 + 0.5));
+                send_resp(client->fd, reply);
+               )
       } else if (command[6] == ';') {
         int id = atoi(&command[2]);
         int p2 = atoi(&command[3]);
-        double val = (double)p2 / 255.0 * 100.0 + 0.5;
-        suppress_popup_sliders++;
-        radio_set_squelch(id, val);
-        suppress_popup_sliders--;
+        RXCHECK(id,
+                receiver[id]->squelch = (int)((double)p2 / 255.0 * 100.0 + 0.5);
+                set_squelch(receiver[id]);
+               )
       }
 
       break;
@@ -5508,7 +5494,7 @@ static int set_interface_attribs (int fd, speed_t speed, int parity) {
   memset (&tty, 0, sizeof tty);
 
   if (tcgetattr (fd, &tty) != 0) {
-    t_perror ("RIGCTL (tcgetattr)");
+    t_perror ("RIGCTL (tcgetattr):");
     return -1;
   }
 
@@ -5533,7 +5519,7 @@ static int set_interface_attribs (int fd, speed_t speed, int parity) {
   tty.c_cflag &= ~CRTSCTS;
 
   if (tcsetattr (fd, TCSANOW, &tty) != 0) {
-    t_perror( "RIGCTL (tcsetattr)");
+    t_perror( "RIGCTL (tcsetattr):");
     return -1;
   }
 
@@ -5554,7 +5540,7 @@ static void set_blocking (int fd, int should_block) {
   fcntl(fd, F_SETFL, flags);
 
   if (tcgetattr (fd, &tty) != 0) {
-    t_perror ("RIGCTL (tggetattr)");
+    t_perror ("RIGCTL (tggetattr):");
     return;
   }
 
@@ -5562,7 +5548,7 @@ static void set_blocking (int fd, int should_block) {
   tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
 
   if (tcsetattr (fd, TCSANOW, &tty) != 0) {
-    t_perror("RIGCTL (tcsetattr)");
+    t_perror("RIGCTL (tcsetattr):");
   }
 }
 
@@ -5627,11 +5613,10 @@ static gpointer serial_server(gpointer data) {
 
     //
     // On my MacOS using a FIFO, I have seen that numbytes can be -1
-    // (with errno = EAGAIN) although the select() indicated that data
+    // (with errno = EAGAIN) although the select() inidcated that data
     // is available. Therefore the serial thread is not shut down if
     // the read() failed -- it will try again and again until it is
     // shut down by the rigctl menu.
-    //
     if (!client->running) { break; }
 
     if (numbytes > 0) {
@@ -5685,7 +5670,7 @@ int launch_serial_rigctl (int id) {
   fd = open (SerialPorts[id].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
 
   if (fd < 0) {
-    t_perror("RIGCTL (open serial)");
+    t_perror("RIGCTL (open serial):");
     return 0 ;
   }
 
@@ -5818,7 +5803,7 @@ void launch_tcp_rigctl () {
   rigctl_server_thread_id = g_thread_new( "rigctl server", rigctl_server, GINT_TO_POINTER(rigctl_tcp_port));
 }
 
-void rigctl_restore_state() {
+void rigctlRestoreState() {
   GetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   GetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   GetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
@@ -5846,7 +5831,7 @@ void rigctl_restore_state() {
   //
 }
 
-void rigctl_save_state() {
+void rigctlSaveState() {
   SetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   SetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   SetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
@@ -5871,9 +5856,9 @@ void rigctl_save_state() {
         (serial_client[id].andromeda_type == 4 || serial_client[id].andromeda_type == 5) &&
         serial_client[id].buttonvec != NULL &&
         serial_client[id].encodervec != NULL) {
-      g2panel_save_state(serial_client[id].andromeda_type,
-                         serial_client[id].buttonvec,
-                         serial_client[id].encodervec);
+      g2panelSaveState(serial_client[id].andromeda_type,
+                       serial_client[id].buttonvec,
+                       serial_client[id].encodervec);
       return;
     }
   }
@@ -5883,9 +5868,9 @@ void rigctl_save_state() {
         (tcp_client[id].andromeda_type == 4 || tcp_client[id].andromeda_type == 5) &&
         tcp_client[id].buttonvec != NULL &&
         tcp_client[id].encodervec != NULL) {
-      g2panel_save_state(tcp_client[id].andromeda_type,
-                         tcp_client[id].buttonvec,
-                         tcp_client[id].encodervec);
+      g2panelSaveState(tcp_client[id].andromeda_type,
+                       tcp_client[id].buttonvec,
+                       tcp_client[id].encodervec);
       return;
     }
   }

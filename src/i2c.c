@@ -33,6 +33,7 @@
 
 #include "actions.h"
 #include "band.h"
+#include "band_menu.h"
 #include "bandstack.h"
 #include "ext.h"
 #include "gpio.h"
@@ -50,13 +51,9 @@ static int i2cfd;
 //
 // When reading the flags and ints registers of the
 // MCP23017, it is important that no other thread
-// does this concurrently.
-// For example, we now (asynchronously) call the
-// i2c interrupt service routine every 100 msec
-// to recover from "missed" interrupts.
-// With the libgpiod V1 API, it may also happen that
-// concurrent invocations of i2c_interrupt() may
-// occur.
+// (e.g., another instance of the interrupt service
+// routine), does this concurrently.
+// i2c_mutex guarantees this.
 //
 static GMutex i2c_mutex;
 
@@ -116,32 +113,26 @@ void i2c_interrupt() {
   for (;;) {
     flags = read_word_data(0x0E);
 
-    //
     // bits in "flags" indicate which input lines triggered an interrupt
     // Two interrupts occuring at about the same time can lead to multiple bits
     // set in "flags" (or no bit set if interrupt has already been processed
     // by another interrupt service routine). If we enter here (protected by
-    // the mutex), we handle all interrupts until no one is left (flags==0).
-    // This also means that this routine can safely be called if there was
-    // no interrupt -- in this case we quickly return.
-    //
+    // the mutex), we handle all interrupts until no one is left (flags==0)
     if (flags == 0) { break; }
 
     unsigned int ints = read_word_data(0x10);
 
+    //t_print("%s: flags=%04X ints=%04X\n",__FUNCTION__,flags,ints);
     // only those bits in "ints" matter where the corresponding position
-    // in "flags" is set. We have a PRESSED or RELEASED event depending on
+    // in "flags" is set. We have a ACTION_PRESSED or ACTION_RELEASED event depending on
     // whether the bit in "ints" is set or clear.
-
-    for (i = 0; i < 16; i++) {
-      if (flags == 0) { break; }  // leave loop if no bits left in "flags"
-
+    for (i = 0; i < 16 && flags; i++) { // leave loop if no bits left in "flags"
       if (i2c_sw[i] & flags) {
         //t_print("%s: switches=%p sw=%d action=%d\n",__FUNCTION__,switches,i,switches[i].switch_function);
         // The input line associated with switch #i has triggered an interrupt
-        // clear *this* bit in flags to make it zero when all events have been processed
+        // clear *this* bit in flags
         flags &= ~i2c_sw[i];
-        schedule_action(switches[i].function, (ints & i2c_sw[i]) ? PRESSED : RELEASED, 0);
+        schedule_action(switches[i].switch_function, (ints & i2c_sw[i]) ? ACTION_PRESSED : ACTION_RELEASED, 0);
       }
     }
   }
@@ -151,6 +142,7 @@ void i2c_interrupt() {
 
 void i2c_init() {
   int flags;
+  t_print("%s: open i2c device %s\n", __FUNCTION__, i2c_device);
   i2cfd = open(i2c_device, O_RDWR);
 
   if (i2cfd < 0) {
@@ -158,10 +150,10 @@ void i2c_init() {
     return;
   }
 
-  t_print("%s: i2c device %s fd=%d\n", __FUNCTION__, i2c_device, i2cfd);
+  t_print("%s: open i2c device %s fd=%d\n", __FUNCTION__, i2c_device, i2cfd);
 
   if (ioctl(i2cfd, I2C_SLAVE, i2c_address_1) < 0) {
-    t_print("%s: ioctl i2c slave %ud failed: %s\n", __FUNCTION__, i2c_address_1, g_strerror(errno));
+    t_print("%s: ioctl i2c slave %d failed: %s\n", __FUNCTION__, i2c_address_1, g_strerror(errno));
     return;
   }
 
