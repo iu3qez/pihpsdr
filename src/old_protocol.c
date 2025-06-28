@@ -576,11 +576,11 @@ static void open_udp_socket() {
   int optval = 1;
   socklen_t optlen = sizeof(optval);
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_REUSEADDR, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_REUSEADDR, &optval, optlen) < 0) {
     t_perror("data_socket: SO_REUSEADDR");
   }
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_REUSEPORT, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_REUSEPORT, &optval, optlen) < 0) {
     t_perror("data_socket: SO_REUSEPORT");
   }
 
@@ -603,13 +603,13 @@ static void open_udp_socket() {
   //
   optval = 0x40000;
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
     t_perror("data_socket: set SO_RCVBUF");
   }
 
   optval = 0x10000;
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_SNDBUF, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_SNDBUF, &optval, optlen) < 0) {
     t_perror("data_socket: set SO_SNDBUF");
   }
 
@@ -641,7 +641,7 @@ static void open_udp_socket() {
   optval = 0xB8;
 #endif
 
-  if (setsockopt(tmp, IPPROTO_IP, IP_TOS, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, IPPROTO_IP, IP_TOS, &optval, optlen) < 0) {
     t_perror("data_socket: IP_TOS");
   }
 
@@ -655,7 +655,7 @@ static void open_udp_socket() {
   tv.tv_sec = 0;
   tv.tv_usec = 100000;
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
     t_perror("data_socket: SO_RCVTIMEO");
   }
 
@@ -704,11 +704,11 @@ static void open_tcp_socket() {
   int optval = 1;
   socklen_t optlen = sizeof(optval);
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_REUSEADDR, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_REUSEADDR, &optval, optlen) < 0) {
     t_perror("tcp_socket: SO_REUSEADDR");
   }
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_REUSEPORT, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_REUSEPORT, &optval, optlen) < 0) {
     t_perror("tcp_socket: SO_REUSEPORT");
   }
 
@@ -735,13 +735,13 @@ static void open_tcp_socket() {
   //
   optval = 0x40000;
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_RCVBUF, &optval, optlen) < 0) {
     t_perror("tcp_socket: set SO_RCVBUF");
   }
 
   optval = 0x10000;
 
-  if (setsockopt(tmp, SOL_SOCKET, SO_SNDBUF, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, SOL_SOCKET, SO_SNDBUF, &optval, optlen) < 0) {
     t_perror("tcp_socket: set SO_SNDBUF");
   }
 
@@ -773,7 +773,7 @@ static void open_tcp_socket() {
   optval = 0xB8;
 #endif
 
-  if (setsockopt(tmp, IPPROTO_IP, IP_TOS, &optval, optlen) < 0) {
+  if (SETSOCKOPT(tmp, IPPROTO_IP, IP_TOS, &optval, optlen) < 0) {
     t_perror("tcp_socket: IP_TOS");
   }
 
