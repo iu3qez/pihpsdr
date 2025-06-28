@@ -223,7 +223,7 @@ static void p1_discover(struct ifaddrs* iface, int discflag) {
 
     // Step 3. select() succeeded. Check success of connect()
     optlen = sizeof(int);
-    rc = getsockopt(discovery_socket, SOL_SOCKET, SO_ERROR, &optval, &optlen);
+    rc = GETSOCKOPT(discovery_socket, SOL_SOCKET, SO_ERROR, &optval, &optlen);
 
     if (rc < 0) {
       // this should very rarely happen

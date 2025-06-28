@@ -615,7 +615,7 @@ static void open_udp_socket() {
 
   optlen = sizeof(optval);
 
-  if (getsockopt(tmp, SOL_SOCKET, SO_RCVBUF, &optval, &optlen) < 0) {
+  if (GETSOCKOPT(tmp, SOL_SOCKET, SO_RCVBUF, &optval, &optlen) < 0) {
     t_perror("data_socket: get SO_RCVBUF");
   } else {
     if (optlen == sizeof(optval)) { t_print("UDP Socket RCV buf size=%d\n", optval); }
@@ -623,7 +623,7 @@ static void open_udp_socket() {
 
   optlen = sizeof(optval);
 
-  if (getsockopt(tmp, SOL_SOCKET, SO_SNDBUF, &optval, &optlen) < 0) {
+  if (GETSOCKOPT(tmp, SOL_SOCKET, SO_SNDBUF, &optval, &optlen) < 0) {
     t_perror("data_socket: get SO_SNDBUF");
   } else {
     if (optlen == sizeof(optval)) { t_print("UDP Socket SND buf size=%d\n", optval); }
@@ -747,7 +747,7 @@ static void open_tcp_socket() {
 
   optlen = sizeof(optval);
 
-  if (getsockopt(tmp, SOL_SOCKET, SO_RCVBUF, &optval, &optlen) < 0) {
+  if (GETSOCKOPT(tmp, SOL_SOCKET, SO_RCVBUF, &optval, &optlen) < 0) {
     t_perror("tcp_socket: get SO_RCVBUF");
   } else {
     if (optlen == sizeof(optval)) { t_print("TCP Socket RCV buf size=%d\n", optval); }
@@ -755,7 +755,7 @@ static void open_tcp_socket() {
 
   optlen = sizeof(optval);
 
-  if (getsockopt(tmp, SOL_SOCKET, SO_SNDBUF, &optval, &optlen) < 0) {
+  if (GETSOCKOPT(tmp, SOL_SOCKET, SO_SNDBUF, &optval, &optlen) < 0) {
     t_perror("tcp_socket: get SO_SNDBUF");
   } else {
     if (optlen == sizeof(optval)) { t_print("TCP Socket SND buf size=%d\n", optval); }
