@@ -17,7 +17,7 @@
 *
 */
 #include <gtk/gtk.h>
-#include <locale.h>
+#include <gdk/gdk.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,18 +26,9 @@
 #ifdef _WIN32
 #include "../Windows/windows_compat.h"
 #include <sys/types.h>
-// Windows doesn't have utsname, so we'll define a simple version
-struct utsname {
-    char sysname[256];
-    char nodename[256];
-    char release[256];
-    char version[256];
-    char machine[256];
-};
+#include <sys/utsname.h>
 #else
 #include <unistd.h>
-#endif
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -53,12 +44,14 @@ struct utsname {
 #include "audio.h"
 #include "band.h"
 #include "bandstack.h"
+#include "configure.h"
 #include "css.h"
 #include "discovery.h"
 #include "discovered.h"
+#include "exit_menu.h"
 #include "ext.h"
 #include "gpio.h"
-#include "piHPSDR_logo.h"
+#include "hpsdr_logo.h"
 #include "main.h"
 #include "message.h"
 #include "new_menu.h"
@@ -73,16 +66,20 @@ struct utsname {
 #endif
 #include "startup.h"
 #include "test_menu.h"
+#ifdef TTS
+#include "tts.h"
+#endif
 #include "version.h"
 #include "vfo.h"
 
 struct utsname unameData;
 
 GdkScreen *screen;
-int display_size;
-int display_width[6] = {0, 0, 640, 800, 1024, 1280};
-int display_height[6] = {0, 0, 400, 480, 600, 720};
-int display_vfobar[6] = {0, 0, 0, 0, 0, 0};
+int display_width;
+int display_height;
+int screen_height;
+int screen_width;
+int full_screen;
 int this_monitor;
 
 static GdkCursor *cursor_arrow;
@@ -107,20 +104,181 @@ static pthread_t wisdom_thread_id;
 static int wisdom_running = 0;
 
 static void* wisdom_thread(void *arg) {
-  if (WDSPwisdom ((char *)arg)) {
-    t_print("%s: WDSP wisdom file has been rebuilt.\n", __FUNCTION__);
-  } else {
-    t_print("%s: Re-using existing WDSP wisdom file.\n", __FUNCTION__);
-  }
-
+  WDSPwisdom ((char *)arg);
   wisdom_running = 0;
   return NULL;
 }
 
 // cppcheck-suppress constParameterCallback
+gboolean keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
+  gboolean ret = TRUE;
+
+  //
+  // Intercept key-strokes. The "keypad" stuff
+  // has been contributed by Ron.
+  // Everything that is not intercepted is handled downstream.
+  //
+  // space             ==>  MOX
+  // u                 ==>  active receiver VFO up
+  // d                 ==>  active receiver VFO down
+  // Keypad 0..9       ==>  NUMPAD 0 ... 9
+  // Keypad Decimal    ==>  NUMPAD DEC
+  // Keypad Subtract   ==>  NUMPAD BS
+  // Keypad Divide     ==>  NUMPAD CL
+  // Keypad Multiply   ==>  NUMPAD Hz
+  // Keypad Add        ==>  NUMPAD kHz
+  // Keypad Enter      ==>  NUMPAD MHz
+  //
+  // Function keys invoke Text-to-Speech machine
+  // (see tts.c)
+  // F1                ==>  Frequency
+  // F2                ==>  Mode
+  // F3                ==>  Filter width
+  // F4                ==>  RX S-meter level
+  // F5                ==>  TX drive
+  // F6                ==>  Attenuation/Preamp
+  //
+  switch (event->keyval) {
+#ifdef TTS
+  case GDK_KEY_F1:
+    tts_freq();
+    break;
+
+  case GDK_KEY_F2:
+    tts_mode();
+    break;
+
+  case GDK_KEY_F3:
+    tts_filter();
+    break;
+
+  case GDK_KEY_F4:
+    tts_smeter();
+    break;
+
+  case GDK_KEY_F5:
+    tts_txdrive();
+    break;
+
+  case GDK_KEY_F6:
+    tts_atten();
+    break;
+#endif
+
+  case GDK_KEY_space:
+    radio_toggle_mox();
+    break;
+
+  case  GDK_KEY_d:
+    vfo_step(-1);
+    break;
+
+  case GDK_KEY_u:
+    vfo_step(1);
+    break;
+
+  //
+  // Suggestion of Richard: using U and D for changing
+  // the frequency of the "other" VFO in large steps
+  // (useful for split operation)
+  //
+  case  GDK_KEY_U:
+    vfo_id_step(1 - active_receiver->id, 10);
+    break;
+
+  case  GDK_KEY_D:
+    vfo_id_step(1 - active_receiver->id, -10);
+    break;
+
+  //
+  // This is a contribution of Ron, it uses a keypad for
+  // entering a frequency
+  //
+  case GDK_KEY_KP_0:
+    vfo_num_pad(0, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_1:
+    vfo_num_pad(1, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_2:
+    vfo_num_pad(2, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_3:
+    vfo_num_pad(3, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_4:
+    vfo_num_pad(4, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_5:
+    vfo_num_pad(5, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_6:
+    vfo_num_pad(6, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_7:
+    vfo_num_pad(7, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_8:
+    vfo_num_pad(8, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_9:
+    vfo_num_pad(9, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Divide:
+    vfo_num_pad(-1, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Multiply:
+    vfo_num_pad(-2, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Add:
+    vfo_num_pad(-3, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Enter:
+    vfo_num_pad(-4, active_receiver->id);
+    break;
+
+  //
+  // Some countries (e.g. Germany) do not have a "decimal point"
+  // in a properly localised OS. In Germany we have a comma instead.
+  // A quick-and-dirty fix accepts both a decimal and a comma
+  // (a.k.a. separator) here.
+  //
+  case GDK_KEY_KP_Decimal:
+  case GDK_KEY_KP_Separator:
+    vfo_num_pad(-5, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Subtract:
+    vfo_num_pad(-6, active_receiver->id);
+    break;
+
+  default:
+    // not intercepted, so handle downstream
+    ret = FALSE;
+    break;
+  }
+
+  g_idle_add(ext_vfo_update, NULL);
+  return ret;
+}
+
+// cppcheck-suppress constParameterCallback
 static gboolean main_delete (GtkWidget *widget) {
   if (radio != NULL) {
-    radio_stop_program();
+    stop_program();
   }
 
   _exit(0);
@@ -130,8 +288,6 @@ static int init(void *data) {
   char wisdom_directory[1025];
   char text[1024];
   t_print("%s\n", __FUNCTION__);
-  t_print("LC_ALL=%s\n", setlocale(LC_ALL, NULL));
-  t_print("LC_NUMERIC=%s\n", setlocale(LC_NUMERIC, NULL));
   //
   // We want to intercept some key strokes
   //
@@ -148,7 +304,7 @@ static int init(void *data) {
   //
   (void) getcwd(text, sizeof(text));
   snprintf(wisdom_directory, sizeof(wisdom_directory), "%s/", text);
-  t_print("%s: Securing wisdom file in directory: %s\n", __FUNCTION__, wisdom_directory);
+  t_print("Securing wisdom file in directory: %s\n", wisdom_directory);
   status_text("Checking FFTW Wisdom file ...");
   wisdom_running = 1;
   pthread_create(&wisdom_thread_id, NULL, wisdom_thread, wisdom_directory);
@@ -175,16 +331,15 @@ static int init(void *data) {
 }
 
 static void activate_pihpsdr(GtkApplication *app, gpointer data) {
-  GtkWidget *label;
   char text[256];
-  t_print("%s: Build: %s (Commit: %s, Date: %s)\n", __FUNCTION__, build_version, build_commit, build_date);
-  t_print("%s: GTK+ version %u.%u.%u\n", __FUNCTION__, gtk_major_version, gtk_minor_version, gtk_micro_version);
+  t_print("Build: %s (Commit: %s, Date: %s)\n", build_version, build_commit, build_date);
+  t_print("GTK+ version %u.%u.%u\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
   uname(&unameData);
-  t_print("%s: sysname=  %s\n", __FUNCTION__, unameData.sysname);
-  t_print("%s: nodename= %s\n", __FUNCTION__, unameData.nodename);
-  t_print("%s: release=  %s\n", __FUNCTION__, unameData.release);
-  t_print("%s: version=  %s\n", __FUNCTION__, unameData.version);
-  t_print("%s: machine=  %s\n", __FUNCTION__, unameData.machine);
+  t_print("sysname: %s\n", unameData.sysname);
+  t_print("nodename: %s\n", unameData.nodename);
+  t_print("release: %s\n", unameData.release);
+  t_print("version: %s\n", unameData.version);
+  t_print("machine: %s\n", unameData.machine);
   load_css();
   //
   // Start with default font. The selected
@@ -194,14 +349,14 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   GdkDisplay *display = gdk_display_get_default();
 
   if (display == NULL) {
-    t_print("%s: FATAL: no default display!\n", __FUNCTION__);
+    t_print("no default display!\n");
     _exit(0);
   }
 
   screen = gdk_display_get_default_screen(display);
 
   if (screen == NULL) {
-    t_print("%s: FATAL: no default screen!\n", __FUNCTION__);
+    t_print("no default screen!\n");
     _exit(0);
   }
 
@@ -230,43 +385,41 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   int x, y;
   gtk_window_get_position(GTK_WINDOW(top_window), &x, &y);
   this_monitor = gdk_screen_get_monitor_at_point(screen, x, y);
-  t_print("%s: Monitor Number within Screen=%d\n", __FUNCTION__, this_monitor);
+  t_print("Monitor Number within Screen=%d\n", this_monitor);
   //
   // Determine the size of "our" monitor
   //
   GdkRectangle rect;
   gdk_screen_get_monitor_geometry(screen, this_monitor, &rect);
+  screen_width = rect.width;
+  screen_height = rect.height;
+  t_print("Monitor: width=%d height=%d\n", screen_width, screen_height);
   // Start with 800x480, since this width is required for the "discovery" screen.
   // Go to "full screen" mode if display nearly matches 800x480
   // This is all overridden later for the radio from the props file
-  display_width[0] = rect.width;
-  display_height[0] = rect.height;
-  display_width[1]  = 800;
-  display_height[1] = 480;
-  display_size   = 1;  // Custom
-  t_print("%s: Monitor: width=%d height=%d\n", __FUNCTION__, display_width[0], display_height[0]);
+  display_width  = 800;
+  display_height = 480;
+  full_screen    = 0;
 
   //
   // Go to full-screen mode by default, if the screen size is approx. 800*480
   //
-  if (display_width[0] > 780 && display_width[0] < 820 && display_height[0] > 460 && display_height[0] < 500) {
-    display_size = 0;   // FullScreen
+  if (screen_width > 780 && screen_width < 820 && screen_height > 460 && screen_height < 500) {
+    full_screen = 1;
+    display_width = screen_width;
+    display_height = screen_height;
   }
 
-  t_print("%s: display_width=%d display_height=%d\n", __FUNCTION__,
-          display_width[display_size], display_height[display_size]);
+  t_print("display_width=%d display_height=%d\n", display_width, display_height);
 
-  if (display_size == 0) {
-    t_print("%s: Going full screen\n", __FUNCTION__);
+  if (full_screen) {
+    t_print("full screen\n");
     gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
-  } else {
-    t_print("%s: display_width=%d display_height=%d\n", __FUNCTION__,
-            display_width[display_size], display_height[display_size]);
   }
 
   g_signal_connect (top_window, "delete-event", G_CALLBACK (main_delete), NULL);
   topgrid = gtk_grid_new();
-  gtk_widget_set_size_request(topgrid, display_width[display_size], display_height[display_size]);
+  gtk_widget_set_size_request(topgrid, display_width, display_height);
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_spacing (GTK_GRID(topgrid), 10);
@@ -275,32 +428,26 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   // Closely following Heiko's suggestion, we now have the HPSDR log contained
   // in the code and need not fiddle around with the question from where to load it.
   //
-  GtkWidget *image = piHPSDR_logo();
+  GtkWidget *image = hpsdr_logo();
 
   if (image) {
-    gtk_grid_attach(GTK_GRID(topgrid), image, 0, 0, 1, 3);
+    gtk_grid_attach(GTK_GRID(topgrid), image, 0, 0, 1, 2);
   }
 
-  label = gtk_label_new("piHPSDR");
-  gtk_widget_set_name(label, "big_txt");
-  gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(topgrid), label, 1, 0, 3, 1);
-  label = gtk_label_new("Originally written by John Melton (G0ORX/N6LYT)\n"
-                        "Extended and maintained by Christoph van Wüllen (DL1YCF)");
-  gtk_widget_set_name(label, "med_txt");
-  gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(topgrid), label, 1, 1, 3, 1);
-  snprintf(text, sizeof(text), "Version %s (Commit: %s, Date: %s)\nOptions: %s\nAudio Module: %s",
-           build_version, build_commit, build_date, build_options, build_audio);
-  label = gtk_label_new(text);
-  gtk_widget_set_name(label, "med_txt");
-  gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(topgrid), label, 1, 2, 3, 1);
+  GtkWidget *pi_label = gtk_label_new("piHPSDR by John Melton G0ORX/N6LYT");
+  gtk_widget_set_name(pi_label, "big_txt");
+  gtk_widget_set_halign(pi_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(topgrid), pi_label, 1, 0, 3, 1);
+  snprintf(text, sizeof(text), "Built %s, Version %s\nOptions: %s\nAudio module: %s",
+           build_date, build_version, build_options, build_audio);
+  GtkWidget *build_date_label = gtk_label_new(text);
+  gtk_widget_set_name(build_date_label, "med_txt");
+  gtk_widget_set_halign(build_date_label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(topgrid), build_date_label, 1, 1, 3, 1);
   status_label = gtk_label_new(NULL);
   gtk_widget_set_name(status_label, "med_txt");
   gtk_widget_set_halign(status_label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 3, 3, 1);
+  gtk_grid_attach(GTK_GRID(topgrid), status_label, 1, 2, 3, 1);
   gtk_widget_show_all(top_window);
   g_idle_add(init, NULL);
 }
@@ -322,7 +469,7 @@ int main(int argc, char **argv) {
   // If invoked with -V, print version and FPGA firmware compatibility information
   //
   if (argc >= 2 && !strcmp("-V", argv[1])) {
-    fprintf(stderr, "piHPSDR version %s(%s); built %s\n", build_version, build_commit, build_date);
+    fprintf(stderr, "piHPSDR version and commit: %s, %s; built %s\n", build_version, build_commit, build_date);
     fprintf(stderr, "Compile-time options      : %sAudioModule=%s\n", build_options, build_audio);
 #ifdef SATURN
     fprintf(stderr, "SATURN min:max minor FPGA : %d:%d\n", saturn_minor_version_min(), saturn_minor_version_max());
@@ -357,25 +504,24 @@ int main(int argc, char **argv) {
   // privilege is there, it may help to run piHPSDR at a lower nice
   // value.
   //
-  startup(argv[0]);
-  setlocale(LC_ALL, "C");  // make a decimal point a decimal point
 #ifndef _WIN32
   rc = getpriority(PRIO_PROCESS, 0);
-  t_print("%s: Base priority on startup: %d\n", __FUNCTION__, rc);
+  t_print("Base priority on startup: %d\n", rc);
   setpriority(PRIO_PROCESS, 0, -10);
   rc = getpriority(PRIO_PROCESS, 0);
-  t_print("%s: Base priority after adjustment: %d\n", __FUNCTION__, rc);
+  t_print("Base priority after adjustment: %d\n", rc);
 #endif
+  startup(argv[0]);
 #ifdef _WIN32
   snprintf(name, sizeof(name), "org.g0orx.pihpsdr.pid%lu", (unsigned long)GetCurrentProcessId());
 #else
   snprintf(name, sizeof(name), "org.g0orx.pihpsdr.pid%d", getpid());
 #endif
-  gtk_disable_setlocale();  // keep having a decimal point as a decimal point
+  //t_print("gtk_application_new: %s\n",name);
   pihpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(pihpsdr, "activate", G_CALLBACK(activate_pihpsdr), NULL);
   rc = g_application_run(G_APPLICATION(pihpsdr), argc, argv);
-  t_print("%s: exiting ...\n", __FUNCTION__);
+  t_print("exiting ...\n");
   g_object_unref(pihpsdr);
 #ifdef _WIN32
   cleanup_winsock();
