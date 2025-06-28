@@ -95,7 +95,7 @@ static void p1_discover(struct ifaddrs* iface, int discflag) {
 
     // allow broadcast on the socket
     int on = 1;
-    rc = setsockopt(discovery_socket, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on));
+    rc = SETSOCKOPT(discovery_socket, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on));
 
     if (rc != 0) {
       t_print("%s: cannot set SO_BROADCAST: rc=%d\n", __FUNCTION__, rc);
@@ -249,8 +249,8 @@ static void p1_discover(struct ifaddrs* iface, int discflag) {
   }
 
   optval = 1;
-  setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-  setsockopt(discovery_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+  SETSOCKOPT(discovery_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+  SETSOCKOPT(discovery_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
   rc = devices;
   // start a receive thread to collect discovery response packets
   discover_thread_id = g_thread_new( "old discover receive", p1_discover_receive_thread, GINT_TO_POINTER(discflag));
