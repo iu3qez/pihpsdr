@@ -367,7 +367,7 @@ int main(int argc, char **argv) {
   t_print("%s: Base priority after adjustment: %d\n", __FUNCTION__, rc);
 #endif
 #ifdef _WIN32
-  snprintf(name, sizeof(name), "org.g0orx.pihpsdr.pid%d", GetCurrentProcessId());
+  snprintf(name, sizeof(name), "org.g0orx.pihpsdr.pid%lu", (unsigned long)GetCurrentProcessId());
 #else
   snprintf(name, sizeof(name), "org.g0orx.pihpsdr.pid%d", getpid());
 #endif
