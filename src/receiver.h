@@ -236,9 +236,10 @@ typedef struct _receiver {
 
   int mute_radio;
 
-  double *buffer;
   void *resampler;
-  double *resample_buffer;
+  double *resample_input;
+  double *resample_output;
+  int resample_count;
   int resample_buffer_size;
 
   int zoom;

@@ -431,8 +431,8 @@ gboolean discovery_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer d
 
   case GDK_KEY_F2:
     if (devices > 0) {
-      char *p;
-      char *r;
+      const char *p;
+      const char *r;
       switch(discovered[0].protocol) {
       case ORIGINAL_PROTOCOL:
         p = "running Protocol 1";

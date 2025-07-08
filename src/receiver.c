@@ -320,14 +320,17 @@ void rx_save_state(const RECEIVER *rx) {
 void rx_restore_state(RECEIVER *rx) {
   t_print("%s: id=%d\n", __FUNCTION__, rx->id);
 
+  if (!radio_is_remote) {
+    GetPropI1("receiver.%d.alex_antenna", rx->id,               rx->alex_antenna);
+    //SOAPY: do not allow ADC changes
+    if (protocol != SOAPYSDR_PROTOCOL) {
+      GetPropI1("receiver.%d.adc", rx->id,                      rx->adc);
+    }
+  }
+
   //
   // For a PS_RX_FEEDBACK, we only store/restore the alex antenna and ADC
   //
-  if (!radio_is_remote) {
-    GetPropI1("receiver.%d.alex_antenna", rx->id,               rx->alex_antenna);
-    GetPropI1("receiver.%d.adc", rx->id,                        rx->adc);
-  }
-
   if (rx->id == PS_RX_FEEDBACK) { return; }
 
   //
@@ -725,17 +728,20 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   //t_print("%s: RXid=%d default adc=%d\n",__FUNCTION__,rx->id, rx->adc);
   rx->sample_rate = 48000;
 
+  rx->resampler = NULL;
+  rx->resample_input = NULL;
+  rx->resample_output = NULL;
+
   if (device == SOAPYSDR_USB_DEVICE) {
     rx->sample_rate = radio->info.soapy.sample_rate;
     t_print("%s: RXid=%d sample_rate=%d\n", __FUNCTION__, rx->id, rx->sample_rate);
-    rx->resampler = NULL;
-    rx->resample_buffer = NULL;
   }
 
   //
   // For larger sample rates we could use a larger buffer_size, since then
   // the number of audio samples per batch is rather small. However, the buffer
-  // size is not changed when the sample rate is changed.
+  // size is not changed when the sample RX rate is changed, so we use an
+  // "average" value here.
   //
   rx->buffer_size = 1024;
   rx->dsp_size = 2048;
@@ -866,9 +872,10 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   // If this is the second receiver in P1, over-write sample rate
   // with that of the first  receiver. Different sample rates in
   // the props file may arise due to illegal hand editing or
-  // firmware downgrade from P2 to P1.
+  // firmware downgrade from P2 to P1. The same applies to
+  // a LIMESDR where we keep both receivers at the same sample rate.
   //
-  if (protocol == ORIGINAL_PROTOCOL && id == 1) {
+  if ((protocol == ORIGINAL_PROTOCOL || have_lime) && id == 1) {
     rx->sample_rate = receiver[0]->sample_rate;
   }
 
