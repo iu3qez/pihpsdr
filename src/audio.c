@@ -386,8 +386,8 @@ int cw_audio_write(RECEIVER *rx, float sample) {
 
     case SND_PCM_FORMAT_S32_LE: {
       int32_t *long_buffer = (int32_t *)rx->local_audio_buffer;
-      long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(sample * 4294967295.0F);
-      long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(sample * 4294967295.0F);
+      long_buffer[rx->local_audio_buffer_offset * 2] = (int32_t)(sample * 2147483647.0F);
+      long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = (int32_t)(sample * 2147483647.0F);
     }
     break;
 
@@ -803,7 +803,7 @@ void audio_get_cards() {
           // the two allocated strings will never be free'd
           output_devices[n_output_devices].name = strdup(device_id);
           output_devices[n_output_devices].description = strdup(device_id);
-          input_devices[n_output_devices].index = 0; // not used
+          output_devices[n_output_devices].index = 0; // not used
           n_output_devices++;
           t_print("output_device: %s\n", device_id);
         }
@@ -840,7 +840,7 @@ void audio_get_cards() {
           }
         }
 
-        input_devices[n_output_devices].index = 0; // not used
+        output_devices[n_output_devices].index = 0; // not used
         n_output_devices++;
         t_print("output_device: name=%s descr=%s\n", name, descr);
       }
