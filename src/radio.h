@@ -288,10 +288,12 @@ extern int rx_stack_horizontal;
 extern int suppress_popup_sliders;
 extern const int tx_dialog_width;
 extern const int tx_dialog_height;
+
 //
 // All global functions declared here start with "radio_",
 // exception: my_combo_attach()
 //
+extern gboolean radio_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data);
 extern void   radio_set_mox(int state);
 extern void   radio_toggle_mox(void);
 extern void   radio_toggle_tune(void);

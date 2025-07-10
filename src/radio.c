@@ -71,6 +71,9 @@
 #include "test_menu.h"
 #include "toolbar.h"
 #include "transmitter.h"
+#ifdef TTS
+  #include "tts.h"
+#endif
 #include "tx_panadapter.h"
 #ifdef SATURN
   #include "saturnmain.h"
@@ -344,6 +347,176 @@ static SaturnSerialPort SaturnSerialPortsList[] = {
 };
 
 static void radio_restore_state();
+
+//
+// This is the key-press handler which is activated as soon as the
+// radio is running
+//
+// cppcheck-suppress constParameterCallback
+gboolean radio_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data) {
+  gboolean ret = TRUE;
+
+  //
+  // Intercept key-strokes. The "keypad" stuff
+  // has been contributed by Ron.
+  // Everything that is not intercepted is handled downstream.
+  //
+  // space             ==>  MOX
+  // u                 ==>  active receiver VFO up
+  // d                 ==>  active receiver VFO down
+  // Keypad 0..9       ==>  NUMPAD 0 ... 9
+  // Keypad Decimal    ==>  NUMPAD DEC
+  // Keypad Subtract   ==>  NUMPAD BS
+  // Keypad Divide     ==>  NUMPAD CL
+  // Keypad Multiply   ==>  NUMPAD Hz
+  // Keypad Add        ==>  NUMPAD kHz
+  // Keypad Enter      ==>  NUMPAD MHz
+  //
+  // Function keys invoke Text-to-Speech machine
+  // (see tts.c)
+  // F1                ==>  Frequency
+  // F2                ==>  Mode
+  // F3                ==>  Filter width
+  // F4                ==>  RX S-meter level
+  // F5                ==>  TX drive
+  // F6                ==>  Attenuation/Preamp
+  //
+  switch (event->keyval) {
+#ifdef TTS
+  case GDK_KEY_F1:
+    tts_freq();
+    break;
+
+  case GDK_KEY_F2:
+    tts_mode();
+    break;
+
+  case GDK_KEY_F3:
+    tts_filter();
+    break;
+
+  case GDK_KEY_F4:
+    tts_smeter();
+    break;
+
+  case GDK_KEY_F5:
+    tts_txdrive();
+    break;
+
+  case GDK_KEY_F6:
+    tts_atten();
+    break;
+#endif
+
+  case GDK_KEY_space:
+    radio_toggle_mox();
+    break;
+
+  case  GDK_KEY_d:
+    vfo_step(-1);
+    break;
+
+  case GDK_KEY_u:
+    vfo_step(1);
+    break;
+
+  //
+  // Suggestion of Richard: using U and D for changing
+  // the frequency of the "other" VFO in large steps
+  // (useful for split operation)
+  //
+  case  GDK_KEY_U:
+    vfo_id_step(1 - active_receiver->id, 10);
+    break;
+
+  case  GDK_KEY_D:
+    vfo_id_step(1 - active_receiver->id, -10);
+    break;
+
+  //
+  // This is a contribution of Ron, it uses a keypad for
+  // entering a frequency
+  //
+  case GDK_KEY_KP_0:
+    vfo_num_pad(0, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_1:
+    vfo_num_pad(1, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_2:
+    vfo_num_pad(2, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_3:
+    vfo_num_pad(3, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_4:
+    vfo_num_pad(4, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_5:
+    vfo_num_pad(5, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_6:
+    vfo_num_pad(6, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_7:
+    vfo_num_pad(7, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_8:
+    vfo_num_pad(8, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_9:
+    vfo_num_pad(9, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Divide:
+    vfo_num_pad(-1, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Multiply:
+    vfo_num_pad(-2, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Add:
+    vfo_num_pad(-3, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Enter:
+    vfo_num_pad(-4, active_receiver->id);
+    break;
+
+  //
+  // Some countries (e.g. Germany) do not have a "decimal point"
+  // in a properly localised OS. In Germany we have a comma instead.
+  // A quick-and-dirty fix accepts both a decimal and a comma
+  // (a.k.a. separator) here.
+  //
+  case GDK_KEY_KP_Decimal:
+  case GDK_KEY_KP_Separator:
+    vfo_num_pad(-5, active_receiver->id);
+    break;
+
+  case GDK_KEY_KP_Subtract:
+    vfo_num_pad(-6, active_receiver->id);
+    break;
+
+  default:
+    // not intercepted, so handle downstream
+    ret = FALSE;
+    break;
+  }
+
+  g_idle_add(ext_vfo_update, NULL);
+  return ret;
+}
 
 void radio_stop() {
   ASSERT_SERVER();
@@ -1624,7 +1797,7 @@ void radio_start_radio() {
   // Now the radio is up and running. Connect "Radio" keyboard interceptor
   //
   g_signal_handler_disconnect(top_window, keypress_signal_id);
-  keypress_signal_id = g_signal_connect(top_window, "key_press_event", G_CALLBACK(keypress_cb), NULL);
+  keypress_signal_id = g_signal_connect(top_window, "key_press_event", G_CALLBACK(radio_keypress_cb), NULL);
 }
 
 void radio_remote_change_receivers(int r) {
@@ -2994,7 +3167,7 @@ int radio_remote_start(void *data) {
   // Now the radio is up and running. Connect "Radio" keyboard interceptor
   //
   g_signal_handler_disconnect(top_window, keypress_signal_id);
-  keypress_signal_id = g_signal_connect(top_window, "key_press_event", G_CALLBACK(keypress_cb), NULL);
+  keypress_signal_id = g_signal_connect(top_window, "key_press_event", G_CALLBACK(radio_keypress_cb), NULL);
   return 0;
 }
 

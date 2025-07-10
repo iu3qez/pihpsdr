@@ -277,6 +277,7 @@ static int ozy_load_firmware(char *fnamep) {
 
     if ( readbuf[0] != ':' ) {
       t_print( "ozy_upload_firmware: bad record\n");
+      fclose(ifile);
       return 0;
     }
 
@@ -286,6 +287,7 @@ static int ozy_load_firmware(char *fnamep) {
 
     if ( length < 0 || addr < 0 || type < 0 ) {
       t_print( "ozy_upload_firmware: bad length, addr or type\n");
+      fclose(ifile);
       return 0;
     }
 
@@ -343,7 +345,7 @@ static int ozy_load_firmware(char *fnamep) {
     }
   }
 
-  //        t_print( "ozy_upload_firmware: Processed %d lines.\n", linecount);
+  fclose(ifile);
   return linecount;
 }
 
@@ -403,6 +405,12 @@ static int ozy_load_fpga(char *rbf_fnamep) {
       fclose(rbffile);
       return 0;
     }
+
+    //
+    // If fread() results in a "short read", the file pointer is undefined
+    // so do not continue
+    //
+    if (bytes_read < (int)sizeof(buf)) break;
   }
 
   t_print("%d bytes transferred.\n", total_bytes_xferd);

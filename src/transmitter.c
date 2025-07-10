@@ -822,7 +822,7 @@ void tx_create_dialog(TRANSMITTER *tx) {
   // Handle key presses in the TX dialog through the handler in main.c
   //
   gtk_widget_add_events(tx->dialog, GDK_KEY_PRESS_MASK);
-  g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(keypress_cb), NULL);
+  g_signal_connect(tx->dialog, "key_press_event", G_CALLBACK(radio_keypress_cb), NULL);
 }
 
 static void tx_create_visual(TRANSMITTER *tx) {
