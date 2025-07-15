@@ -2501,6 +2501,10 @@ frequency refers to the audio domain.
 and the filter edges of the current RX filter are used instead. The \rett{TX Filter Low}
 and \rett{TX Filter High} check boxes will be inactive in this case.
 
+\textbf{Note:}TX filter settings have no effect in FMN mode.
+All the filter characteristics are then calculated from the deviation for
+a maximum audio frequency of 3000 Hz.
+
 \rett{Compression} With this box the TX compressor can be enabled/disabled.
 The compression level (0-20 dB) can be chosen in the spin button to the right.
 Setting TX compression on/off automatically engages/disengages the auto leveller
