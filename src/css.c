@@ -85,11 +85,6 @@ char *cssfont[] = {"FreeSans", "Roboto Mono", "Open Sans", "Piboto" };
 const int num_css_fonts = sizeof(cssfont) / sizeof(char *);
 int which_css_font = 0;
 
-//
-// This string will be printed using printf, it contains
-// a single data element %s, that is, the font family name
-// from cssfont[]
-//
 char *css =
   "  combobox { font-size: 15px; }\n"
   "  button   { font-size: 15px; }\n"
@@ -190,13 +185,20 @@ char *css =
   "  headerbar { min-height: 0px; padding: 0px; margin: 0px; font-size: 15px; }\n"
   ;
 
+//
+// This function adds a global "font family" statement to the CSS
+// data (possibliy shadowing previous selections)
+// and is called whenever a new font is selected
+// in the screen menu. No clean-up is done so it is assumed
+// that the font is not changed thousands of times during
+// one instance of piHPSDR.
+//
 void load_font(int font) {
   GtkCssProvider *provider;
   GdkDisplay *display;
   GdkScreen *screen;
   GError *error;
-  char str[128];
-  int rc;
+  char str[256];
 
   if (font < 0) { font = 0; }
 
@@ -211,13 +213,11 @@ void load_font(int font) {
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   error = NULL;
   snprintf(str, sizeof(str), "  * { font-family: %s; }\n", cssfont[which_css_font]);
-  rc = gtk_css_provider_load_from_data(provider, str, -1, &error);
-  g_clear_error(&error);
+  (void) gtk_css_provider_load_from_data(provider, str, -1, &error);
 
-  if (rc) {
-    t_print("%s: CSS font set to %s\n", __FUNCTION__, cssfont[which_css_font]);
-  } else {
-    t_print("%s: failed to set CSS font\n", __FUNCTION__);
+  if (error != NULL) {
+    t_print("%s: %s\n", __FUNCTION__, error->message);
+    g_clear_error(&error);
   }
 
   g_object_unref (provider);
@@ -234,7 +234,6 @@ void load_css() {
   GdkDisplay *display;
   GdkScreen *screen;
   GError *error;
-  int rc;
   provider = gtk_css_provider_new ();
   display = gdk_display_get_default ();
   screen = gdk_display_get_default_screen (display);
@@ -242,20 +241,25 @@ void load_css() {
       GTK_STYLE_PROVIDER(provider),
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   error = NULL;
-  rc = gtk_css_provider_load_from_path (provider, "default.css", &error);
-  g_clear_error(&error);
+  (void) gtk_css_provider_load_from_path (provider, "default.css", &error);
 
-  if (rc) {
-    t_print("%s: CSS data loaded from file default.css\n", __FUNCTION__);
-  } else {
-    t_print("%s: failed to load CSS data from file default.css\n", __FUNCTION__);
-    rc = gtk_css_provider_load_from_data(provider, css, -1, &error);
+  if (error != NULL) {
+    //
+    // The average user does not provide a default.css file, here
+    // the following error message will always appear although this does
+    // not indicate a problem.
+    //
+    t_print("%s: %s\n", __FUNCTION__, error->message);
     g_clear_error(&error);
+    (void) gtk_css_provider_load_from_data(provider, css, -1, &error);
 
-    if (rc) {
-      t_print("%s: hard-wired CSS data successfully loaded\n", __FUNCTION__);
-    } else {
-      t_print("%s: failed to load hard-wired CSS data\n", __FUNCTION__);
+    if (error != NULL) {
+      //
+      // If this error message appears, this usually flags an error
+      // in the hard-wired CSS data.
+      //
+      t_print("%s: %s\n", __FUNCTION__, error->message);
+      g_clear_error(&error);
     }
   }
 
