@@ -258,7 +258,6 @@ int pre_mox = 0;
 
 int ptt = 0;
 int mox = 0;
-int tune = 0;
 int have_rx_gain = 0;
 int have_rx_att = 0;
 int have_alex_att = 0;
@@ -2086,7 +2085,7 @@ static void rxtx(int state) {
             break;
           }
 
-          if (tune) { do_silence = 5; } // 31 ms "silence" for TUNEing in any mode
+          if (transmitter->tune) { do_silence = 5; } // 31 ms "silence" for TUNEing in any mode
         }
       }
 
@@ -2130,26 +2129,30 @@ void radio_toggle_mox() {
 }
 
 void radio_remote_set_vox(int state) {
-  if (state != radio_is_transmitting()) {
-    rxtx(state);
-  }
+  if (can_transmit) {
+    if (state != radio_is_transmitting()) {
+      rxtx(state);
+    }
 
-  mox = 0;
-  tune = 0;
-  vox = state;
-  g_idle_add(ext_vfo_update, NULL);
+    mox = 0;
+    transmitter->tune = 0;
+    vox = state;
+    g_idle_add(ext_vfo_update, NULL);
+  }
 }
 
 void radio_remote_set_mox(int state) {
-  if (state != radio_is_transmitting()) {
-    rxtx(state);
-  }
+  if (can_transmit) {
+    if (state != radio_is_transmitting()) {
+      rxtx(state);
+    }
 
-  vox_cancel();  // remove time-out
-  mox = state;
-  tune = 0;
-  vox = 0;
-  g_idle_add(ext_vfo_update, NULL);
+    vox_cancel();  // remove time-out
+    mox = state;
+    transmitter->tune = 0;
+    vox = 0;
+    g_idle_add(ext_vfo_update, NULL);
+  }
 }
 
 void radio_remote_set_twotone(int state) {
@@ -2161,29 +2164,31 @@ void radio_remote_set_twotone(int state) {
 }
 
 void radio_remote_set_tune(int state) {
-  if (state != tune) {
-    vox_cancel();
+  if (can_transmit) {
+    if (state != transmitter->tune) {
+      vox_cancel();
 
-    if (vox || mox) {
-      rxtx(0);
-      vox = 0;
-      mox = 0;
+      if (vox || mox) {
+        rxtx(0);
+        vox = 0;
+        mox = 0;
+      }
+
+      rxtx(state);
+      transmitter->tune = state;
     }
 
-    rxtx(state);
-    tune = state;
+    g_idle_add(ext_vfo_update, NULL);
   }
-
-  g_idle_add(ext_vfo_update, NULL);
 }
 
 void radio_set_mox(int state) {
-  if (!can_transmit) { return; }
-
   if (radio_is_remote) {
     send_mox(client_socket, state);
     return;
   }
+
+  if (!can_transmit) { return; }
 
   if (state && !TransmitAllowed()) {
     state = 0;
@@ -2198,7 +2203,7 @@ void radio_set_mox(int state) {
   // - activating MOX while VOX is pending continues transmission
   // - deactivating MOX while VOX is pending makes a TX/RX transition
   //
-  if (tune) {
+  if (transmitter->tune) {
     radio_set_tune(0);
   }
 
@@ -2214,7 +2219,7 @@ void radio_set_mox(int state) {
   }
 
   mox  = state;
-  tune = 0;
+  transmitter->tune = 0;
   vox  = 0;
   schedule_high_priority();
   schedule_receive_specific();
@@ -2226,17 +2231,16 @@ int radio_get_mox() {
 }
 
 void radio_set_vox(int state) {
-  //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox,vox,tune,state);
-  if (!can_transmit) { return; }
-
-  if (mox || tune) { return; }
-
-  if (state && TxInhibit) { return; }
-
   if (radio_is_remote) {
     send_vox(client_socket, state);
     return;
   }
+
+  if (!can_transmit) { return; }
+
+  if (mox || transmitter->tune) { return; }
+
+  if (state && TxInhibit) { return; }
 
   if (vox != state) {
     rxtx(state);
@@ -2264,8 +2268,10 @@ void radio_toggle_tune() {
     return;
   }
 
-  radio_set_tune(!tune);
-  g_idle_add(ext_vfo_update, NULL);
+  if (can_transmit) {
+    radio_set_tune(!transmitter->tune);
+    g_idle_add(ext_vfo_update, NULL);
+  }
 }
 
 void radio_set_tune(int state) {
@@ -2274,13 +2280,12 @@ void radio_set_tune(int state) {
     return;
   }
 
-  //t_print("%s: mox=%d vox=%d tune=%d NewState=%d\n", __FUNCTION__, mox,vox,tune,state);
   if (!can_transmit) { return; }
 
   if (state && TxInhibit) { return; }
 
   // if state==tune, this function is a no-op
-  if (tune != state) {
+  if (transmitter->tune != state) {
     vox_cancel();
 
     if (vox || mox) {
@@ -2415,7 +2420,7 @@ void radio_set_tune(int state) {
         break;
       }
 
-      tune = state;
+      transmitter->tune = state;
       radio_calc_drive_level();
       rxtx(state);
     } else {
@@ -2440,7 +2445,7 @@ void radio_set_tune(int state) {
       }
 
       tx_set_compressor(transmitter);
-      tune = state;
+      transmitter->tune = state;
       radio_calc_drive_level();
     }
   }
@@ -2451,12 +2456,12 @@ void radio_set_tune(int state) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-int radio_get_tune() {
-  return tune;
-}
-
 int radio_is_transmitting() {
-  return mox | vox | tune;
+  int ret = 0;
+
+  if (can_transmit) { ret = mox | vox | transmitter->tune; }
+
+  return ret;
 }
 
 double radio_get_drive() {
@@ -2493,7 +2498,7 @@ void radio_calc_drive_level() {
 
   if (!can_transmit) { return; }
 
-  if (tune && !transmitter->tune_use_drive) {
+  if (transmitter->tune && !transmitter->tune_use_drive) {
     level = calcLevel(transmitter->tune_drive);
   } else {
     level = calcLevel(transmitter->drive);

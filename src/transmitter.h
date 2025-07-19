@@ -84,6 +84,9 @@ typedef struct _transmitter {
   int out_of_band;
   guint out_of_band_timer_id;
 
+  int tune;
+  int swrtune;            // produce SWR-dependent side tone while TUNE-ing
+  double swrtune_volume;  // Volume of SWR-dependent side tone (1-127)
   int twotone;
   int puresignal;
   int feedback;

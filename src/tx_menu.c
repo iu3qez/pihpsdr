@@ -37,6 +37,7 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *input;
 static GtkWidget *tx_spin_low;
 static GtkWidget *tx_spin_high;
+static GtkWidget *swrtune_volume_spin;
 
 static GtkWidget *tx_container;
 static GtkWidget *cfc_container;
@@ -82,7 +83,9 @@ enum _tx_choices {
   TX_SWR_PROTECTION,
   TX_USE_RX_FILTER,
   TX_LOCAL_MIC,
-  TX_FM_EMP
+  TX_FM_EMP,
+  TX_SWRTUNE,
+  TX_SWRTUNE_VOLUME
 };
 
 enum _dexp_choices {
@@ -216,6 +219,10 @@ static void spinbtn_cb(GtkWidget *widget, gpointer data) {
         tx_set_framerate(transmitter);
       }
 
+      break;
+
+    case TX_SWRTUNE_VOLUME:
+      transmitter->swrtune_volume = v;
       break;
 
     case TX_COMP:
@@ -386,6 +393,11 @@ static void chkbtn_cb(GtkWidget *widget, gpointer data) {
 
       break;
 
+    case TX_SWRTUNE:
+      transmitter->swrtune = v;
+      gtk_widget_set_sensitive (swrtune_volume_spin, SET(v));
+      break;
+
     case TX_SWR_PROTECTION:
       transmitter->swr_protection = v;
 
@@ -548,6 +560,14 @@ void tx_menu(GtkWidget *parent) {
   gtk_container_add(GTK_CONTAINER(content), grid);
   int row = 0;
   int col = 0;
+  int have_swr = 0;
+  int have_mic = 0;
+
+  if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+    have_swr = 1;
+    have_mic = 1;
+  }
+
   btn = gtk_button_new_with_label("Close");
   gtk_widget_set_name(btn, "close_button");
   g_signal_connect (btn, "button-press-event", G_CALLBACK(close_cb), NULL);
@@ -629,7 +649,7 @@ void tx_menu(GtkWidget *parent) {
     g_signal_connect(input, "changed", G_CALLBACK(local_input_changed_cb), NULL);
   }
 
-  if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
+  if (have_mic) {
     row++;
     col = 0;
     label = gtk_label_new("Radio Mic");
@@ -729,6 +749,28 @@ void tx_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->tune_drive);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_TUNE_DRIVE));
+
+  if (have_swr) {
+    row++;
+    col = 0;
+    label = gtk_label_new("TuneSWR Vol");
+    gtk_widget_set_name(label, "boldlabel");
+    gtk_widget_set_halign(label, GTK_ALIGN_END);
+    gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
+    col++;
+    swrtune_volume_spin = gtk_spin_button_new_with_range(0.0, 0.5, 0.01);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(swrtune_volume_spin), transmitter->swrtune_volume);
+    gtk_grid_attach(GTK_GRID(tx_grid), swrtune_volume_spin, col, row, 1, 1);
+    g_signal_connect(swrtune_volume_spin, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_SWRTUNE_VOLUME));
+    gtk_widget_set_sensitive (swrtune_volume_spin, SET(transmitter->swrtune));
+    col++;
+    btn = gtk_check_button_new_with_label("SWR-dependend SideTone with TUNE");
+    gtk_widget_set_name(btn, "boldlabel");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->swrtune);
+    gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 3, 1);
+    g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_SWRTUNE));
+  }
+
   row++;
   col = 0;
   label = gtk_label_new("Panadapter High");
@@ -740,22 +782,26 @@ void tx_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->panadapter_high);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_PAN_HIGH));
-  col++;
-  btn = gtk_check_button_new_with_label("SWR Protection");
-  gtk_widget_set_name(btn, "boldlabel");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->swr_protection);
-  gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
-  g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_SWR_PROTECTION));
-  col++;
-  label = gtk_label_new("SWR alarm at");
-  gtk_widget_set_name(label, "boldlabel");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
-  col++;
-  btn = gtk_spin_button_new_with_range(1.0, 10.0, 0.1);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->swr_alarm);
-  gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
-  g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_SWR_ALARM));
+
+  if (have_swr) {
+    col++;
+    btn = gtk_check_button_new_with_label("SWR Protection");
+    gtk_widget_set_name(btn, "boldlabel");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->swr_protection);
+    gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
+    g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_SWR_PROTECTION));
+    col++;
+    label = gtk_label_new("SWR alarm at");
+    gtk_widget_set_name(label, "boldlabel");
+    gtk_widget_set_halign(label, GTK_ALIGN_END);
+    gtk_grid_attach(GTK_GRID(tx_grid), label, col, row, 1, 1);
+    col++;
+    btn = gtk_spin_button_new_with_range(1.0, 10.0, 0.1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->swr_alarm);
+    gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
+    g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_SWR_ALARM));
+  }
+
   row++;
   col = 0;
   label = gtk_label_new("Panadapter Low");

@@ -1879,7 +1879,7 @@ static void ozy_send_buffer() {
     if (radio_is_transmitting()) {
       output_buffer[C2] |= txband->OCtx << 1;
 
-      if (tune) {
+      if (transmitter->tune) {
         if (full_tune || memory_tune) {
           struct timeval te;
           gettimeofday(&te, NULL);
@@ -2143,7 +2143,7 @@ static void ozy_send_buffer() {
 
       if (filter_board == APOLLO) { output_buffer[C2] |= 0x2C; }
 
-      if ((filter_board == APOLLO) && tune) { output_buffer[C2] |= 0x10; }
+      if ((filter_board == APOLLO) && transmitter->tune) { output_buffer[C2] |= 0x10; }
 
       // Alex 6M low noise amplifier
       if (rxb == band6) { output_buffer[C3] = output_buffer[C3] | 0x40; }
@@ -2209,7 +2209,7 @@ static void ozy_send_buffer() {
 
         if (pa_enabled && !txband->disablePA) { output_buffer[C2] |= 0x08; }
 
-        if (tune) { output_buffer[C2] |= 0x10; }
+        if (transmitter->tune) { output_buffer[C2] |= 0x10; }
       }
 
       command = 4;
@@ -2376,7 +2376,7 @@ static void ozy_send_buffer() {
     case 7:
       output_buffer[C0] = 0x1E;
 
-      if ((txmode == modeCWU || txmode == modeCWL) && !tune
+      if ((txmode == modeCWU || txmode == modeCWL) && !transmitter->tune
           && !transmitter->twotone
           && cw_keyer_internal
           && !MIDI_cw_is_active
@@ -2714,7 +2714,7 @@ static void ozy_send_buffer() {
       //    However, if we are doing CAT CW, local CW or tuning/TwoTone,
       //    we must put the SDR into TX mode *here*.
       //
-      if (tune || CAT_cw_is_active
+      if (transmitter->tune || CAT_cw_is_active
           || MIDI_cw_is_active
           || !cw_keyer_internal
           || transmitter->twotone

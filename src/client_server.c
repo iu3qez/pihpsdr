@@ -459,7 +459,7 @@ void server_tx_audio(short sample) {
   if (txaudio_buffer_index >= AUDIO_DATA_SIZE) {
     int txmode = vfo_get_tx_mode();
 
-    if (radio_is_transmitting() && txmode != modeCWU && txmode != modeCWL && !tune && !transmitter->twotone) {
+    if (radio_is_transmitting() && txmode != modeCWU && txmode != modeCWL && !transmitter->tune && !transmitter->twotone) {
       //
       // The actual transmission of the mic audio samples only takes  place
       // if we *need* them (note VOX is handled locally)
@@ -4027,11 +4027,13 @@ static int remote_command(void *data) {
   break;
 
   case CMD_TOGGLE_TUNE: {
-    full_tune = from_short(header->s1);
-    memory_tune = from_short(header->s2);
-    radio_toggle_tune();
-    g_idle_add(ext_vfo_update, NULL);
-    send_tune(remoteclient.socket, tune);
+    if (can_transmit) {
+      full_tune = from_short(header->s1);
+      memory_tune = from_short(header->s2);
+      radio_toggle_tune();
+      g_idle_add(ext_vfo_update, NULL);
+      send_tune(remoteclient.socket, transmitter->tune);
+    }
   }
   break;
 
@@ -4061,11 +4063,13 @@ static int remote_command(void *data) {
   break;
 
   case CMD_TUNE: {
-    full_tune = from_short(header->s1);
-    memory_tune = from_short(header->s2);
-    radio_set_tune(header->b1);
-    g_idle_add(ext_vfo_update, NULL);
-    send_tune(remoteclient.socket, tune);
+    if (can_transmit) {
+      full_tune = from_short(header->s1);
+      memory_tune = from_short(header->s2);
+      radio_set_tune(header->b1);
+      g_idle_add(ext_vfo_update, NULL);
+      send_tune(remoteclient.socket, transmitter->tune);
+    }
   }
   break;
 

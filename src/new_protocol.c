@@ -745,7 +745,7 @@ static void new_protocol_high_priority() {
       // radio reports a PTT signal, since only then we can use
       // a foot-switch to extend the TX time in a rag-chew QSO
       //
-      if (tune || CAT_cw_is_active
+      if (transmitter->tune || CAT_cw_is_active
           || MIDI_cw_is_active
           || !cw_keyer_internal
           || transmitter->twotone
@@ -882,7 +882,7 @@ static void new_protocol_high_priority() {
   if (xmit) {
     high_priority_buffer_to_radio[1401] = txband->OCtx << 1;
 
-    if (tune) {
+    if (transmitter->tune) {
       if (full_tune || memory_tune) {
         struct timeval te;
         gettimeofday(&te, NULL);

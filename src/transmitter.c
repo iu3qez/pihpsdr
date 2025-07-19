@@ -367,6 +367,8 @@ void tx_save_state(const TRANSMITTER *tx) {
     SetPropF1("transmitter.%d.am_carrier_level",                    tx->id,    tx->am_carrier_level);
     SetPropI1("transmitter.%d.drive",                               tx->id,    tx->drive);
     SetPropF1("transmitter.%d.mic_gain",                            tx->id,    tx->mic_gain);
+    SetPropI1("transmitter.%d.swrtune",                             tx->id,    tx->swrtune);
+    SetPropF1("transmitter.%d.swrtune_volume",                      tx->id,    tx->swrtune_volume);
     SetPropI1("transmitter.%d.tune_drive",                          tx->id,    tx->tune_drive);
     SetPropI1("transmitter.%d.tune_use_drive",                      tx->id,    tx->tune_use_drive);
     SetPropI1("transmitter.%d.swr_protection",                      tx->id,    tx->swr_protection);
@@ -452,6 +454,8 @@ void tx_restore_state(TRANSMITTER *tx) {
     GetPropF1("transmitter.%d.am_carrier_level",                    tx->id,    tx->am_carrier_level);
     GetPropI1("transmitter.%d.drive",                               tx->id,    tx->drive);
     GetPropF1("transmitter.%d.mic_gain",                            tx->id,    tx->mic_gain);
+    GetPropI1("transmitter.%d.swrtune",                             tx->id,    tx->swrtune);
+    GetPropF1("transmitter.%d.swrtune_volume",                      tx->id,    tx->swrtune_volume);
     GetPropI1("transmitter.%d.tune_drive",                          tx->id,    tx->tune_drive);
     GetPropI1("transmitter.%d.tune_use_drive",                      tx->id,    tx->tune_use_drive);
     GetPropI1("transmitter.%d.swr_protection",                      tx->id,    tx->swr_protection);
@@ -703,7 +707,7 @@ static gboolean tx_update_display(gpointer data) {
 
     if (tx->swr >= tx->swr_alarm) {
       if (pre_high_swr) {
-        if (tx->swr_protection && !radio_get_tune()) {
+        if (tx->swr_protection && !tx->tune) {
           set_drive(0.0);
         }
 
@@ -815,7 +819,6 @@ void tx_create_dialog(TRANSMITTER *tx) {
   g_signal_connect (tx->dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (tx->dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(tx->dialog));
-  //t_print("create_dialog: add tx->panel\n");
   gtk_widget_set_size_request (tx->panel, tx_dialog_width, tx_dialog_height);
   gtk_container_add(GTK_CONTAINER(content), tx->panel);
   //
@@ -972,6 +975,9 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->filter_high = 2850;
   tx->use_rx_filter = FALSE;
   tx->out_of_band = 0;
+  tx->tune = 0;
+  tx->swrtune = 0;
+  tx->swrtune_volume = 0.1;
   tx->twotone = 0;
   tx->puresignal = 0;
   //
@@ -1274,7 +1280,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
   // the two "if (cwmode)" clauses give the same result.
   // cwmode only valid in the old protocol, in the new protocol we use a different mechanism
   int txmode = vfo_get_tx_mode();
-  cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone;
+  cwmode = (txmode == modeCWL || txmode == modeCWU) && !tx->tune && !tx->twotone;
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
@@ -1359,7 +1365,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
     //
     // Note that mic sample amplification has to be done after vox_update()
     //
-    if (txmode == modeFMN && !tune) {
+    if (txmode == modeFMN && !tx->tune) {
       for (int i = 0; i < 2 * tx->samples; i += 2) {
         tx->mic_input_buffer[i] *= 5.6234;  // 20*Log(5.6234) is 15
       }
@@ -1612,7 +1618,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, short next_mic_sample) {
   // to prevent firing VOX
   // (perhaps not really necessary, but can do no harm)
   //
-  if (tune || txmode == modeCWL || txmode == modeCWU) {
+  if (tx->tune || txmode == modeCWL || txmode == modeCWU) {
     mic_sample_double = 0.0;
   }
 
@@ -1630,10 +1636,69 @@ void tx_add_mic_sample(TRANSMITTER *tx, short next_mic_sample) {
     cw_delay_time++;
   }
 
-  //
-  // shape CW pulses when doing CW and transmitting, else nullify them
-  //
-  if ((txmode == modeCWL || txmode == modeCWU) && radio_is_transmitting()) {
+  int xmit = radio_is_transmitting();
+  int localaudio = active_receiver->local_audio;
+
+  if (xmit && tx->tune && tx->swrtune && localaudio && g_mutex_trylock(&tx->cw_ramp_mutex)) {
+    //
+    // produce a string of tones whose pitch and speed indicates the SWR
+    //
+    static int c1 = 0;
+    float swrsample;
+    double val;
+
+    int swrfreq = 500 + (int) (tx->swr*tx->swr*100.0);
+
+    if (swrfreq > 5000) {
+      swrfreq = 5000;
+    }
+
+    //
+    // The following implements variable "dash/dot" lengths with increasing SWR
+    // (the pause is always 50 msec)
+    //
+    //    SWR       len(msec)
+    //    1.2     50
+    //    1.3     75
+    //    1.5    125
+    //    2.0    250
+    //    3.0    500
+    //
+    int inc = 30;
+
+    if (tx->swr >= 1.2) { inc = (int) (6.0 / (tx->swr - 1.0)); }
+
+    c1 += inc;
+    swrsample = tx->swrtune_volume * sine_generator(&p1local, &p2local, swrfreq);
+
+    if (c1 < 72000) {
+      // "keydown"
+      if (tx->cw_ramp_audio_ptr < tx->cw_ramp_audio_len) {
+        tx->cw_ramp_audio_ptr++;
+      }
+
+      val = tx->cw_ramp_audio[tx->cw_ramp_audio_ptr];
+    } else {
+      // "keydown"
+      static int c2 = 0;
+      c2++;
+      if (tx->cw_ramp_audio_ptr > 0) {
+        tx->cw_ramp_audio_ptr--;
+      }
+
+      val = tx->cw_ramp_audio[tx->cw_ramp_audio_ptr];
+
+      if (c2 >= 2400) { c1 = c2 = 0; }
+
+    }
+
+    swrsample *= val;
+    g_mutex_unlock(&tx->cw_ramp_mutex);
+    cw_audio_write(active_receiver, swrsample);
+  } else if ((txmode == modeCWL || txmode == modeCWU) && xmit) {
+    //
+    // shape CW pulses when doing CW and transmitting, else nullify them
+    //
     float cwsample;
 
     //
@@ -1829,7 +1894,7 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
   if (rx_feedback->samples >= rx_feedback->buffer_size) {
     if (radio_is_transmitting()) {
       int txmode = vfo_get_tx_mode();
-      int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tune && !tx->twotone;
+      int cwmode = (txmode == modeCWL || txmode == modeCWU) && !tx->tune && !tx->twotone;
 #if 0
       //
       // Special code to document the amplitude of the TX IQ samples.

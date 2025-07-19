@@ -595,11 +595,12 @@ int audio_write (RECEIVER *rx, float left, float right) {
   int txmode = vfo_get_tx_mode();
   float *buffer = rx->local_audio_buffer;
 
-  if (rx == active_receiver && radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
-    //
-    // If a CW side tone may occur, quickly return
-    //
-    return 0;
+  //
+  // If a CW/TUNE side tone may occur, quickly return
+  //
+  if (rx == active_receiver && radio_is_transmitting()) {
+    if (txmode == modeCWU || txmode == modeCWL) { return 0; }
+    if (can_transmit && transmitter->tune && transmitter->swrtune) { return 0; }
   }
 
   g_mutex_lock(&rx->local_audio_mutex);

@@ -58,7 +58,9 @@ void vox_update(double lvl) {
   //
   if (remoteclient.running) { return; }
 
-  if (vox_enabled && !mox && !tune && !TxInhibit) {
+  if (!can_transmit) { return; }
+
+  if (vox_enabled && !mox && !transmitter->tune && !TxInhibit) {
     if (peak > vox_threshold) {
       // we use the value of vox_timeout to determine whether
       // the time-out is "hanging". We cannot use the value of vox

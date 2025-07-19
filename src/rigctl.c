@@ -979,7 +979,7 @@ static gboolean andromeda_handler(gpointer data) {
         break;
 
       case 3:
-        new = tune;
+        new = can_transmit ? transmitter->tune : 0;
         break;
 
       case 4:
@@ -1034,7 +1034,7 @@ static gboolean andromeda_handler(gpointer data) {
         break;
 
       case 2:
-        new = tune;
+        new = can_transmit ? transmitter->tune : 0;
         break;
 
       case 3:
@@ -2997,7 +2997,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
       //DO NOT DOCUMENT, THIS WILL BE REMOVED
       if (command[4] == ';') {
-        snprintf(reply,  sizeof(reply), "ZZTU%d;", tune);
+        snprintf(reply,  sizeof(reply), "ZZTU%d;", can_transmit ? transmitter->tune : 0);
         send_resp(client->fd, reply) ;
       } else if (command[5] == ';') {
         radio_set_tune(atoi(&command[4]));
@@ -3255,7 +3255,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           status = status | 0x40;
         }
 
-        if (tune) {
+        if (can_transmit && transmitter->tune) {
           status = status | 0x80;
         }
 

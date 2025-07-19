@@ -499,15 +499,11 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   int txmode = vfo_get_tx_mode();
 
   //
-  // We have to stop the stream here if a CW side tone may occur.
-  // This might cause underflows, but we cannot use audio_write
-  // and cw_audio_write simultaneously on the same device.
-  // Instead, the side tone version will take over.
-  // If *not* doing CW, the stream continues because we might wish
-  // to listen to this rx while transmitting.
+  // If a CW/TUNE side tone may occur, quickly return
   //
-  if (rx == active_receiver && radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
-    return 0;
+  if (rx == active_receiver && radio_is_transmitting()) {
+    if (txmode == modeCWU || txmode == modeCWL) { return 0; }
+    if (can_transmit && transmitter->tune && transmitter->swrtune) { return 0; }
   }
 
   // lock AFTER checking the "quick return" condition but BEFORE checking the pointers
