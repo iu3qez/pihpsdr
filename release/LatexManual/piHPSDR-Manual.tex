@@ -2435,7 +2435,25 @@ Note that for RX-only radios, only the \bltt{CW} menu will be shown here
 because there one can set the pitch of the CW side tone, which also affects
 the RX ,,BFO frequency''.
 
+
 \section{The \texttt{TX} Menu}
+
+The \bltt{TX} menu can be opened from the main menu, or just by a secondary mouse click
+into the TX pan-adapter (while transmitting). The menu is shown in Fig. \ref{fig:TXMenu}.
+This menu has five sub-menus, called the \rett{TX Settings} for general transmitter settings,
+the \rett{CFC settings} for controlling the continuous frequency compressor (CFC),  the
+\rett{DExp Settings} for controlling the downward expander (DEXP),  the \rett{Peak Lables}
+settings for controlling if and how peaks are labelled with their dBm values,
+and finally the \rett{TUNE and SWR} settings with options for TUNE-ing and SWR control.
+With the radio buttons
+in the top row of the menu you can switch between the sub-menus. When you open the TX
+menu for the first time after starting \pH, the TX settings are shown. Subsequently opening
+the TX menu always shows the sub-menu that was on display when the TX  menu was closed the last
+time.
+
+\subsection{TX Menu: TX Settings}
+
+
 \label{sec:txmenu}
 \begin{figure}[ht!]
 \center
@@ -2443,19 +2461,6 @@ the RX ,,BFO frequency''.
 \caption{The \bltt{TX} menu with the TX settings.}
 \label{fig:TXMenu}
 \end{figure}
-
-The \bltt{TX} menu can be opened from the main menu, or just by a secondary mouse click
-into the TX pan-adapter (while transmitting). The menu is shown in Fig. \ref{fig:TXMenu}.
-This menu has three sub-menus, called the \rett{TX Settings} for general transmitter settings,
-the \rett{CFC settings} for controlling the continuous frequency compressor (CFC),  the
-\rett{DwdExp Settings} for controlling the downward expander (DEXP), and the \rett{Peak Lables}
-settings for controlling if and how peaks are labelled with their dBm values. With the radio buttons
-in the top row of the menu you can switch between the four sub-menus. When you open the TX
-menu for the first time after starting \pH, the TX settings are shown. Subsequently opening
-the TX menu always shows the sub-menu that was on display when the TX  menu was closed the last
-time.
-
-\subsection{TX Menu: TX Settings}
 
 \rett{Local Microphone}. If this box is checked, the TX audio samples come from a sound card
 attached to the host computer, or from a virtual audio cable. The sound device can be
@@ -2518,28 +2523,6 @@ and disabled for digi modes (DIGL/DIGU), and when switching modes, the compresso
 settings for the new mode are automatically restored. The compressor can be used (although
 this might not be recommended together with the CFC).
 
-\rett{Tune use Drive} If this box is checked, TUNE-ing will be done with the power that corresponds to the
-current position of the drive slider, and the tune drive level is ignored.
-
-\rett{Tune Drive Level} The value that can be adjusted with this spin box is the virtual position of the
-drive slider while TUNE-ing. This value is ignored if the \rett{Tune use Drive} box is checked.
-
-\rett{Panadapter High:} This spin button sets the upper edge (in dBm) of the TX pan-adapter.
-
-\rett{Panadapter Low:} This spin button sets the lower edge (in dBm) of the TX pan-adapter.
-
-\rett{Panadapter Step:} This spin button determines how many horizontal lines are drawn on the
-TX pan-adapter. If set to 10, for example, there will be a horizontal line for every multiple
-of 10 dBm.
-
-\rett{SWR protection} If this box is checked, a very simple SWR protection is enabled. If the SWR exceeds
-the threshold value (see next point), the drive slider is set to zero. The SWR protection is disabled
-while TUNE-ing.
-
-\rett{SWR alarm at} The spin button to the right determines the SWR threshold. If the SWR is beyond the
-threshold, the SWR reported in the meter turns red. If SWR protection is enabled, the drive slider is set to
-zero if the SWR exceeds the threshold.
-
 \rett{CTCSS Enable} (FM only!) This checkbox enables/disables CTCSS (continuous tone coded squelch system).
 If enabled, a low-frequency
 tone is transmitted together with the normal TX audio. This can be used to trigger repeaters, or any other
@@ -2571,19 +2554,26 @@ carrier and the
 signal is a DSB signal. A reasonable value is 0.5 which leads to 100\% modulation. Values larger than
 0.5 have less than 100\% modulation. This means too much power goes into the carrier.
 
-\rett{Frames Per Second:} This spin button determines how many frames per second are drawn for the TX
-pan-adapter. The default value, 10, is a good choice.
+\rett{Max Digi Drv} This spin button restricts the range of the drive slider from 0 to the
+chosen value
+for the DIGU and DIGL modes. If the value is 100, this has no effect. The primary use of this menu point is
+PA protection,
+since many digital modes (unlike SSB voice) are constantly transmitting at full power.
+
+\rett{Panadapter High:} This spin button sets the upper edge (in dBm) of the TX pan-adapter.
+
+\rett{Panadapter Low:} This spin button sets the lower edge (in dBm) of the TX pan-adapter.
+
+\rett{Panadapter Step:} This spin button determines how many horizontal lines are drawn on the
+TX pan-adapter. If set to 10, for example, there will be a horizontal line for every multiple
+of 10 dBm.
 
 \rett{Fill Panadapter} This is used to enable/disable the ,,Filling'' option
 for the TX  spectrum scope (see chapter \ref{sec:FillingGradient}). No ,,gradient''
 option is available for the TX scope.
 
-
-\rett{Max Drive for digi} This spin button restricts the range of the drive slider from 0 to the
-chosen value
-for the DIGU and DIGL modes. If the value is 100, this has no effect. The primary use of this menu point is
-PA protection,
-since many digital modes (unlike SSB voice) are constantly transmitting at full power.
+\rett{Frames Per Second:} This spin button determines how many frames per second are drawn for the TX
+pan-adapter. The default value, 10, is a good choice.
 
 \subsection{TX Menu: CFC Settings}
 \label{sec:cfc}
@@ -2631,7 +2621,8 @@ corner frequency while linear interpolation is used between corner frequencies.
 \label{fig:DEXPmenu}
 \end{figure}
 
-In the sub-menu for the downward expander, you can control the settings for DEXP. DEXP can be viewed
+In the sub-menu for the downward expander, you can control the settings for the downward expander
+(DEXP). This can be viewed
 as a configurable noise gate that applies to the TX audio input. Its main use is to suppress low noise
 (e.g. from fans) that are taken up  by the microphone in speech pauses. The downward expander damps
 such noise as long it is below a trigger level. Once the ,,noise'' exceeds the trigger level (that is,
@@ -2677,8 +2668,6 @@ new triggering audio arrives within that time, the gate is closed and the noise 
 channel filter (if it is enabled). The defaults given here (1000--2000 Hz) are well suited  for distinguishing
 human voice from humming noise coming from fans etc.
 
-
-
 \subsection{TX Menu: Peak Labels}
 
 The ``Peak Labels'' sub-menu allows one to control if and how labels
@@ -2711,7 +2700,49 @@ percentile is 50, then the noise floor is the level of that pixel that is in the
 if all pixels are sorted by their dBm value (a safety margin of 3 dBm is added).
 If the \rett{No Labels Below Noise Floor} box is ticked
 peaks below this value will not be labelled.
+
+\subsection{TX Menu: TUNE and SWR}
+This sub-menu allows to specify the TX drive level while TUNE-ing. For HPSDR radios which report forward
+and reverse power (and thus the SWR), some SWR-dependent controls are added as well.
+
+\begin{figure}[ht]
+\center
+\includegraphics[scale=0.45]{TX_TUNE.png}
+\caption{The TX menu with the peak label settings}
+\label{fig:TXTUNEMenu}
+\end{figure}
+
+\rett{Tune use Drive} If this box is checked, TUNE-ing will be done with the power that corresponds to the
+current position of the drive slider, and the tune drive level is ignored.
+
+\rett{Tune Drive Level} The value that can be adjusted with this spin box is the virtual position of the
+drive slider while TUNE-ing. This value is ignored (and the spin-button made inactive)
+if the \rett{Tune use Drive} box is checked.
+
+\rett{SWR protection} If this box is checked, a very simple SWR protection is enabled. If the SWR exceeds
+the threshold value (see next point), the drive slider is set to zero. The SWR protection is disabled
+while TUNE-ing.
+
+\rett{SWR alarm at} The spin button to the right determines the SWR threshold. If the SWR is beyond the
+threshold, the SWR reported in the meter turns red. If SWR protection is enabled, the drive slider is set to
+zero if the SWR exceeds the threshold.
+
+\rett{SWR-dependent Sidetone with TUNE} If this box is checked, there will be a side tone while TUNE-ing.
+This side tone is similar to a string of dots or dashes, separated by pauses which are 50 msec long.
+The SWR is encoded both in the length and the frequency of the "dashes".  The higher 
+the SWR, the higher (with a limit of 5000 Hz) the pitch, an ideal 1:1 SWR results in a minimum pitch
+of 500 Hz. Likewise, the "dot/dash" length is 50 msec for this ideal SWR and becomes longer as the SWR
+gets larger. So for ideal SWR, the side tones sounds like a string of CW dots at 24 wpm at a pitch of
+500 Hz. This ``dot length'' increases to 125 msec (with a pitch of 725 Hz) if the SWR is 1:1.5,
+and to 500 msec (with a pitch of 1400 Hz) for an SWR of 1:3. The idea of
+this feature is that one can operate a manual antenna tuner without looking at the screen.
+
+\rett{TUNE Sidetone Volume} With this spin-button, one can adjust the volume of the SWR-dependent TUNE side tone
+(allowed range: $0 \ldots 0.5$). \textbf{Attention!} Always start with small values to protect your ears.
+This spin-box is inactive is the \rett{SWR-dependent Sidetone with TUNE} is not active.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
 \section{The \texttt{PA} Menu}
 
 In the \bltt{PA} menu, you can adjust the output level of your HPSDR board
@@ -2995,6 +3026,14 @@ itself as a HERMES board but needs a quite large SetPk value of about 0.7800. Bu
 cases are easily identified when performing a two-tone test by a large difference
 between the values in the SetPk field and the GetPk value which is obtained from analysing
 the TX DAC data.
+
+\textbf{Attention!} Specifying a wrong value in the \rett{SetPk} field will effectively
+disable \texttt{PURESIGNAL}, and since this value is stored in the props file, this
+adverse effect also shows up in the future, that is, until either the props file is deleted
+or the correct value is again entered in the \rett{SetPk} field. This \textit{caveat} also
+applies if you upgrade your radio firmware from protocol-1 to protocol-2, since then your props
+file still contains the correct protocol-1 value (0.4067) and you have
+to manually modify the \rett{SetPk} value (in this case, to 0.2899).
 
 \begin{figure}[t!]
 \center
@@ -5521,7 +5560,7 @@ language for the text to be spoken.
 
 The whole text-to-speech feature, if it is not needed, can be suppressed by compiling
 \pH \textit{without} the \texttt{TTS} compile-time option (see Sec. \ref{sec:compiletime}).
-Note that even without \texttt{TTS}, 
+Note that even without \texttt{TTS},
 the function keys F3 (start first radio) and F4 (restart
 discovery process) still work on the discovery screen, but without producing any speech.
 
@@ -7639,7 +7678,7 @@ avoided if  there is no need for it, and it needs the \texttt{libcurl}  library 
 \item[\rett{TTS}] {(default: \texttt{ON})
 Activates the text-to-speech capability, meant to improve accessibility for the blind
 (see section \ref{sec:accessibility}). With this option, hitting e.g. function key F1
-reads the current frequency aloud. 
+reads the current frequency aloud.
 }
 
 \item[\rett{AUDIO}] {(default: empty)
