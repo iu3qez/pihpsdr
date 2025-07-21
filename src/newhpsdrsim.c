@@ -1626,12 +1626,14 @@ void *send_highprio_thread(void *data) {
       buffer[7] = txdrive;  // Exciter Power
 
       if (alex0_enable > 0) {
+        // ALEX Fwd power
         rc = (int) ((4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
         buffer[14] = (rc >> 8) & 0xFF;
-        buffer[15] = (rc     ) & 0xFF;  // Alex0 forward power
-        rc = (int) ((4095.0 / c1) * sqrt(0.05 * maxpwr * txlevel * c2));
+        buffer[15] = (rc     ) & 0xFF;
+        // ALEX Rev power, make it TX dridve dependent to get a handle to vary the SWR
+        rc = (int) (txdrv_dbl * (4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
         buffer[22] = (rc >> 8) & 0xFF;
-        buffer[23] = (rc     ) & 0xFF;  // Alex0 reverse power
+        buffer[23] = (rc     ) & 0xFF;
       }
     }
 

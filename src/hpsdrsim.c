@@ -278,7 +278,7 @@ int main(int argc, char *argv[]) {
   const int MAC4 = 0xA2;
   int MAC5 = 0x10;
   const int MAC6 = 0xDD;  // P1
-  const int MAC6N = 0xDD; // P2
+  const int MAC6N = 0xEE; // P2
   OLDDEVICE = ODEV_ORION2;
   NEWDEVICE = NDEV_ORION2;
 
@@ -1699,8 +1699,8 @@ void *handler_ep6(void *arg) {
         break;
 
       case 16:
-        // AIN2: Reverse power; 5 percent of forward
-        j = (int) (0.05 * (4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
+        // AIN2: Reverse power, depends on TX drive to get a handle to vary the SWR
+        j = (int) (txdrv_dbl * (4095.0 / c1) * sqrt(maxpwr * txlevel * c2));
         *(pointer + 4) = (j >> 8) & 0xFF;
         *(pointer + 5) = (j     ) & 0xFF;
         // AIN3: ADC0 (PA current for HL2, PA voltage for others)
