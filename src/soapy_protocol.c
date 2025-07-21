@@ -441,7 +441,7 @@ void soapy_protocol_start_transmitter(const TRANSMITTER *tx) {
   ASSERT_SERVER();
   int rc;
   double rate = SoapySDRDevice_getSampleRate(soapy_device, SOAPY_SDR_TX, tx->dac);
-  t_print("%s: rate=%f\n", rate);
+  t_print("%s: rate=%f\n", __FUNCTION__, rate);
   rc = SoapySDRDevice_activateStream(soapy_device, tx_stream, 0, 0LL, 0);
 
   if (rc != 0) {
