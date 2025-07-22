@@ -99,7 +99,7 @@ static gpointer tci_listener(gpointer data);
 // if TCI is enabled there.
 //
 void launch_tci () {
-  t_print( "---- LAUNCHING TCI SERVER ----\n");
+  t_print( "%s: LAUNCHING TCI SERVER \n", __FUNCTION__);
   tci_running = 1;
   //
   // Start TCI server
@@ -248,12 +248,12 @@ static int tci_send_frame(void *data) {
   return G_SOURCE_REMOVE;
 }
 
-static void tci_send_text(CLIENT *client, char *msg) {
+static void tci_send_text(CLIENT *client, const char *msg) {
   if (!client->running) {
     return;
   }
 
-  if (rigctl_debug) { t_print("TCI%d response: %s\n", client->seq, msg); }
+  if (rigctl_debug) { t_print("%s: TCI%d response: %s\n", __FUNCTION__, client->seq, msg); }
 
   RESPONSE *resp = g_new(RESPONSE, 1);
   resp->client = client;
@@ -460,7 +460,7 @@ static void tci_send_rx(CLIENT *client, int v) {
 static void tci_send_close(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
 
-  if (rigctl_debug) { t_print("TCI%d CLOSE\n", client->seq); }
+  if (rigctl_debug) { t_print("%s: TCI%d CLOSE\n", __FUNCTION__, client->seq); }
 
   resp->client = client;
   resp->type   = opCLOSE;
@@ -471,7 +471,7 @@ static void tci_send_close(CLIENT *client) {
 static void tci_send_ping(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
 
-  if (rigctl_debug) { t_print("TCI%d PING\n", client->seq); }
+  if (rigctl_debug) { t_print("%s: TCI%d PING\n", __FUNCTION__, client->seq); }
 
   resp->client = client;
   resp->type   = opPING;
@@ -482,7 +482,7 @@ static void tci_send_ping(CLIENT *client) {
 static void tci_send_pong(CLIENT *client) {
   RESPONSE *resp = g_new(RESPONSE, 1);
 
-  if (rigctl_debug) { t_print("TCI%d PONG\n", client->seq); }
+  if (rigctl_debug) { t_print("%s: TCI%d PONG\n", __FUNCTION__, client->seq); }
 
   resp->client = client;
   resp->type   = opPONG;
@@ -892,7 +892,7 @@ static gpointer tci_listener(gpointer data) {
       case opTEXT:
 
         if (rigctl_debug) {
-          t_print("TCI%d command rcvd=%s\n", client->seq, msg);
+          t_print("%s: TCI%d command rcvd=%s\n", __FUNCTION__, client->seq, msg);
         }
 
         //
@@ -958,13 +958,13 @@ static gpointer tci_listener(gpointer data) {
         break;
 
       case opPING:
-        if (rigctl_debug) { t_print("TCI%d PING rcvd\n", client->seq); }
+        if (rigctl_debug) { t_print("%s: TCI%d PING rcvd\n", __FUNCTION__, client->seq); }
 
         tci_send_pong(client);
         break;
 
       case opCLOSE:
-        if (rigctl_debug) { t_print("TCI%d CLOSE rcvd\n", client->seq); }
+        if (rigctl_debug) { t_print("%s: TCI%d CLOSE rcvd\n", __FUNCTION__, client->seq); }
 
         client->running = 0;
         break;

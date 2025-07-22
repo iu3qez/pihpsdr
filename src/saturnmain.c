@@ -395,7 +395,7 @@ void saturn_discovery() {
     }
 
     if (incompatible) {
-      t_print("Incompatible Saturn FPGA firmware version (%d,%d), need (%d...%d, %d...%d) \n",
+      t_print("Incompatible Saturn FPGA firmware version (%ud,%ud), need (%d...%d, %d...%d) \n",
               MajorVersion,
               MinorVersion,
               FIRMWARE_MIN_MAJOR,

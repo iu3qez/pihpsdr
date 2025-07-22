@@ -366,7 +366,7 @@ void ant_menu(GtkWidget *parent) {
   }
 
   if (device == SOAPYSDR_USB_DEVICE) {
-    t_print("rx_antennas=%ld\n", radio->info.soapy.rx_antennas);
+    t_print("%s: rx_antennas=%d\n", __FUNCTION__, radio->info.soapy.rx_antennas);
 
     if (radio->info.soapy.rx_antennas > 0) {
       GtkWidget *antenna_label = gtk_label_new("RX Antenna:");
@@ -384,7 +384,7 @@ void ant_menu(GtkWidget *parent) {
     }
 
     if (can_transmit) {
-      t_print("tx_antennas=%ld\n", radio->info.soapy.tx_antennas);
+      t_print("%s: tx_antennas=%d\n", __FUNCTION__, radio->info.soapy.tx_antennas);
 
       if (radio->info.soapy.tx_antennas > 0) {
         GtkWidget *antenna_label = gtk_label_new("TX Antenna:");

@@ -17,10 +17,6 @@
 *
 */
 
-//
-// This code uses libcurl, but not avahi
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -43,10 +39,9 @@
 
 // As we only run in the GTK+ main event loop, which is single-threaded and
 // non-preemptive, we shouldn't need any additional synchronisation mechanisms.
+
 static bool curl_initialised = FALSE;
 extern void status_text(const char *);
-
-#define ERROR_PREFIX "stemlab_discovery: "
 
 static size_t app_list_cb(void *buffer, size_t size, size_t nmemb, void *data);
 
@@ -59,7 +54,6 @@ static size_t get_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
   // fancy and will not show the name of the apps in the initial HEAD
   // request.
   //
-  //t_print("WEB-DEBUG:HEAD: %s\n", buffer);
   int *software_version = (int*) data;
   const gchar *pavel_rx = "\"sdr_receiver_hpsdr\"";
 
@@ -87,7 +81,6 @@ static size_t app_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
   // are not split across two buffers.
   // This is for STEMlab web servers.
   //
-  //t_print("WEB-DEBUG:APPLIST: %s\n", buffer);
   int *software_version = (int*) data;
   const gchar *pavel_rx_json = "\"sdr_receiver_hpsdr\":";
 
@@ -124,7 +117,6 @@ static size_t app_list_cb(void *buffer, size_t size, size_t nmemb, void *data) {
 //
 // cppcheck-suppress constParameterCallback
 static size_t alpine_start_callback(void *buffer, size_t size, size_t nmemb, void *data) {
-  //t_print("WEB-DEBUG:ALPINE-START: %s\n", buffer);
   return size * nmemb;
 }
 
@@ -134,9 +126,8 @@ static size_t alpine_start_callback(void *buffer, size_t size, size_t nmemb, voi
 //
 // cppcheck-suppress constParameterCallback
 static size_t app_start_callback(void *buffer, size_t size, size_t nmemb, void *data) {
-  //t_print("WEB-DEBUG:STEMLAB-START: %s\n", buffer);
   if (strncmp(buffer, "{\"status\":\"OK\"}", size * nmemb) != 0) {
-    t_print( "stemlab_start: Receiver error from STEMlab\n");
+    t_print( "%s: Receiver error from STEMlab\n", __FUNCTION__);
     return 0;
   }
 
@@ -146,7 +137,7 @@ static size_t app_start_callback(void *buffer, size_t size, size_t nmemb, void *
 //
 // Starting an app on the Alpine Linux version of RedPitaya simply works
 // by accessing the corresponding directory. We could use a no-op instead of
-// the WRITEFUNCTION, but this way we can activate debut output in
+// the WRITEFUNCTION, but this way we can activate debug output in
 // alpine_start_cb.
 //
 int alpine_start_app(const char * const app_id) {
@@ -158,13 +149,13 @@ int alpine_start_app(const char * const app_id) {
   CURLcode curl_error = CURLE_OK;
 
   if (curl_handle == NULL) {
-    t_print( "alpine_start: Failed to create cURL handle\n");
+    t_print( "%s: Failed to create cURL handle\n", __FUNCTION__);
     return -1;
   }
 
 #define check_curl(description) do { \
   if (curl_error != CURLE_OK) { \
-    t_print( "ALPINE_start: " description ": %s\n", \
+    t_print( "%s: " description ": %s\n", __FUNCTION__, \
         curl_easy_strerror(curl_error)); \
      return -1; \
   } \
@@ -208,13 +199,13 @@ int stemlab_start_app(const char * const app_id) {
   CURLcode curl_error = CURLE_OK;
 
   if (curl_handle == NULL) {
-    t_print( "stemlab_start: Failed to create cURL handle\n");
+    t_print( "%s: Failed to create cURL handle\n", __FUNCTION__);
     return -1;
   }
 
 #define check_curl(description) do { \
   if (curl_error != CURLE_OK) { \
-    t_print( "STEMLAB_start: " description ": %s\n", \
+    t_print( "%s: " description ": %s\n", __FUNCTION__, \
         curl_easy_strerror(curl_error)); \
      return -1; \
   } \
@@ -265,10 +256,6 @@ void stemlab_cleanup() {
 // assuming is has the (fixed) ip address which we can now set
 // in the discovery menu and which is saved to a local file.
 //
-// So, on MacOS, just configure your STEMLAB/HAMLAB to this
-// fixed IP address and you need not open a browser to start
-// SDR *before* you can use piHPSDR.
-//
 // After starting the app in the main discover menu, we
 // have to re-discover to get full info and start the radio.
 //
@@ -280,12 +267,11 @@ void stemlab_discovery() {
   int app_list;
   struct sockaddr_in ip_address;
   struct sockaddr_in netmask;
-  t_print("Stripped-down STEMLAB/HAMLAB discovery...\n");
-  t_print("STEMLAB: using inet addr %s\n", ipaddr_radio);
+  t_print("%s: using inet addr %s\n", __FUNCTION__, ipaddr_radio);
   ip_address.sin_family = AF_INET;
 
   if (inet_aton(ipaddr_radio, &ip_address.sin_addr) == 0) {
-    t_print("StemlabDiscovery: TCP %s is invalid!\n", ipaddr_radio);
+    t_print("%s: TCP %s is invalid!\n", __FUNCTION__, ipaddr_radio);
     return;
   }
 
@@ -298,7 +284,7 @@ void stemlab_discovery() {
   curl_handle = curl_easy_init();
 
   if (curl_handle == NULL) {
-    t_print( "stemlab_start: Failed to create cURL handle\n");
+    t_print( "%s: Failed to create cURL handle\n", __FUNCTION__);
     return;
   }
 
@@ -314,11 +300,11 @@ void stemlab_discovery() {
   if (curl_error ==  CURLE_OPERATION_TIMEDOUT) {
     snprintf(txt, sizeof(txt), "No response from web server at %s", ipaddr_radio);
     status_text(txt);
-    t_print("%s\n", txt);
+    t_print("%s: %s\n", __FUNCTION__, txt);
   }
 
   if (curl_error != CURLE_OK) {
-    t_print( "STEMLAB ping error: %s\n", curl_easy_strerror(curl_error));
+    t_print( "%s: ping error: %s\n", __FUNCTION__, curl_easy_strerror(curl_error));
     return;
   }
 
@@ -329,7 +315,7 @@ void stemlab_discovery() {
     curl_handle = curl_easy_init();
 
     if (curl_handle == NULL) {
-      t_print( "stemlab_start: Failed to create cURL handle\n");
+      t_print( "%s: Failed to create cURL handle\n", __FUNCTION__);
       return;
     }
 
@@ -343,23 +329,23 @@ void stemlab_discovery() {
 
     if (curl_error == CURLE_OPERATION_TIMEDOUT) {
       status_text("No Response from RedPitaya in 20 secs");
-      t_print("60-sec TimeOut met when trying to get list of HPSDR apps from RedPitaya\n");
+      t_print("%s: TimeOut met when trying to get list of HPSDR apps from RedPitaya\n", __FUNCTION__);
     }
 
     if (curl_error != CURLE_OK) {
-      t_print( "STEMLAB app-list error: %s\n", curl_easy_strerror(curl_error));
+      t_print( "%s: app-list error: %s\n", __FUNCTION__, curl_easy_strerror(curl_error));
       return;
     }
   }
 
   if (app_list == 0) {
-    t_print( "Could contact web server but no SDR apps found.\n");
+    t_print( "%s: Could contact web server but no SDR apps found.\n", __FUNCTION__);
     return;
   }
 
   //
-  // Constructe "device" descripter. Hi-Jack the software version to
-  // encode which apps are present.
+  // Constructe "device" descripter. Hi-Jack the software version field to
+  // encode which RedPitaya apps are present.
   // What is needed in the interface data is only info.network.address.sin_addr,
   // but the address and netmask of the interface must be compatible with this
   // address to avoid an error condition upstream. That means

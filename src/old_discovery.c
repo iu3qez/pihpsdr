@@ -74,7 +74,7 @@ static void discover(struct ifaddrs* iface, int discflag) {
     // Send METIS discovery packet to broadcast address on interface iface
     //
     snprintf(interface_name, sizeof(interface_name), "%s", iface->ifa_name);
-    t_print("discover: looking for HPSDR devices on %s\n", interface_name);
+    t_print("%s: looking for HPSDR devices on %s\n", __FUNCTION__, interface_name);
     // send a broadcast to locate hpsdr boards on the network
     discovery_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 

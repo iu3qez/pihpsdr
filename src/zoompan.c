@@ -72,7 +72,6 @@ int zoompan_active_receiver_changed(void *data) {
 }
 
 static void zoom_value_changed_cb(GtkWidget *widget, gpointer data) {
-  //t_print("zoom_value_changed_cb\n");
   g_mutex_lock(&pan_zoom_mutex);
   g_mutex_lock(&active_receiver->display_mutex);
   active_receiver->zoom = (int)(gtk_range_get_value(GTK_RANGE(zoom_scale)) + 0.5);
@@ -101,7 +100,6 @@ static void zoom_value_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 void set_zoom(int rx, double value) {
-  //t_print("set_zoom: %f\n",value);
   if (rx >= receivers) { return; }
 
   int ival = (int) value;
@@ -125,7 +123,6 @@ void set_zoom(int rx, double value) {
 }
 
 void remote_set_zoom(int rx, double value) {
-  //t_print("remote_set_zoom: rx=%d zoom=%f\n",rx,value);
   g_mutex_lock(&pan_zoom_mutex);
   g_signal_handler_block(G_OBJECT(zoom_scale), zoom_signal_id);
   g_signal_handler_block(G_OBJECT(pan_scale), pan_signal_id);
@@ -133,11 +130,9 @@ void remote_set_zoom(int rx, double value) {
   g_signal_handler_unblock(G_OBJECT(pan_scale), pan_signal_id);
   g_signal_handler_unblock(G_OBJECT(zoom_scale), zoom_signal_id);
   g_mutex_unlock(&pan_zoom_mutex);
-  //t_print("remote_set_zoom: EXIT\n");
 }
 
 static void pan_value_changed_cb(GtkWidget *widget, gpointer data) {
-  //t_print("pan_value_changed_cb\n");
   g_mutex_lock(&pan_zoom_mutex);
 
   if (active_receiver->zoom > 1) {
@@ -152,7 +147,6 @@ static void pan_value_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 void set_pan(int rx, double value) {
-  //t_print("set_pan: value=%f\n",value);
   if (rx >= receivers) { return; }
 
   if (receiver[rx]->zoom == 1) {
@@ -178,7 +172,6 @@ void set_pan(int rx, double value) {
 }
 
 void remote_set_pan(int rx, double value) {
-  //t_print("remote_set_pan: rx=%d pan=%f\n",rx,value);
   if (rx >= receivers) { return; }
 
   g_mutex_lock(&pan_zoom_mutex);
@@ -188,13 +181,11 @@ void remote_set_pan(int rx, double value) {
   set_pan(rx, value);
   g_signal_handler_unblock(G_OBJECT(pan_scale), pan_signal_id);
   g_mutex_unlock(&pan_zoom_mutex);
-  //t_print("remote_set_pan: EXIT\n");
 }
 
 GtkWidget *zoompan_init(int my_width, int my_height) {
   width = my_width;
   height = my_height;
-  //t_print("%s: width=%d height=%d\n", __FUNCTION__,width,height);
   //
   // the horizontal layout changes a little if the total width changes
   //

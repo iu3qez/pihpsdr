@@ -372,7 +372,7 @@ GtkWidget *hpsdr_logo() {
   g_object_unref(mem_stream);
 
   if (!pixbuf) {
-    t_print("Could not load HPSDR logo.\n");
+    t_print("%s: Could not load HPSDR logo.\n", __FUNCTION__);
     g_error_free(error);
     return NULL;
   }

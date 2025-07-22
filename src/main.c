@@ -95,9 +95,9 @@ static int wisdom_running = 0;
 
 static void* wisdom_thread(void *arg) {
   if (WDSPwisdom ((char *)arg)) {
-    t_print("WDSP wisdom file has been rebuilt.\n");
+    t_print("%s: WDSP wisdom file has been rebuilt.\n", __FUNCTION__);
   } else {
-    t_print("Re-using existing WDSP wisdom file.\n");
+    t_print("%s: Re-using existing WDSP wisdom file.\n", __FUNCTION__);
   }
   wisdom_running = 0;
   return NULL;
@@ -132,7 +132,7 @@ static int init(void *data) {
   //
   (void) getcwd(text, sizeof(text));
   snprintf(wisdom_directory, sizeof(wisdom_directory), "%s/", text);
-  t_print("Securing wisdom file in directory: %s\n", wisdom_directory);
+  t_print("%s: Securing wisdom file in directory: %s\n", __FUNCTION__, wisdom_directory);
   status_text("Checking FFTW Wisdom file ...");
   wisdom_running = 1;
   pthread_create(&wisdom_thread_id, NULL, wisdom_thread, wisdom_directory);
@@ -160,14 +160,14 @@ static int init(void *data) {
 
 static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   char text[256];
-  t_print("Build: %s (Commit: %s, Date: %s)\n", build_version, build_commit, build_date);
-  t_print("GTK+ version %u.%u.%u\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
+  t_print("%s: Build: %s (Commit: %s, Date: %s)\n", __FUNCTION__, build_version, build_commit, build_date);
+  t_print("%s: GTK+ version %u.%u.%u\n", __FUNCTION__, gtk_major_version, gtk_minor_version, gtk_micro_version);
   uname(&unameData);
-  t_print("sysname: %s\n", unameData.sysname);
-  t_print("nodename: %s\n", unameData.nodename);
-  t_print("release: %s\n", unameData.release);
-  t_print("version: %s\n", unameData.version);
-  t_print("machine: %s\n", unameData.machine);
+  t_print("%s: sysname=  %s\n", __FUNCTION__, unameData.sysname);
+  t_print("%s: nodename= %s\n", __FUNCTION__, unameData.nodename);
+  t_print("%s: release=  %s\n", __FUNCTION__, unameData.release);
+  t_print("%s: version=  %s\n", __FUNCTION__, unameData.version);
+  t_print("%s: machine=  %s\n", __FUNCTION__, unameData.machine);
   load_css();
   //
   // Start with default font. The selected
@@ -177,14 +177,14 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   GdkDisplay *display = gdk_display_get_default();
 
   if (display == NULL) {
-    t_print("no default display!\n");
+    t_print("%s: FATAL: no default display!\n", __FUNCTION__);
     _exit(0);
   }
 
   screen = gdk_display_get_default_screen(display);
 
   if (screen == NULL) {
-    t_print("no default screen!\n");
+    t_print("%s: FATAL: no default screen!\n", __FUNCTION__);
     _exit(0);
   }
 
@@ -213,7 +213,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   int x, y;
   gtk_window_get_position(GTK_WINDOW(top_window), &x, &y);
   this_monitor = gdk_screen_get_monitor_at_point(screen, x, y);
-  t_print("Monitor Number within Screen=%d\n", this_monitor);
+  t_print("%s: Monitor Number within Screen=%d\n", __FUNCTION__, this_monitor);
   //
   // Determine the size of "our" monitor
   //
@@ -221,7 +221,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   gdk_screen_get_monitor_geometry(screen, this_monitor, &rect);
   screen_width = rect.width;
   screen_height = rect.height;
-  t_print("Monitor: width=%d height=%d\n", screen_width, screen_height);
+  t_print("%s: Monitor: width=%d height=%d\n", __FUNCTION__, screen_width, screen_height);
   // Start with 800x480, since this width is required for the "discovery" screen.
   // Go to "full screen" mode if display nearly matches 800x480
   // This is all overridden later for the radio from the props file
@@ -238,10 +238,10 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
     display_height = screen_height;
   }
 
-  t_print("display_width=%d display_height=%d\n", display_width, display_height);
+  t_print("%s: display_width=%d display_height=%d\n", __FUNCTION__, display_width, display_height);
 
   if (full_screen) {
-    t_print("full screen\n");
+    t_print("%s: Going full screen\n", __FUNCTION__);
     gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
   }
 
@@ -322,17 +322,16 @@ int main(int argc, char **argv) {
   // value.
   //
   rc = getpriority(PRIO_PROCESS, 0);
-  t_print("Base priority on startup: %d\n", rc);
+  t_print("%s: Base priority on startup: %d\n", __FUNCTION__, rc);
   setpriority(PRIO_PROCESS, 0, -10);
   rc = getpriority(PRIO_PROCESS, 0);
-  t_print("Base priority after adjustment: %d\n", rc);
+  t_print("%s: Base priority after adjustment: %d\n", __FUNCTION__, rc);
   startup(argv[0]);
   snprintf(name, sizeof(name), "org.g0orx.pihpsdr.pid%d", getpid());
-  //t_print("gtk_application_new: %s\n",name);
   pihpsdr = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
   g_signal_connect(pihpsdr, "activate", G_CALLBACK(activate_pihpsdr), NULL);
   rc = g_application_run(G_APPLICATION(pihpsdr), argc, argv);
-  t_print("exiting ...\n");
+  t_print("%s: exiting ...\n", __FUNCTION__);
   g_object_unref(pihpsdr);
   return rc;
 }

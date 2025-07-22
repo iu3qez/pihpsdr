@@ -153,7 +153,7 @@ void i2c_init() {
   t_print("%s: open i2c device %s fd=%d\n", __FUNCTION__, i2c_device, i2cfd);
 
   if (ioctl(i2cfd, I2C_SLAVE, i2c_address_1) < 0) {
-    t_print("%s: ioctl i2c slave %d failed: %s\n", __FUNCTION__, i2c_address_1, g_strerror(errno));
+    t_print("%s: ioctl i2c slave %ud failed: %s\n", __FUNCTION__, i2c_address_1, g_strerror(errno));
     return;
   }
 

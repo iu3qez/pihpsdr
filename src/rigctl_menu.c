@@ -220,7 +220,7 @@ static void speed_cb(GtkWidget *widget, gpointer data) {
     }
   }
 
-  t_print("%s: Baud rate changed: Port=%s SpeedCode=%d\n", __FUNCTION__, SerialPorts[id].port, SerialPorts[id].speed);
+  t_print("%s: Baud rate changed: Port=%s SpeedCode=%d\n", __FUNCTION__, SerialPorts[id].port, (int) SerialPorts[id].speed);
 }
 
 void rigctl_menu(GtkWidget *parent) {

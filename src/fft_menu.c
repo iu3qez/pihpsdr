@@ -69,8 +69,6 @@ static void filter_type_cb(GtkToggleButton *widget, gpointer data) {
     // NOTREACHED
     break;
   }
-
-  //t_print("WDSP filter type channel=%d changed to %d\n", channel, type);
 }
 
 static void filter_size_cb(GtkWidget *widget, gpointer data) {
@@ -96,8 +94,6 @@ static void filter_size_cb(GtkWidget *widget, gpointer data) {
 
     break;
   }
-
-  //t_print("WDSP filter size channel=%d changed to %d\n", channel, size);
 }
 
 void fft_menu(GtkWidget *parent) {

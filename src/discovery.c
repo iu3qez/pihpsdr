@@ -91,7 +91,7 @@ static char host_addr[128] = "127.0.0.1:50000";
 static void host_entry_cb(GtkWidget *widget, gpointer data);
 
 static void print_device(int i) {
-  t_print("discovery: found protocol=%d device=%d software_version=%d status=%d address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s\n",
+  t_print("%s: found protocol=%d device=%d software_version=%d status=%d address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s\n", __FUNCTION__, 
           discovered[i].protocol,
           discovered[i].device,
           discovered[i].software_version,
@@ -313,7 +313,7 @@ static gboolean connect_cb(GtkWidget *widget, GdkEventButton *event, gpointer us
 
   g_strfreev(splitstr);
   mypwd = gtk_entry_get_text(GTK_ENTRY(host_pwd));
-  t_print("connect_cb: host=%s port=%d\n", myhost, myport);
+  t_print("%s: host=%s port=%d\n", __FUNCTION__, myhost, myport);
 
   if (*myhost == 0 || myport == 0) {
     g_idle_add(fatal_error, "NOTICE: invalid host:port string.");
@@ -590,7 +590,7 @@ static void discovery() {
       discovered[devices].use_tcp = 0;
       discovered[devices].use_routing = 0;
       discovered[devices].supported_receivers = 2;
-      t_print("discovery: found USB OZY device min=%0.3f MHz max=%0.3f MHz\n",
+      t_print("%s: found USB OZY device min=%0.3f MHz max=%0.3f MHz\n", __FUNCTION__,
               discovered[devices].frequency_min * 1E-6,
               discovered[devices].frequency_max * 1E-6);
       devices++;
@@ -642,7 +642,7 @@ static void discovery() {
   status_text("Discovery completed.");
   // subsequent discoveries check all protocols enabled.
   discover_only_stemlab = 0;
-  t_print("discovery: found %d devices\n", devices);
+  t_print("%s: found %d devices\n", __FUNCTION__, devices);
 
   for (int i = 0; i < devices; i++) { print_device(i); }
 
@@ -676,7 +676,7 @@ static void discovery() {
 
     for (row = 0; row < devices; row++) {
       d = &discovered[row];
-      t_print("Device Protocol=%d name=%s\n", d->protocol, d->name);
+      t_print("%s: Device Protocol=%d name=%s\n", __FUNCTION__, d->protocol, d->name);
       snprintf(version, sizeof(version), "v%d.%d",
                d->software_version / 10,
                d->software_version % 10);
@@ -823,7 +823,7 @@ static void discovery() {
   //----------------------------------------------------+
   loadProperties("remote.props");
   GetPropS0("current_host", host_addr);
-  t_print("current host: %s\n", host_addr);
+  t_print("%s: current host %s\n", __FUNCTION__, host_addr);
   // Create a "Server" button
   GtkWidget *start_server_button = gtk_button_new_with_label("Use Server");
   g_signal_connect(start_server_button, "clicked", G_CALLBACK(connect_cb), grid);
@@ -841,7 +841,7 @@ static void discovery() {
   for (int i = 0; i < num_hosts; i++) {
     *str = 0;
     GetPropS1("host[%d]", i, str);
-    t_print("HOST ENTRY #%d = %s\n", i, str);
+    t_print("%s: HOST ENTRY #%d = %s\n", __FUNCTION__, i, str);
 
     if (strcmp(str, host_addr) && *str && strlen(str) > 0) {  // Avoid duplicate
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(host_combo), NULL, str);
@@ -908,7 +908,7 @@ static void discovery() {
   gtk_grid_attach(GTK_GRID(grid), exit_b, 3, row, 1, 1);
   gtk_container_add (GTK_CONTAINER (content), grid);
   gtk_widget_show_all(discovery_dialog);
-  t_print("showing device dialog\n");
+  t_print("%s: showing device dialog\n", __FUNCTION__);
   //
   // Autostart and RedPitaya radios:
   //

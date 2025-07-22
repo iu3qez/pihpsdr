@@ -110,7 +110,6 @@ static void toolbar_button_press_cb(GtkWidget *widget, GdkEventButton *event, gp
 // cppcheck-suppress constParameterCallback
 static void toolbar_button_released_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   int i = GPOINTER_TO_INT(data);
-  //t_print("%s: %d action=%d\n",__FUNCTION__,i,toolbar_switches[i].switch_function);
   schedule_action(toolbar_switches[i].switch_function, RELEASED, 0);
 }
 
@@ -119,7 +118,7 @@ GtkWidget *toolbar_init(int my_width, int my_height) {
   height = my_height;
   int button_width = width / 8;
   const char *button_css;
-  t_print("toolbar_init: width=%d height=%d button_width=%d\n", width, height, button_width);
+  t_print("%s: width=%d height=%d button_width=%d\n", __FUNCTION__, width, height, button_width);
 
   if (height < 40) {
     button_css = "small_button";

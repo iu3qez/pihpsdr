@@ -1220,7 +1220,7 @@ void radio_start_radio() {
   //
   if (have_saturn_xdma) {
     for (SaturnSerialPort *ChkSerial = SaturnSerialPortsList; ChkSerial->port != NULL; ChkSerial++) {
-      char *cp = realpath(ChkSerial->port, NULL);
+      const char *cp = realpath(ChkSerial->port, NULL);
 
       if (cp != NULL) {
         SerialPorts[MAX_SERIAL - 1].enable = 1;

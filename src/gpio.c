@@ -98,7 +98,6 @@ void gpio_set_ptt(int state) {
 #ifdef GPIO
 
   if (pttout_line) {
-    //t_print("%s: state=%d\n", __FUNCTION__, state);
     if (gpiod_line_set_value(pttout_line, NOT(state)) < 0) {
       t_print("%s failed: %s\n", __FUNCTION__, g_strerror(errno));
     }
@@ -111,7 +110,6 @@ void gpio_set_cw(int state) {
 #ifdef GPIO
 
   if (cwout_line) {
-    //t_print("%s: state=%d\n", __FUNCTION__, state);
     if (gpiod_line_set_value(cwout_line, NOT(state)) < 0) {
       t_print("%s failed: %s\n", __FUNCTION__, g_strerror(errno));
     }
@@ -520,7 +518,6 @@ static gpointer rotary_encoder_thread(gpointer data) {
 
     for (i = 0; i < MAX_ENCODERS; i++) {
       if (encoders[i].bottom_encoder_enabled && encoders[i].bottom_encoder_pos != 0) {
-        //t_print("%s: BOTTOM encoder %d pos=%d\n",__FUNCTION__,i,encoders[i].bottom_encoder_pos);
         action = encoders[i].bottom_encoder_function;
         mode = RELATIVE;
         val = encoders[i].bottom_encoder_pos;
@@ -529,7 +526,6 @@ static gpointer rotary_encoder_thread(gpointer data) {
       }
 
       if (encoders[i].top_encoder_enabled && encoders[i].top_encoder_pos != 0) {
-        //t_print("%s: TOP encoder %d pos=%d\n",__FUNCTION__,i,encoders[i].top_encoder_pos);
         action = encoders[i].top_encoder_function;
         mode = RELATIVE;
         val = encoders[i].top_encoder_pos;
@@ -547,7 +543,6 @@ static gpointer rotary_encoder_thread(gpointer data) {
 
 static void process_encoder(int e, int l, int addr, int val) {
   guchar pinstate;
-  //t_print("%s: encoder=%d level=%d addr=0x%02X val=%d\n",__FUNCTION__,e,l,addr,val);
   g_mutex_lock(&encoder_mutex);
 
   switch (l) {
@@ -558,7 +553,6 @@ static void process_encoder(int e, int l, int addr, int val) {
       pinstate = (encoders[e].bottom_encoder_b_value << 1) | encoders[e].bottom_encoder_a_value;
       encoders[e].bottom_encoder_state = encoder_state_table[encoders[e].bottom_encoder_state & 0xf][pinstate];
 
-      //t_print("%s: state=%02X\n",__FUNCTION__,encoders[e].bottom_encoder_state);
       switch (encoders[e].bottom_encoder_state & 0x30) {
       case DIR_NONE:
         break;
@@ -575,7 +569,6 @@ static void process_encoder(int e, int l, int addr, int val) {
         break;
       }
 
-      //t_print("%s: %d BOTTOM pos=%d\n",__FUNCTION__,e,encoders[e].bottom_encoder_pos);
       break;
 
     case B:
@@ -583,7 +576,6 @@ static void process_encoder(int e, int l, int addr, int val) {
       pinstate = (encoders[e].bottom_encoder_b_value << 1) | encoders[e].bottom_encoder_a_value;
       encoders[e].bottom_encoder_state = encoder_state_table[encoders[e].bottom_encoder_state & 0xf][pinstate];
 
-      //t_print("%s: state=%02X\n",__FUNCTION__,encoders[e].bottom_encoder_state);
       switch (encoders[e].bottom_encoder_state & 0x30) {
       case DIR_NONE:
         break;
@@ -600,7 +592,6 @@ static void process_encoder(int e, int l, int addr, int val) {
         break;
       }
 
-      //t_print("%s: %d BOTTOM pos=%d\n",__FUNCTION__,e,encoders[e].bottom_encoder_pos);
       break;
     }
 
@@ -613,7 +604,6 @@ static void process_encoder(int e, int l, int addr, int val) {
       pinstate = (encoders[e].top_encoder_b_value << 1) | encoders[e].top_encoder_a_value;
       encoders[e].top_encoder_state = encoder_state_table[encoders[e].top_encoder_state & 0xf][pinstate];
 
-      //t_print("%s: state=%02X\n",__FUNCTION__,encoders[e].top_encoder_state);
       switch (encoders[e].top_encoder_state & 0x30) {
       case DIR_NONE:
         break;
@@ -630,7 +620,6 @@ static void process_encoder(int e, int l, int addr, int val) {
         break;
       }
 
-      //t_print("%s: %d TOP pos=%d\n",__FUNCTION__,e,encoders[e].top_encoder_pos);
       break;
 
     case B:
@@ -638,7 +627,6 @@ static void process_encoder(int e, int l, int addr, int val) {
       pinstate = (encoders[e].top_encoder_b_value << 1) | encoders[e].top_encoder_a_value;
       encoders[e].top_encoder_state = encoder_state_table[encoders[e].top_encoder_state & 0xf][pinstate];
 
-      //t_print("%s: state=%02X\n",__FUNCTION__,encoders[e].top_encoder_state);
       switch (encoders[e].top_encoder_state & 0x30) {
       case DIR_NONE:
         break;
@@ -655,7 +643,6 @@ static void process_encoder(int e, int l, int addr, int val) {
         break;
       }
 
-      //t_print("%s: %d TOP pos=%d\n",__FUNCTION__,e,encoders[e].top_encoder_pos);
       break;
     }
 
@@ -669,7 +656,6 @@ static void process_edge(int offset, int value) {
   int i;
   unsigned int t;
   gboolean found;
-  //t_print("%s: offset=%d value=%d\n",__FUNCTION__,offset,value);
   found = FALSE;
 
   //
@@ -677,30 +663,24 @@ static void process_edge(int offset, int value) {
   //
   for (i = 0; i < MAX_ENCODERS; i++) {
     if (encoders[i].bottom_encoder_enabled && encoders[i].bottom_encoder_address_a == offset) {
-      //t_print("%s: found %d encoder %d bottom A\n",__FUNCTION__,offset,i);
       process_encoder(i, BOTTOM_ENCODER, A, SET(value == PRESSED));
       found = TRUE;
       break;
     } else if (encoders[i].bottom_encoder_enabled && encoders[i].bottom_encoder_address_b == offset) {
-      //t_print("%s: found %d encoder %d bottom B\n",__FUNCTION__,offset,i);
       process_encoder(i, BOTTOM_ENCODER, B, SET(value == PRESSED));
       found = TRUE;
       break;
     } else if (encoders[i].top_encoder_enabled && encoders[i].top_encoder_address_a == offset) {
-      //t_print("%s: found %d encoder %d top A\n",__FUNCTION__,offset,i);
       process_encoder(i, TOP_ENCODER, A, SET(value == PRESSED));
       found = TRUE;
       break;
     } else if (encoders[i].top_encoder_enabled && encoders[i].top_encoder_address_b == offset) {
-      //t_print("%s: found %d encoder %d top B\n",__FUNCTION__,offset,i);
       process_encoder(i, TOP_ENCODER, B, SET(value == PRESSED));
       found = TRUE;
       break;
     } else if (encoders[i].switch_enabled && encoders[i].switch_address == offset) {
-      //t_print("%s: found %d encoder %d switch\n",__FUNCTION__,offset,i);
       t = millis();
 
-      //t_print("%s: found %d encoder %d switch value=%d t=%u\n",__FUNCTION__,offset,i,value,t);
       if (t < encoders[i].switch_debounce) {
         return;
       }
@@ -761,14 +741,12 @@ static void process_edge(int offset, int value) {
   for (i = 0; i < MAX_SWITCHES; i++) {
     if (switches[i].switch_enabled && switches[i].switch_address == offset) {
       t = millis();
-      //t_print("%s: found %d switch %d value=%d t=%u\n",__FUNCTION__,offset,i,value,t);
       found = TRUE;
 
       if (t < switches[i].switch_debounce) {
         return;
       }
 
-      //t_print("%s: switches=%p function=%d (%s)\n",__FUNCTION__,switches,switches[i].switch_function,sw_string[switches[i].switch_function]);
       switches[i].switch_debounce = t + settle_time;
       schedule_action(switches[i].switch_function, value, 0);
       break;
@@ -782,20 +760,16 @@ static void process_edge(int offset, int value) {
 
 // cppcheck-suppress constParameterCallback
 static int interrupt_cb(int event_type, unsigned int line, const struct timespec *timeout, void* data) {
-  //t_print("%s: event=%d line=%d\n",__FUNCTION__,event_type,line);
   switch (event_type) {
   case GPIOD_CTXLESS_EVENT_CB_TIMEOUT:
     // timeout - ignore
-    //t_print("%s: Ignore timeout\n",__FUNCTION__);
     break;
 
   case GPIOD_CTXLESS_EVENT_CB_RISING_EDGE:
-    //t_print("%s: Ignore RISING EDGE\n",__FUNCTION__);
     process_edge(line, RELEASED);
     break;
 
   case GPIOD_CTXLESS_EVENT_CB_FALLING_EDGE:
-    //t_print("%s: Process FALLING EDGE\n",__FUNCTION__);
     process_edge(line, PRESSED);
     break;
   }
@@ -891,7 +865,7 @@ void gpio_default_switch_actions(int ctrlr) {
 //  and my_switches, including GPIO lines etc.
 //
 void gpio_set_defaults(int ctrlr) {
-  t_print("%s: %d\n", __FUNCTION__, ctrlr);
+  t_print("%s: Controller=%d\n", __FUNCTION__, ctrlr);
 
   switch (ctrlr) {
   case CONTROLLER1:
@@ -1185,7 +1159,7 @@ static gpointer monitor_thread(gpointer arg) {
   }
 
   for (int i = 0; i < lines; i++) {
-    t_print("... monitoring line  %u\n", monitor_lines[i]);
+    t_print("%s: ... monitoring line  %u\n", __FUNCTION__, monitor_lines[i]);
   }
 
   t.tv_sec = 60;

@@ -65,8 +65,9 @@ static gboolean making_active = FALSE;
 // PART 1. Functions releated to the receiver display
 //
 
+// cppcheck-suppress constParameterCallback
 static void rx_weak_notify(gpointer data, GObject  *obj) {
-  RECEIVER *rx = (RECEIVER *)data;
+  const RECEIVER *rx = (RECEIVER *)data;
   t_print("%s: id=%d obj=%p\n", __FUNCTION__, rx->id, obj);
 }
 

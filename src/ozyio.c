@@ -252,7 +252,7 @@ static int hexitsToUInt(const char *p, int count) {
   return result;
 }
 
-static int ozy_load_firmware(char *fnamep) {
+static int ozy_load_firmware(const char *fnamep) {
   FILE *ifile;
   int linecount = 0;
   int length;
@@ -369,7 +369,7 @@ static int ozy_set_led(int which, int on) {
   return 1;
 }
 
-static int ozy_load_fpga(char *rbf_fnamep) {
+static int ozy_load_fpga(const char *rbf_fnamep) {
   FILE *rbffile;
   unsigned char buf[MAX_EPO_PACKET_SIZE];
   int bytes_read;

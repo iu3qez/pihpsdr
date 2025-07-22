@@ -1372,7 +1372,7 @@ void InitialiseCWKeyerRamp(bool Protocol2, uint32_t Length_us) {
     uint32_t Register;
     GCWKeyerRampms = Length_us;
     GCWKeyerRamp_IsP2 = Protocol2;
-    t_print("calculating new CW ramp, length = %d us\n", Length_us);
+    t_print("calculating new CW ramp, length = %ud usec\n", Length_us);
 
     // work out required length in samples
     if (Protocol2) {

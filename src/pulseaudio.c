@@ -177,7 +177,7 @@ int audio_open_output(RECEIVER *rx) {
     rx->local_audio_buffer_offset = 0;
     rx->local_audio_buffer = g_new0(float, 2 * out_buffer_size);
     t_print("%s: allocated local_audio_buffer %p size %ld bytes\n", __FUNCTION__, rx->local_audio_buffer,
-            2 * out_buffer_size * sizeof(float));
+            (long)(2 * out_buffer_size * sizeof(float)));
   } else {
     result = -1;
     t_print("%s: pa-simple_new failed: err=%d\n", __FUNCTION__, err);
@@ -380,7 +380,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
     //
     // Since this is mutex-protected, we know that both rx->playstream
-    // and rx->local_audio_buffer will not be destroyes until we
+    // and rx->local_audio_buffer will not be destroyed until we
     // are finished here.
     //
     rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = sample;

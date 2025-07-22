@@ -75,17 +75,14 @@ static void save_xvtr () {
       if ((xvtr->frequencyMin < xvtr->frequencyLO + radio->frequency_min) ||
           (xvtr->frequencyMin > xvtr->frequencyLO + radio->frequency_max)) {
         xvtr->frequencyMin = xvtr->frequencyLO + radio->frequency_min;
-        //t_print("XVTR band %s MinFrequency changed to %lld\n", txt, xvtr->frequencyMin);
       }
 
       if (xvtr->frequencyMax < xvtr->frequencyMin) {
         xvtr->frequencyMax = xvtr->frequencyMin + 1000000LL;
-        //t_print("XVTR band %s MaxFrequency changed to %lld\n", txt, xvtr->frequencyMax);
       }
 
       if (xvtr->frequencyMax > xvtr->frequencyLO + radio->frequency_max) {
         xvtr->frequencyMax = xvtr->frequencyLO + radio->frequency_max;
-        //t_print("XVTR band %s MaxFrequency changed to %lld\n", txt, xvtr->frequencyMax);
       }
 
       //

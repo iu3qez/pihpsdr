@@ -360,8 +360,8 @@ void get_midi_devices() {
         ret = snd_ctl_rawmidi_info(ctl, info);
 
         if (ret < 0) {
-          t_print("%s: cannot get rawmidi information %d:%d:%d: %s\n",
-                  __FUNCTION__, card, device, sub, snd_strerror(ret));
+          t_print("%s: cannot get rawmidi information %d:%d:%d: %s\n", __FUNCTION__,
+                  card, device, sub, snd_strerror(ret));
           break;
         }
 

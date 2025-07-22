@@ -155,7 +155,6 @@ void band_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 2, 1);
   long long frequency_min = radio->frequency_min;
   long long frequency_max = radio->frequency_max;
-  //t_print("band_menu: min=%lld max=%lld\n",frequency_min,frequency_max);
   j = 0;
 
   for (i = 0; i < BANDS + XVTRS; i++) {

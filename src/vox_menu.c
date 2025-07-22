@@ -117,7 +117,6 @@ static gboolean enable_cb (GtkWidget *widget, GdkEventButton *event, gpointer da
 static void start_level_thread() {
   run_level = 1;
   level_thread_id = g_thread_new( "VOX level", level_thread, NULL);
-  t_print("level_thread: id=%p\n", level_thread_id);
 }
 
 // cppcheck-suppress constParameterCallback

@@ -59,7 +59,6 @@ static void oc_rx_cb(GtkWidget *widget, gpointer data) {
   BAND *band = band_get_band(b);
   int mask = 0x01 << (oc - 1);
 
-  //t_print("oc_rx_cb: band=%d oc=%d mask=%d\n",b,oc,mask);
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     band->OCrx |= mask;
   } else {
@@ -79,7 +78,6 @@ static void oc_tx_cb(GtkWidget *widget, gpointer data) {
   BAND *band = band_get_band(b);
   int mask = 0x01 << (oc - 1);
 
-  //t_print("oc_tx_cb: band=%d oc=%d mask=%d\n",b,oc,mask);
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     band->OCtx |= mask;
   } else {
@@ -97,7 +95,6 @@ static void oc_tune_cb(GtkWidget *widget, gpointer data) {
   int oc = (GPOINTER_TO_UINT(data)) & 0xF;
   int mask = 0x01 << (oc - 1);
 
-  //t_print("oc_tune_cb: oc=%d mask=%d\n",oc,mask);
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     OCtune |= mask;
   } else {
