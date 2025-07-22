@@ -2176,7 +2176,7 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
                            + (buffer[3] & 0xFF);
 
   if (ddc_sequence[ddc] != sequence) {
-    t_print("%s: DDC(%d) sequence error: expected %ld got %ld\n", __FUNCTION__, ddc, ddc_sequence[ddc], sequence);
+    t_print("%s: DDC(%d) sequence error: expected %lu got %lu\n", __FUNCTION__, ddc, ddc_sequence[ddc], sequence);
     sequence_errors++;
   }
 
@@ -2465,7 +2465,7 @@ static void process_high_priority() {
   sequence = ((buffer[0] & 0xFF) << 24) + ((buffer[1] & 0xFF) << 16) + ((buffer[2] & 0xFF) << 8) + (buffer[3] & 0xFF);
 
   if (sequence != highprio_rcvd_sequence) {
-    t_print("HighPrio SeqErr Expected=%ld Seen=%ld\n", highprio_rcvd_sequence, sequence);
+    t_print("HighPrio SeqErr Expected=%lu Seen=%lu\n", highprio_rcvd_sequence, sequence);
     highprio_rcvd_sequence = sequence;
     sequence_errors++;
   }
@@ -2589,7 +2589,7 @@ static void process_mic_data(const unsigned char *buffer) {
   sequence = ((buffer[0] & 0xFF) << 24) + ((buffer[1] & 0xFF) << 16) + ((buffer[2] & 0xFF) << 8) + (buffer[3] & 0xFF);
 
   if (sequence != micsamples_sequence) {
-    t_print("MicSample SeqErr Expected=%ld Seen=%ld\n", micsamples_sequence, sequence);
+    t_print("MicSample SeqErr Expected=%lu Seen=%lu\n", micsamples_sequence, sequence);
     sequence_errors++;
   }
 
@@ -2606,9 +2606,9 @@ static void process_mic_data(const unsigned char *buffer) {
 void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sample) {
   int txmode = vfo_get_tx_mode();
 
-  if (radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) {
+  if (radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL || (transmitter->tune && transmitter->swrtune))) {
     //
-    // Only process samples if transmitting in CW
+    // Only process samples if there can be a sidetone
     //
     pthread_mutex_lock(&send_rxaudio_mutex);
 
@@ -2669,9 +2669,9 @@ void new_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
   int txmode = vfo_get_tx_mode();
 
   //
-  // Only process samples if NOT transmitting in CW
+  // Only process samples if there can be no sidetone
   //
-  if (radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL)) { return; }
+  if (radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL || (transmitter->tune && transmitter->swrtune))) { return; }
 
   pthread_mutex_lock(&send_rxaudio_mutex);
 

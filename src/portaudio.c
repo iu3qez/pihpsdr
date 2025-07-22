@@ -78,10 +78,11 @@ int n_output_devices = 0;
 // If we then go to RX again a "low water mark" condition is detected in the
 // first call to audio_write() and half a buffer length of silence is inserted
 // again.
-// Of course, a small portaudio audio buffer size (128 sample) helps
-// keeping the latency small. With the CW low/high water marks of 128/256
-// I have achieved a latency of slightly less than 15 msec on my
-// old 2013 iMac.
+// Of course, a small portaudio audio buffer size (128 samples) helps
+// keeping the latency small. With the CW low/high water marks of 192/320
+// I have achieved a latency of about 15 msec on a Macintosh.
+// One can go smaller but this increases the probabilities of audio cracks
+// from buffer underruns.
 //
 // Experiments indicate that we can indeed keep the ring buffer about half filling
 // during RX and quite empty during CW-TX.
@@ -92,8 +93,8 @@ int n_output_devices = 0;
 #define MY_RING_BUFFER_SIZE  9600
 #define MY_RING_LOW_WATER     512
 #define MY_RING_HIGH_WATER   9000
-#define MY_CW_LOW_WATER       128
-#define MY_CW_HIGH_WATER      256
+#define MY_CW_LOW_WATER       192
+#define MY_CW_HIGH_WATER      320
 
 //
 // Ring buffer for "local microphone" samples stored locally here.
@@ -599,8 +600,9 @@ int audio_write (RECEIVER *rx, float left, float right) {
   // If a CW/TUNE side tone may occur, quickly return
   //
   if (rx == active_receiver && radio_is_transmitting()) {
+    // radio_is_transmitting() ensures we have a transmitter
     if (txmode == modeCWU || txmode == modeCWL) { return 0; }
-    if (can_transmit && transmitter->tune && transmitter->swrtune) { return 0; }
+    if (transmitter->tune && transmitter->swrtune) { return 0; }
   }
 
   g_mutex_lock(&rx->local_audio_mutex);

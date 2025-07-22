@@ -171,6 +171,7 @@ typedef struct _transmitter {
   int display_filled;
 
   double *cw_sig_rf;      // contains the CW RF envelope
+  int    *p1stone;        // contains side tone (CW or TUNE), only used in P1
 
   int cw_ramp_audio_len;  // ramp width in samples
   int cw_ramp_audio_ptr;
