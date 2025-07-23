@@ -158,6 +158,7 @@ void soapy_protocol_change_sample_rate(RECEIVER *rx) {
 void soapy_protocol_create_receiver(RECEIVER *rx) {
   //
   // NOTE: this one will be called for LIME if a single RX channel is found
+  //       (e.g. for a LIME-mini)
   //
   ASSERT_SERVER();
   int rc;
@@ -356,8 +357,7 @@ void soapy_protocol_start_dual_receiver(RECEIVER *rx1, RECEIVER *rx2) {
   int rc;
   double rate1 = SoapySDRDevice_getSampleRate(soapy_device, SOAPY_SDR_RX, rx1->adc);
   double rate2 = SoapySDRDevice_getSampleRate(soapy_device, SOAPY_SDR_RX, rx2->adc);
-  t_print("%s: rate1=%f\n", __FUNCTION__, rate1);
-  t_print("%s: rate1=%f\n", __FUNCTION__, rate2);
+  t_print("%s: RX1 rate=%f, RX2 rate=%f\n", __FUNCTION__, rate1, rate2);
   rc = SoapySDRDevice_activateStream(soapy_device, rx_stream[0], 0, 0LL, 0);
 
   if (rc != 0) {
@@ -604,13 +604,13 @@ static void *soapy_receive_thread(void *arg) {
   RECEIVER *rx = (RECEIVER *)arg;
   float *rxbuff = g_new(float, max_samples * 2);
   void *buffs[1] = {rxbuff};
-  size_t channel = rx->adc;
+  int rxadc = rx->adc;
 
   running = TRUE;
-  t_print("%s started\n", __FUNCTION__);
+  t_print("%s started, rxadc=%d\n", __FUNCTION__, rxadc);
 
   while (running) {
-    int elements = SoapySDRDevice_readStream(soapy_device, rx_stream[channel], buffs, max_samples, &flags, &timeNs,
+    int elements = SoapySDRDevice_readStream(soapy_device, rx_stream[rxadc], buffs, max_samples, &flags, &timeNs,
                    timeoutUs);
 
     if (elements <= 0) {
@@ -621,10 +621,10 @@ static void *soapy_receive_thread(void *arg) {
   }
 
   t_print("%s: deactivateStream\n", __FUNCTION__);
-  SoapySDRDevice_deactivateStream(soapy_device, rx_stream[channel], 0, 0LL);
+  SoapySDRDevice_deactivateStream(soapy_device, rx_stream[rxadc], 0, 0LL);
   /*
   t_print("%s: SoapySDRDevice_closeStream\n", __FUNCTION__);
-  SoapySDRDevice_closeStream(soapy_device,rx_stream[channel]);
+  SoapySDRDevice_closeStream(soapy_device,rx_stream[rxadc]);
   t_print("%s: SoapySDRDevice_unmake\n", __FUNCTION__);
   SoapySDRDevice_unmake(soapy_device);
   */

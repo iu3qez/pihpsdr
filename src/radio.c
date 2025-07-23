@@ -1641,7 +1641,6 @@ void radio_start_radio() {
 
   switch (protocol) {
   case SOAPYSDR_PROTOCOL:
-    t_print("%s: setup RECEIVERS SOAPYSDR\n", __FUNCTION__);
     RECEIVERS = 1;
 
     if (radio->info.soapy.rx_channels > 1) {
@@ -1650,10 +1649,11 @@ void radio_start_radio() {
 
     PS_TX_FEEDBACK = RECEIVERS;
     PS_RX_FEEDBACK = RECEIVERS + 1;
+    t_print("%s: setup %d receivers for SoapySDR\n", __FUNCTION__, RECEIVERS);
     break;
 
   default:
-    t_print("%s: setup RECEIVERS default\n", __FUNCTION__);
+    t_print("%s: default setup for 2 receivers\n", __FUNCTION__);
     RECEIVERS = 2;
     PS_TX_FEEDBACK = (RECEIVERS);
     PS_RX_FEEDBACK = (RECEIVERS + 1);
@@ -1686,6 +1686,7 @@ void radio_start_radio() {
 #ifdef SOAPYSDR
   if (protocol == SOAPYSDR_PROTOCOL) {
     if (!have_lime) {
+      t_print("%s: create %d SOAPY receiver(s)\n", __FUNCTION__, RECEIVERS);
       //
       // LIME: do not start receivers before TX is running
       //       since this starts auto-calibration.
@@ -1697,6 +1698,7 @@ void radio_start_radio() {
     }
 
     if (can_transmit) {
+      t_print("%s: create SOAPY transmitter\n", __FUNCTION__);
       soapy_protocol_create_transmitter(transmitter);
       soapy_protocol_set_tx_antenna(transmitter, dac.antenna);
       //
@@ -1722,14 +1724,28 @@ void radio_start_radio() {
       soapy_protocol_set_rx_frequency(rx, id);
 
       if (have_lime && RECEIVERS == 2) {
+        //
         // LIME: This one has a single (Soapy) receiver with two
         //       channels, so we have to create and start this
-        //       *pair* in a single call
+        //       *pair* in the first pass through this loop
+        //
+        // ATTENTION: this does not apply to a LIME-mini!
+        //
         if (id == 0) {
+          t_print("%s: create and start a dual SOAPY receiver\n", __FUNCTION__);
           soapy_protocol_create_dual_receiver(receiver[0],receiver[1]);
           soapy_protocol_start_dual_receiver(receiver[0],receiver[1]);
         }
       } else {
+        if (have_lime) {
+          //
+          // LIME with 1RX: creating the receiver has been deferred so
+          // we need to do this HERE.
+          //
+          t_print("%s: create 1 SOAPY receiver\n", __FUNCTION__);
+          soapy_protocol_create_receiver(rx);
+        }
+        t_print("%s: start 1 SOAPY receiver\n", __FUNCTION__);
         soapy_protocol_start_receiver(rx);
       }
 
@@ -1741,6 +1757,7 @@ void radio_start_radio() {
         rx_set_frequency(rx, vfo[id].ctun_frequency);
       }
     }
+    t_print("%s: SOAPY init RX stuff completed\n", __FUNCTION__);
   }  // protocol == SOAPYSDR
 #endif
 
@@ -1797,6 +1814,8 @@ void radio_start_radio() {
   //
   g_signal_handler_disconnect(top_window, keypress_signal_id);
   keypress_signal_id = g_signal_connect(top_window, "key_press_event", G_CALLBACK(radio_keypress_cb), NULL);
+
+  t_print("%s: completed\n");
 }
 
 void radio_remote_change_receivers(int r) {
