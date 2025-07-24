@@ -1,8 +1,55 @@
 LIST OF RECENT PIHPSDR CHANGES
 ==============================
+July 2025:
+----------
+
+- added an option to mute the ANAN-7000/G2 speaker amp
+  during transmit only (might be helpful if there are RFI
+  problems).
+
+- added option to get a side tone while TUNE-ing which
+  indicates the SWR.
+
+- SOAPY: better support for LIME-SDR, both the LIME-SDR
+  with 2RX and the LIME-Mini with 1RX
+
+June 2025:
+----------
+
+- updated to WDSP version 1.26
+
+- added code to improve compatibility with the "other" (prandr)
+  SATURN xdma driver
+
+- include GEN and WWV bands in the antenna menu
+
+- Accessibility for the Blind, Text-to-Speech: use MacOS
+  native capability when compiling on MacOS.
+  Text-to-speech functions now also in the discovery screen
+
+- Include TX filter setting in the RX/TX profile
+
+- Put the MicLvl meter bar in different colors, as to warn
+  the user for possible Mic level overdrives
+
+May 2025:
+---------
+
+- Increased the maximum amount of Recorded/Playback audio
+  from 10 to 20 seconds.
+
+April 2025:
+-----------
+- TX ALC meter: combined peak and gain into a single value
 
 March 2025:
 -----------
+- HermesLITE-II: Use 40.5 dB as default PA calibration value
+  since "forgetting" to go to the PA menu was the #1 HL2
+  newbee problem.
+
+- The MivLvl meter is now in dB (from -40 to 0) rather than
+  as the raw amplitude.
 
 - Make the waterfall height adjustable in the Display menu
   if both panadapter and waterfall are displayed
