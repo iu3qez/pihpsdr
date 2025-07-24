@@ -1814,8 +1814,6 @@ void radio_start_radio() {
   //
   g_signal_handler_disconnect(top_window, keypress_signal_id);
   keypress_signal_id = g_signal_connect(top_window, "key_press_event", G_CALLBACK(radio_keypress_cb), NULL);
-
-  t_print("%s: completed\n");
 }
 
 void radio_remote_change_receivers(int r) {

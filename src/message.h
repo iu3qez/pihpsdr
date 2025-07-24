@@ -22,5 +22,17 @@
 
 #include <gdk/gdk.h>
 
+//
+// if TPRINTDEBUG is defined, then t_print() and t_perror() are converted to simple
+// printf() and perror() calls, then the compiler can check for the correct ordering
+// of the var-args
+//
+//#define TPRINTDEBUG 1
+
+#ifdef TPRINTDEBUG
+#define t_print printf
+#define t_perror perror
+#else
 extern void t_print(const gchar *format, ...);
 extern void t_perror(const gchar *string);
+#endif
