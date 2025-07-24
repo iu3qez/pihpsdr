@@ -914,7 +914,16 @@ static void new_protocol_high_priority() {
       high_priority_buffer_to_radio[1400] |= ANAN7000_HIPRIO1400_XVTR_OUT;
     }
 
-    if (mute_spkr_amp) {
+    //
+    // On ANAN-7000 and G2, one can "mute" the stereo amplifier. This affects speakers,
+    // headphone, and LineOut. Some have reported that distorted audio goes to the speakers
+    // upon transmit, so there is an option to mute the amplifier during TX only.
+    // However, if we expect a side tone from CW or TUNEing, "mute when tx" is ignored.
+    // Note that "Mute when TX" is not generally recommended, since the
+    // speakers emit a notable "pop" when the amp is switched on or off.
+    //
+    if (mute_spkr_amp ||
+        (mute_spkr_xmit && xmit && (txmode != modeCWL) && (txmode != modeCWU) && !transmitter->tune)) {
       //
       // Mute the amplifier of the built-in speakers
       //

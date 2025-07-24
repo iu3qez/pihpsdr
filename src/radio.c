@@ -169,8 +169,9 @@ int hl2_cl1_input = 0;
 int anan10E = 0;
 
 int adc0_filter_bypass = 0; // Bypass ADC0 filters on receive
-int adc1_filter_bypass = 0; // Bypass ADC1 filters on receiver  (ANAN-7000/8000/G2)
-int mute_spkr_amp = 0;      // Mute audio amplifier in radio    (ANAN-7000, G2)
+int adc1_filter_bypass = 0; // Bypass ADC1 filters on receiver              (ANAN-7000/8000/G2)
+int mute_spkr_amp = 0;      // Mute audio amplifier in radio                (ANAN-7000, G2)
+int mute_spkr_xmit= 0;      // Mute audio amplifier in radio upon transmit  (ANAN-7000, G2)
 
 int tx_out_of_band_allowed = 0;
 
@@ -2842,6 +2843,7 @@ static void radio_restore_state() {
     GetPropI0("radio.display_warnings",                      display_warnings);
     GetPropI0("radio.display_pacurr",                        display_pacurr);
     GetPropI0("mute_spkr_amp",                               mute_spkr_amp);
+    GetPropI0("mute_spkr_xmit",                              mute_spkr_xmit);
     GetPropI0("adc0_filter_bypass",                          adc0_filter_bypass);
     GetPropI0("adc1_filter_bypass",                          adc1_filter_bypass);
 #ifdef SATURN
@@ -3041,6 +3043,7 @@ void radio_save_state() {
     SetPropI0("radio.display_warnings",                      display_warnings);
     SetPropI0("radio.display_pacurr",                        display_pacurr);
     SetPropI0("mute_spkr_amp",                               mute_spkr_amp);
+    SetPropI0("mute_spkr_xmit",                              mute_spkr_xmit);
     SetPropI0("adc0_filter_bypass",                          adc0_filter_bypass);
     SetPropI0("adc1_filter_bypass",                          adc1_filter_bypass);
 #ifdef SATURN

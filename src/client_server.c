@@ -728,6 +728,7 @@ void send_radiomenu(int sock) {
   data.mic_bias_enabled = mic_bias_enabled;
   data.pa_enabled = pa_enabled;
   data.mute_spkr_amp = mute_spkr_amp;
+  data.mute_spkr_xmit = mute_spkr_xmit;
   data.hl2_audio_codec = hl2_audio_codec;
   data.soapy_iqswap = soapy_iqswap;
   data.enable_tx_inhibit = enable_tx_inhibit;
@@ -853,6 +854,7 @@ void send_radio_data(int sock) {
   data.OCtune = OCtune;
   data.mute_rx_while_transmitting = mute_rx_while_transmitting;
   data.mute_spkr_amp = mute_spkr_amp;
+  data.mute_spkr_xmit = mute_spkr_xmit;
   data.adc0_filter_bypass = adc0_filter_bypass;
   data.adc1_filter_bypass = adc1_filter_bypass;
   data.split = split;
@@ -3030,6 +3032,7 @@ static void *client_thread(void* arg) {
       OCtune = data.OCtune;
       mute_rx_while_transmitting = data.mute_rx_while_transmitting;
       mute_spkr_amp = data.mute_spkr_amp;
+      mute_spkr_xmit = data.mute_spkr_xmit;
       adc0_filter_bypass = data.adc0_filter_bypass;
       adc1_filter_bypass = data.adc1_filter_bypass;
       split = data.split;
@@ -4615,6 +4618,7 @@ static int remote_command(void *data) {
     mic_bias_enabled = command->mic_bias_enabled;
     pa_enabled = command->pa_enabled;
     mute_spkr_amp = command->mute_spkr_amp;
+    mute_spkr_xmit = command->mute_spkr_xmit;
     hl2_audio_codec = command->hl2_audio_codec;
     soapy_iqswap = command->soapy_iqswap;
     enable_tx_inhibit = command->enable_tx_inhibit;

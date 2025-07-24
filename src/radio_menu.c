@@ -875,6 +875,12 @@ void radio_menu(GtkWidget *parent) {
     gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
     g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mute_spkr_amp);
     col++;
+    ChkBtn = gtk_check_button_new_with_label("Mute Spkr when TX");
+    gtk_widget_set_name(ChkBtn, "boldlabel");
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), mute_spkr_xmit);
+    gtk_grid_attach(GTK_GRID(grid), ChkBtn, col, row, 1, 1);
+    g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &mute_spkr_xmit);
+    col++;
   }
   break;
 

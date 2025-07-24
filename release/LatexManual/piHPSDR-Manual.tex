@@ -1323,6 +1323,14 @@ If checked, the audio amplifier driving the speakers (either the speaker jacks i
 back panel, or the built-in speakers) is disabled. This does not affect the audio signal
 at the headphone jack.
 
+\rett{Mute Spkr when TX} This box only appears on Anan-7000/8000 and G2 radios using protocol 2.
+If checked, it mutes the audio amplifier driving the speakers upon transmit only.
+Note that this box has no effect if TXing in CW mode or TUNE-ing such that a side tone
+is not muted. It is generally \textit{not recommended} to use this option, because the
+speakers emit an audible ``pop'' each time the speaker amplifier is muted or un-muted.
+Some users have reported RFI problems with the speakers and this option has been added
+to make it possible to mute the speakers during transmit only.
+
 \rett{Enable TxInhibit Input} This box only appears for HPSDR (and not for SoapySDR)
 radios.
 For  protocol 1, TxInhibit is signalled for most radios by the Hermes IO1 bit being
@@ -2729,7 +2737,7 @@ zero if the SWR exceeds the threshold.
 
 \rett{SWR-dependent Sidetone with TUNE} If this box is checked, there will be a side tone while TUNE-ing.
 This side tone is similar to a string of dots or dashes, separated by pauses which are 50 msec long.
-The SWR is encoded both in the length and the frequency of the "dashes".  The higher 
+The SWR is encoded both in the length and the frequency of the "dashes".  The higher
 the SWR, the higher (with a limit of 5000 Hz) the pitch, an ideal 1:1 SWR results in a minimum pitch
 of 500 Hz. Likewise, the "dot/dash" length is 50 msec for this ideal SWR and becomes longer as the SWR
 gets larger. So for ideal SWR, the side tones sounds like a string of CW dots at 24 wpm at a pitch of
