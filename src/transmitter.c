@@ -2291,7 +2291,7 @@ void tx_off(const TRANSMITTER *tx) {
     SoapySDRDevice_writeGPIO(sdr, bank, 0x00);
 
     for (int i = 0; i < RECEIVERS; i++) {
-      soapy_protocol_unattenuate(receiver[i]); //unattenuate RX (relays for UHF+ are very leaky)
+      soapy_protocol_unattenuate(receiver[i]);
     }
   }
 
@@ -2305,7 +2305,7 @@ void tx_on(const TRANSMITTER *tx) {
   SetChannelState(tx->id, 1, 0);
 #ifdef SOAPYSDR
 
-  if (have_lime) {
+  if (have_lime && !duplex) {
     // LIME: "mute" receivers, execute TRX relay, connect TX antenna, set nominal TX drive
     for (int i = 0; i < RECEIVERS; i++) {
       soapy_protocol_attenuate(receiver[i]);

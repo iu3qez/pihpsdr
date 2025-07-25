@@ -943,6 +943,8 @@ void soapy_protocol_attenuate(RECEIVER *rx) {
 void soapy_protocol_unattenuate(RECEIVER *rx) {
   //
   // Restore nominal RF gain to recover from having "deaf-ened" it
+  // This must not do any harm if receivers have not been "deaf-ened" before
+  // (this is the case in DUPLEX).
   //
   soapy_protocol_set_gain(rx);
 }
