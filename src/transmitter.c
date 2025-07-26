@@ -2281,9 +2281,14 @@ void tx_off(const TRANSMITTER *tx) {
 #ifdef SOAPYSDR
 
   if (have_lime) {
-    // LIME: set TX gain to zero, disconnect antenna, execute TRX relay, and "unmute" receivers
-    soapy_protocol_set_tx_gain(tx, 0); //set gain to zero
-    soapy_protocol_set_tx_antenna(tx, 0); //set antenna to none which disconnects the output
+    //
+    // LIME: set TX gain to zero,
+    // disconnect antenna,
+    // execute TRX relay,
+    // set RX gains to nominal value
+    //
+    soapy_protocol_set_tx_gain(tx, 0);
+    soapy_protocol_set_tx_antenna(tx, 0); // 0 is NONE
     const char *bank = "MAIN"; //set GPIO to signal the relay to RX
     t_print("%s: Setting LIME GPIO to 0\n", __FUNCTION__);
     SoapySDRDevice *sdr = get_soapy_device();
@@ -2305,10 +2310,18 @@ void tx_on(const TRANSMITTER *tx) {
   SetChannelState(tx->id, 1, 0);
 #ifdef SOAPYSDR
 
-  if (have_lime && !duplex) {
-    // LIME: "mute" receivers, execute TRX relay, connect TX antenna, set nominal TX drive
-    for (int i = 0; i < RECEIVERS; i++) {
-      soapy_protocol_attenuate(receiver[i]);
+  if (have_lime) {
+    //
+    // LIME: "mute" receivers if not running duplex,
+    // execute TRX relay via GPIO,
+    // connect TX antenna,
+    // set nominal TX drive
+    //
+
+    if (!duplex) {
+      for (int i = 0; i < RECEIVERS; i++) {
+        soapy_protocol_attenuate(receiver[i]);
+      }
     }
 
     SoapySDRDevice *sdr = get_soapy_device();
