@@ -932,7 +932,7 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   rx_set_noise(rx);
   rx_set_fft_size(rx);
   rx_set_fft_latency(rx);
-  rx_set_offset(rx, 0);
+  rx_set_offset(rx, vfo[rx->id].offset);
   rx_set_af_gain(rx);
   rx_set_af_binaural(rx);
   rx_set_equalizer(rx);

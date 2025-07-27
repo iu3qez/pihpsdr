@@ -1731,9 +1731,6 @@ void radio_start_radio() {
     for (int id = 0; id < RECEIVERS; id++) {
       RECEIVER *rx = receiver[id];
       int rxadc = rx->adc;
-      soapy_protocol_set_automatic_gain(rx, adc[rxadc].agc);
-      soapy_protocol_set_rx_antenna(rx, adc[rxadc].antenna);
-      soapy_protocol_set_rx_frequency(rx, id);
 
       if (have_lime && RECEIVERS == 2) {
         //
@@ -1761,7 +1758,9 @@ void radio_start_radio() {
         soapy_protocol_start_receiver(rx);
       }
 
-      soapy_protocol_set_gain(rx);
+      soapy_protocol_set_automatic_gain(rx, adc[rxadc].agc);
+      soapy_protocol_set_rx_antenna(rx, adc[rxadc].antenna);
+      soapy_protocol_set_rx_frequency(rx, id);
 
       if (!adc[rxadc].agc) { soapy_protocol_set_gain(rx); }
 
