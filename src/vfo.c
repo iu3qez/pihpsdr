@@ -527,7 +527,7 @@ static inline void vfo_id_adjust_band(int v, long long f) {
   vfo[v].band = get_band_from_frequency(f);
   bandstack = bandstack_get_bandstack(vfo[v].band);
   vfo[v].bandstack = bandstack->current_entry;
-  radio_set_alex_antennas();
+  radio_apply_band_settings(1);
 }
 
 void vfo_xvtr_changed() {
@@ -662,7 +662,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     tx_set_dexp(transmitter);
     tx_set_equalizer(transmitter);
     suppress_popup_sliders = 1;
-    set_mic_gain(mode_settings[m].mic_gain);
+    radio_set_mic_gain(mode_settings[m].mic_gain);
     suppress_popup_sliders = 0;
   }
 
@@ -678,6 +678,7 @@ void vfo_id_band_changed(int id, int b) {
   const BAND *band;
   BANDSTACK *bandstack;
   int   oldmode = vfo[id].mode;
+  int   oldband = vfo[id].band;
 
   //
   // If the band is not equal to the current band, look at the frequency of the
@@ -744,14 +745,18 @@ void vfo_id_band_changed(int id, int b) {
     tx_set_ctcss(transmitter);
   }
 
-  //
-  // In the case of CTUN, the offset is re-calculated
-  // during vfo_vfos_changed ==> rx_vfo_changed ==> rx_frequency_changed
-  //
   if (id < receivers && oldmode != vfo[id].mode) {
     vfo_apply_mode_settings(receiver[id]);
   }
 
+  if (oldband != vfo[id].band) {
+    radio_apply_band_settings(SET(id == 0));
+  }
+
+  //
+  // In the case of CTUN, the offset is re-calculated
+  // during vfo_vfos_changed ==> rx_vfo_changed ==> rx_frequency_changed
+  //
   vfo_vfos_changed();
 }
 
@@ -933,7 +938,7 @@ void vfo_vfos_changed() {
   }
 
   radio_tx_vfo_changed();
-  radio_set_alex_antennas();
+  radio_apply_band_settings(0);
   //
   // radio_set_alex_antennas already scheduled a HighPrio and General packet,
   // but if the mode changed to/from CW, we also need a DUCspecific packet

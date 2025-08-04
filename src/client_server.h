@@ -125,7 +125,6 @@ enum _header_type_enum {
   INFO_ADC,
   INFO_BAND,
   INFO_BANDSTACK,
-  INFO_DAC,
   INFO_DISPLAY,
   INFO_MEMORY,
   INFO_PS,
@@ -140,7 +139,7 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01000012 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01000013 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
 #define AUDIO_DATA_SIZE 1024             // 1024 stereo samples
 
@@ -221,6 +220,7 @@ typedef struct __attribute__((__packed__)) _rxmenu_data {
   uint8_t dither;
   uint8_t random;
   uint8_t preamp;
+  uint8_t alex_attenuation;
   uint8_t adc0_filter_bypass;
   uint8_t adc1_filter_bypass;
 } RXMENU_DATA;
@@ -252,12 +252,11 @@ typedef struct __attribute__((__packed__)) _band_data {
   uint8_t  band;
   uint8_t  OCrx;
   uint8_t  OCtx;
-  uint8_t  alexRxAntenna;
-  uint8_t  alexTxAntenna;
-  uint8_t  alexAttenuation;
+  uint8_t  RxAntenna;
+  uint8_t  TxAntenna;
   uint8_t  disablePA;
   uint8_t  current;
-  uint16_t gain;
+  uint16_t gaincalib;
   mydouble pa_calibration;
   uint64_t frequencyMin;
   uint64_t frequencyMax;
@@ -360,18 +359,23 @@ typedef struct __attribute__((__packed__)) _radio_data {
   uint8_t  n_adc;
   uint8_t  diversity_enabled;
   uint8_t  soapy_iqswap;
-  uint8_t  soapy_rx_antennas;
+  uint8_t  soapy_rx1_antennas;
+  uint8_t  soapy_rx2_antennas;
   uint8_t  soapy_tx_antennas;
-  uint8_t  soapy_rx_gains;
+  uint8_t  soapy_rx1_gains;
+  uint8_t  soapy_rx2_gains;
   uint8_t  soapy_tx_gains;
   uint8_t  soapy_tx_channels;
-  uint8_t  soapy_rx_has_automatic_gain;
+  uint8_t  soapy_rx1_has_automatic_gain;
+  uint8_t  soapy_rx2_has_automatic_gain;
   //
   char     soapy_hardware_key[64];
   char     soapy_driver_key[64];
-  char     soapy_rx_antenna[8][64];
+  char     soapy_rx1_antenna[8][64];
+  char     soapy_rx2_antenna[8][64];
   char     soapy_tx_antenna[8][64];
-  char     soapy_rx_gain_elem_name[8][64];
+  char     soapy_rx1_gain_elem_name[8][64];
+  char     soapy_rx2_gain_elem_name[8][64];
   char     soapy_tx_gain_elem_name[8][64];
   //
   uint16_t pa_power;
@@ -388,15 +392,21 @@ typedef struct __attribute__((__packed__)) _radio_data {
   mydouble pa_trim[11];
   mydouble div_gain;
   mydouble div_phase;
-  mydouble soapy_rx_gain_step;
-  mydouble soapy_rx_gain_min;
-  mydouble soapy_rx_gain_max;
+  mydouble soapy_rx1_gain_step;
+  mydouble soapy_rx1_gain_min;
+  mydouble soapy_rx1_gain_max;
+  mydouble soapy_rx2_gain_step;
+  mydouble soapy_rx2_gain_min;
+  mydouble soapy_rx2_gain_max;
   mydouble soapy_tx_gain_step;
   mydouble soapy_tx_gain_min;
   mydouble soapy_tx_gain_max;
-  mydouble soapy_rx_gain_elem_step[8];
-  mydouble soapy_rx_gain_elem_min[8];
-  mydouble soapy_rx_gain_elem_max[8];
+  mydouble soapy_rx1_gain_elem_step[8];
+  mydouble soapy_rx1_gain_elem_min[8];
+  mydouble soapy_rx1_gain_elem_max[8];
+  mydouble soapy_rx2_gain_elem_step[8];
+  mydouble soapy_rx2_gain_elem_min[8];
+  mydouble soapy_rx2_gain_elem_max[8];
   mydouble soapy_tx_gain_elem_step[8];
   mydouble soapy_tx_gain_elem_min[8];
   mydouble soapy_tx_gain_elem_max[8];
@@ -441,17 +451,17 @@ typedef struct __attribute__((__packed__)) _dexp_data {
   mydouble dexp_hyst;
 } DEXP_DATA;
 
-typedef struct __attribute__((__packed__)) _dac_data {
-  HEADER header;
-  uint8_t antenna;
-  mydouble gain;
-} DAC_DATA;
-
 typedef struct __attribute__((__packed__)) _adc_data {
   HEADER header;
   uint8_t adc;
+  uint8_t random;
+  uint8_t dither;
+  uint8_t preamp;
+  uint8_t antenna;
+  uint8_t alex_attenuation;
+  uint8_t overload;
+  uint8_t filter_bypass;
   //
-  uint16_t antenna;
   uint16_t attenuation;
   //
   mydouble gain;
@@ -471,7 +481,7 @@ typedef struct __attribute__((__packed__)) _transmitter_data {
   uint8_t  display_detector_mode;
   uint8_t  display_average_mode;
   uint8_t  use_rx_filter;
-  uint8_t  alex_antenna;
+  uint8_t  antenna;
   uint8_t  puresignal;
   uint8_t  feedback;
   uint8_t  auto_on;
@@ -550,11 +560,6 @@ typedef struct __attribute__((__packed__)) _receiver_data {
   uint8_t display_detector_mode;
   uint8_t display_average_mode;
   uint8_t zoom;
-  uint8_t dither;
-  uint8_t random;
-  uint8_t preamp;
-  uint8_t alex_antenna;
-  uint8_t alex_attenuation;
   uint8_t squelch_enable;
   uint8_t binaural;
   uint8_t eq_enable;
@@ -882,7 +887,7 @@ extern void send_sample_rate(int s, int rx, int sample_rate);
 extern void send_sat(int s, int sat);
 extern void send_screen(int s, int hstack, int width);
 extern void send_sidetone_freq(int s, int freq);
-extern void send_soapy_rxant(int s);
+extern void send_soapy_rxant(int s, int id);
 extern void send_soapy_txant(int s);
 extern void send_soapy_agc(int s, int id);
 extern void send_split(int s, int state);

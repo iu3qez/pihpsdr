@@ -21,7 +21,6 @@
 #define _RADIO_H_
 
 #include "adc.h"
-#include "dac.h"
 #include "discovered.h"
 #include "receiver.h"
 #include "transmitter.h"
@@ -162,8 +161,7 @@ extern int mic_input_xlr;
 
 extern int receivers;
 
-extern ADC adc[2];
-extern DAC dac;
+extern ADC adc[3];
 
 extern int locked;
 
@@ -205,8 +203,6 @@ extern int pre_mox;
 extern int memory_tune;
 extern int full_tune;
 
-extern int adc0_overload;
-extern int adc1_overload;
 extern int tx_fifo_underrun;
 extern int tx_fifo_overrun;
 extern int high_swr_seen;
@@ -272,8 +268,6 @@ extern int hl2_cl1_input;
 
 extern int anan10E;
 
-extern int adc0_filter_bypass;   // Bypass ADC0 filters on receive
-extern int adc1_filter_bypass;   // Bypass ADC1 filters on receiver  (ANAN-7000/8000/G2)
 extern int mute_spkr_amp;        // Mute audio amplifier in radio    (ANAN-7000, G2)
 extern int mute_spkr_xmit;       // Mute audio amplifier in radio upon transmitting (ANAN-7000, G2)
 
@@ -304,7 +298,7 @@ extern void   radio_reconfigure_screen(void);
 extern void   radio_start_radio(void);
 extern void   radio_change_receivers(int r);
 extern void   radio_change_sample_rate(int rate);
-extern void   radio_set_alex_antennas(void);
+extern void   radio_apply_band_settings(int flag);
 extern void   radio_tx_vfo_changed(void);
 extern void   radio_split_toggle(void);
 extern void   radio_set_split(int v);
@@ -317,7 +311,11 @@ extern double radio_get_drive(void);
 extern void   radio_set_drive(double d);
 extern void   radio_calc_drive_level(void);
 extern void   radio_calc_tune_drive_level(void);
-extern void   radio_set_attenuation(int value);
+extern void   radio_set_attenuation(int id, int value);
+extern void   radio_set_random(int id, int value);
+extern void   radio_set_dither(int id, int value);
+extern void   radio_set_preamp(int id, int value);
+extern void   radio_set_c25_att(int id, int value);
 extern void   radio_set_alex_attenuation(int v);
 extern int    radio_is_transmitting(void);
 extern void   radio_set_satmode(int mode);
@@ -331,6 +329,13 @@ extern void   radio_protocol_stop(void);
 extern void   radio_protocol_restart(void);
 extern void   radio_start_auto_tune(void);
 extern void   radio_set_anan10E(int new);
+extern void   radio_set_squelch_enable(int id, int enable);
+extern void   radio_set_squelch(int id, double value);
+extern void   radio_set_agc_gain(int id, double value);
+extern void   radio_set_af_gain(int id, double value);
+extern void   radio_set_rf_gain(int id, double value);
+extern void   radio_set_mic_gain(double value);
+extern void   radio_set_linein_gain(double value);
 
 extern int compare_doubles(const void *a, const void *b);
 

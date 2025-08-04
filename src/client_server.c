@@ -77,7 +77,6 @@
 #include "audio.h"
 #include "client_server.h"
 #include "band.h"
-#include "dac.h"
 #include "diversity_menu.h"
 #include "discovered.h"
 #include "equalizer_menu.h"
@@ -668,8 +667,8 @@ static int send_periodic_data(gpointer arg) {
   DISPLAY_DATA disp_data;
   SYNC(disp_data.header.sync);
   disp_data.header.data_type = to_short(INFO_DISPLAY);
-  disp_data.adc0_overload = adc0_overload;
-  disp_data.adc1_overload = adc1_overload;
+  disp_data.adc0_overload = adc[0].overload;
+  disp_data.adc1_overload = adc[1].overload;
   disp_data.high_swr_seen = high_swr_seen;
   disp_data.tx_fifo_overrun = tx_fifo_overrun;
   disp_data.tx_fifo_underrun = tx_fifo_underrun;
@@ -704,11 +703,12 @@ void send_rxmenu(int sock, int id) {
   SYNC(data.header.sync);
   data.header.data_type = to_short(CMD_RXMENU);
   data.id = id;
-  data.dither = receiver[id]->dither;
-  data.random = receiver[id]->random;
-  data.preamp = receiver[id]->preamp;
-  data.adc0_filter_bypass = adc0_filter_bypass;
-  data.adc1_filter_bypass = adc1_filter_bypass;
+  data.dither = adc[id].dither;
+  data.random = adc[id].random;
+  data.preamp = adc[id].preamp;
+  data.alex_attenuation = adc[id].alex_attenuation;
+  data.adc0_filter_bypass = adc[0].filter_bypass;
+  data.adc1_filter_bypass = adc[1].filter_bypass;
   send_bytes(sock, (char *)&data, sizeof(RXMENU_DATA));
 }
 
@@ -781,12 +781,11 @@ void send_band_data(int sock, int b) {
   data.band = b;
   data.OCrx = band->OCrx;
   data.OCtx = band->OCtx;
-  data.alexRxAntenna = band->alexRxAntenna;
-  data.alexTxAntenna = band->alexTxAntenna;
-  data.alexAttenuation = band->alexAttenuation;
+  data.RxAntenna = band->RxAntenna;
+  data.TxAntenna = band->TxAntenna;
   data.disablePA = band->disablePA;
   data.current = band->bandstack->current_entry;
-  data.gain = to_short(band->gain);
+  data.gaincalib = to_short(band->gaincalib);
   data.pa_calibration = to_double(band->pa_calibration);
   data.frequencyMin = to_ll(band->frequencyMin);
   data.frequencyMax = to_ll(band->frequencyMax);
@@ -855,8 +854,6 @@ void send_radio_data(int sock) {
   data.mute_rx_while_transmitting = mute_rx_while_transmitting;
   data.mute_spkr_amp = mute_spkr_amp;
   data.mute_spkr_xmit = mute_spkr_xmit;
-  data.adc0_filter_bypass = adc0_filter_bypass;
-  data.adc1_filter_bypass = adc1_filter_bypass;
   data.split = split;
   data.sat_mode = sat_mode;
   data.duplex = duplex;
@@ -870,30 +867,41 @@ void send_radio_data(int sock) {
   data.n_adc = n_adc;
   data.diversity_enabled = diversity_enabled;
   data.soapy_iqswap = soapy_iqswap;
-  data.soapy_rx_antennas = radio->info.soapy.rx_antennas;
-  data.soapy_tx_antennas = radio->info.soapy.tx_antennas;
-  data.soapy_rx_gains = radio->info.soapy.rx_gains;
-  data.soapy_tx_gains = radio->info.soapy.tx_gains;
-  data.soapy_tx_channels = radio->info.soapy.tx_channels;
-  data.soapy_rx_has_automatic_gain = radio->info.soapy.rx_has_automatic_gain;
+  data.soapy_rx1_antennas = radio->soapy.rx[0].antennas;
+  data.soapy_rx2_antennas = radio->soapy.rx[1].antennas;
+  data.soapy_tx_antennas = radio->soapy.tx.antennas;
+  data.soapy_rx1_gains = radio->soapy.rx[0].gains;
+  data.soapy_rx2_gains = radio->soapy.rx[1].gains;
+  data.soapy_tx_gains = radio->soapy.tx.gains;
+  data.soapy_tx_channels = radio->soapy.tx_channels;
+  data.soapy_rx1_has_automatic_gain = radio->soapy.rx[0].has_automatic_gain;
+  data.soapy_rx2_has_automatic_gain = radio->soapy.rx[1].has_automatic_gain;
   //
-  memcpy(data.soapy_hardware_key, radio->info.soapy.hardware_key, 64);
-  memcpy(data.soapy_driver_key, radio->info.soapy.driver_key, 64);
+  memcpy(data.soapy_hardware_key, radio->soapy.hardware_key, 64);
+  memcpy(data.soapy_driver_key, radio->soapy.driver_key, 64);
 
-  for (int i = 0; i < radio->info.soapy.rx_antennas; i++) {
-    memcpy(data.soapy_rx_antenna[i], radio->info.soapy.rx_antenna[i], 64);
+  for (int i = 0; i < radio->soapy.rx[0].antennas; i++) {
+    memcpy(data.soapy_rx1_antenna[i], radio->soapy.rx[0].antenna[i], 64);
   }
 
-  for (int i = 0; i < radio->info.soapy.tx_antennas; i++) {
-    memcpy(data.soapy_tx_antenna[i], radio->info.soapy.tx_antenna[i], 64);
+  for (int i = 0; i < radio->soapy.rx[1].antennas; i++) {
+    memcpy(data.soapy_rx2_antenna[i], radio->soapy.rx[1].antenna[i], 64);
   }
 
-  for (int i = 0; i < radio->info.soapy.rx_gains; i++) {
-    memcpy(data.soapy_rx_gain_elem_name[i], radio->info.soapy.rx_gain_elem_name[i], 64);
+  for (int i = 0; i < radio->soapy.tx.antennas; i++) {
+    memcpy(data.soapy_tx_antenna[i], radio->soapy.tx.antenna[i], 64);
   }
 
-  for (int i = 0; i < radio->info.soapy.tx_gains; i++) {
-    memcpy(data.soapy_tx_gain_elem_name[i], radio->info.soapy.tx_gain_elem_name[i], 64);
+  for (int i = 0; i < radio->soapy.rx[0].gains; i++) {
+    memcpy(data.soapy_rx1_gain_elem_name[i], radio->soapy.rx[0].gain_elem_name[i], 64);
+  }
+
+  for (int i = 0; i < radio->soapy.rx[1].gains; i++) {
+    memcpy(data.soapy_rx2_gain_elem_name[i], radio->soapy.rx[1].gain_elem_name[i], 64);
+  }
+
+  for (int i = 0; i < radio->soapy.tx.gains; i++) {
+    memcpy(data.soapy_tx_gain_elem_name[i], radio->soapy.tx.gain_elem_name[i], 64);
   }
 
   //
@@ -915,23 +923,32 @@ void send_radio_data(int sock) {
     data.pa_trim[i] = to_double(pa_trim[i]);
   }
 
-  data.soapy_rx_gain_step = to_double(radio->info.soapy.rx_gain_step);
-  data.soapy_rx_gain_min  = to_double(radio->info.soapy.rx_gain_min );
-  data.soapy_rx_gain_max  = to_double(radio->info.soapy.rx_gain_max );
-  data.soapy_tx_gain_step = to_double(radio->info.soapy.tx_gain_step);
-  data.soapy_tx_gain_min  = to_double(radio->info.soapy.tx_gain_min );
-  data.soapy_tx_gain_max  = to_double(radio->info.soapy.tx_gain_max );
+  data.soapy_rx1_gain_step = to_double(radio->soapy.rx[0].gain_step);
+  data.soapy_rx1_gain_min  = to_double(radio->soapy.rx[0].gain_min );
+  data.soapy_rx1_gain_max  = to_double(radio->soapy.rx[0].gain_max );
+  data.soapy_rx2_gain_step = to_double(radio->soapy.rx[1].gain_step);
+  data.soapy_rx2_gain_min  = to_double(radio->soapy.rx[1].gain_min );
+  data.soapy_rx2_gain_max  = to_double(radio->soapy.rx[1].gain_max );
+  data.soapy_tx_gain_step = to_double(radio->soapy.tx.gain_step);
+  data.soapy_tx_gain_min  = to_double(radio->soapy.tx.gain_min );
+  data.soapy_tx_gain_max  = to_double(radio->soapy.tx.gain_max );
 
-  for (int i = 0; i < radio->info.soapy.rx_gains; i++) {
-    data.soapy_rx_gain_elem_step[i] = to_double(radio->info.soapy.rx_gain_elem_step[i]);
-    data.soapy_rx_gain_elem_min[i] = to_double(radio->info.soapy.rx_gain_elem_min[i]);
-    data.soapy_rx_gain_elem_max[i] = to_double(radio->info.soapy.rx_gain_elem_max[i]);
+  for (int i = 0; i < radio->soapy.rx[0].gains; i++) {
+    data.soapy_rx1_gain_elem_step[i] = to_double(radio->soapy.rx[0].gain_elem_step[i]);
+    data.soapy_rx1_gain_elem_min[i] = to_double(radio->soapy.rx[0].gain_elem_min[i]);
+    data.soapy_rx1_gain_elem_max[i] = to_double(radio->soapy.rx[0].gain_elem_max[i]);
   }
 
-  for (int i = 0; i < radio->info.soapy.tx_gains; i++) {
-    data.soapy_tx_gain_elem_step[i] = to_double(radio->info.soapy.tx_gain_elem_step[i]);
-    data.soapy_tx_gain_elem_min[i] = to_double(radio->info.soapy.tx_gain_elem_min[i]);
-    data.soapy_tx_gain_elem_max[i] = to_double(radio->info.soapy.tx_gain_elem_max[i]);
+  for (int i = 0; i < radio->soapy.rx[1].gains; i++) {
+    data.soapy_rx2_gain_elem_step[i] = to_double(radio->soapy.rx[1].gain_elem_step[i]);
+    data.soapy_rx2_gain_elem_min[i] = to_double(radio->soapy.rx[1].gain_elem_min[i]);
+    data.soapy_rx2_gain_elem_max[i] = to_double(radio->soapy.rx[1].gain_elem_max[i]);
+  }
+
+  for (int i = 0; i < radio->soapy.tx.gains; i++) {
+    data.soapy_tx_gain_elem_step[i] = to_double(radio->soapy.tx.gain_elem_step[i]);
+    data.soapy_tx_gain_elem_min[i] = to_double(radio->soapy.tx.gain_elem_min[i]);
+    data.soapy_tx_gain_elem_max[i] = to_double(radio->soapy.tx.gain_elem_max[i]);
   }
 
   //
@@ -942,21 +959,17 @@ void send_radio_data(int sock) {
   send_bytes(sock, (char *)&data, sizeof(RADIO_DATA));
 }
 
-void send_dac_data(int sock) {
-  DAC_DATA data;
-  SYNC(data.header.sync);
-  data.header.data_type = to_short(INFO_DAC);
-  data.antenna = dac.antenna;
-  data.gain    = to_double(dac.gain);
-  send_bytes(sock, (char *)&data, sizeof(DAC_DATA));
-}
-
 void send_adc_data(int sock, int i) {
   ADC_DATA data;
   SYNC(data.header.sync);
   data.header.data_type = to_short(INFO_ADC);
   data.adc = i;
-  data.antenna = to_short(adc[i].antenna);
+  data.preamp = adc[i].preamp;
+  data.dither = adc[i].dither;
+  data.random = adc[i].random;
+  data.antenna = adc[i].antenna;
+  data.alex_attenuation = adc[i].alex_attenuation;
+  data.filter_bypass = adc[i].filter_bypass;
   data.attenuation = to_short(adc[i].attenuation);
   data.gain = to_double(adc[i].gain);
   data.min_gain = to_double(adc[i].min_gain);
@@ -976,7 +989,7 @@ static void send_tx_data(int sock) {
     data.display_detector_mode = tx->display_detector_mode;
     data.display_average_mode = tx->display_average_mode;
     data.use_rx_filter = tx->use_rx_filter;
-    data.alex_antenna = tx->alex_antenna;
+    data.antenna = tx->antenna;
     data.puresignal = tx->puresignal;
     data.feedback = tx->feedback;
     data.auto_on = tx->auto_on;
@@ -1057,11 +1070,6 @@ static void send_rx_data(int sock, int id) {
   data.display_detector_mode = rx->display_detector_mode;
   data.display_average_mode  = rx->display_average_mode;
   data.zoom                  = rx->zoom;
-  data.dither                = rx->dither;
-  data.random                = rx->random;
-  data.preamp                = rx->preamp;
-  data.alex_antenna          = rx->alex_antenna;
-  data.alex_attenuation      = rx->alex_attenuation;
   data.squelch_enable        = rx->squelch_enable;
   data.binaural              = rx->binaural;
   data.eq_enable             = rx->eq_enable;
@@ -1169,10 +1177,6 @@ static void server_loop() {
   //
   send_adc_data(remoteclient.socket, 0);
   send_adc_data(remoteclient.socket, 1);
-  //
-  // send DAC data structure
-  //
-  send_dac_data(remoteclient.socket);
 
   //
   // Send filter edges of the Var1 and Var2 filters
@@ -1355,20 +1359,6 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(ADC_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
-      }
-    }
-    break;
-
-    case INFO_DAC: {
-      //
-      // Sending DAC data from the client to the server has a very limited scope:
-      // - antenna (for SoapySDR)
-      //
-      DAC_DATA *command = g_new(DAC_DATA, 1);
-      command->header = header;
-
-      if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(DAC_DATA) - sizeof(HEADER)) > 0) {
         g_idle_add(remote_command, command);
       }
     }
@@ -2219,7 +2209,7 @@ void send_psatt(int s) {
     header.b1 = transmitter->auto_on;
     header.b2 = transmitter->feedback;
     header.s1 = to_short(transmitter->attenuation);
-    header.s2 = to_short(receiver[PS_RX_FEEDBACK]->alex_antenna);
+    header.s2 = to_short(adc[2].antenna);
     send_bytes(s, (char *)&header, sizeof(HEADER));
   }
 }
@@ -2302,20 +2292,23 @@ void send_heartbeat(int s) {
   send_bytes(s, (char *)&header, sizeof(HEADER));
 }
 
-void send_soapy_rxant(int s) {
+void send_soapy_rxant(int s, int id) {
   HEADER header;
   SYNC(header.sync);
   header.data_type = to_short(CMD_SOAPY_RXANT);
-  header.b1 = adc[0].antenna;
+  header.b1 = id;
+  header.b2 = adc[id].antenna;
   send_bytes(s, (char *)&header, sizeof(HEADER));
 }
 
 void send_soapy_txant(int s) {
-  HEADER header;
-  SYNC(header.sync);
-  header.data_type = to_short(CMD_SOAPY_TXANT);
-  header.b1 = dac.antenna;
-  send_bytes(s, (char *)&header, sizeof(HEADER));
+  if (can_transmit) {
+    HEADER header;
+    SYNC(header.sync);
+    header.data_type = to_short(CMD_SOAPY_TXANT);
+    header.b1 = transmitter->antenna;
+    send_bytes(s, (char *)&header, sizeof(HEADER));
+  }
 }
 
 void send_soapy_agc(int s, int id) {
@@ -2861,8 +2854,8 @@ static void *client_thread(void* arg) {
 
       if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(data) - sizeof(HEADER)) < 0) { return NULL; }
 
-      adc0_overload = data.adc0_overload;
-      adc1_overload = data.adc1_overload;
+      adc[0].overload = data.adc0_overload;
+      adc[1].overload = data.adc1_overload;
       high_swr_seen = data.high_swr_seen;
       tx_fifo_overrun = data.tx_fifo_overrun;
       tx_fifo_underrun = data.tx_fifo_underrun;
@@ -2881,7 +2874,7 @@ static void *client_thread(void* arg) {
       //
       if (can_transmit) {
         if (data.txzero && transmitter->drive > 0.4) {
-          set_drive(0.0);
+          radio_set_drive(0.0);
         }
       }
     }
@@ -2954,12 +2947,11 @@ static void *client_thread(void* arg) {
       snprintf(band->title, sizeof(band->title), "%s", data.title);
       band->OCrx = data.OCrx;
       band->OCtx = data.OCtx;
-      band->alexRxAntenna = data.alexRxAntenna;
-      band->alexTxAntenna = data.alexTxAntenna;
-      band->alexAttenuation = data.alexAttenuation;
+      band->RxAntenna = data.RxAntenna;
+      band->TxAntenna = data.TxAntenna;
       band->disablePA = data.disablePA;
       band->bandstack->current_entry = data.current;
-      band->gain = from_short(data.gain);
+      band->gaincalib = from_short(data.gaincalib);
       band->pa_calibration = from_double(data.pa_calibration);
       band->frequencyMin = from_ll(data.frequencyMin);
       band->frequencyMax = from_ll(data.frequencyMax);
@@ -3033,8 +3025,6 @@ static void *client_thread(void* arg) {
       mute_rx_while_transmitting = data.mute_rx_while_transmitting;
       mute_spkr_amp = data.mute_spkr_amp;
       mute_spkr_xmit = data.mute_spkr_xmit;
-      adc0_filter_bypass = data.adc0_filter_bypass;
-      adc1_filter_bypass = data.adc1_filter_bypass;
       split = data.split;
       sat_mode = data.sat_mode;
       duplex = data.duplex;
@@ -3048,30 +3038,41 @@ static void *client_thread(void* arg) {
       n_adc = data.n_adc;
       diversity_enabled = data.diversity_enabled;
       soapy_iqswap = data.soapy_iqswap;
-      radio->info.soapy.rx_antennas = data.soapy_rx_antennas;
-      radio->info.soapy.tx_antennas = data.soapy_tx_antennas;
-      radio->info.soapy.rx_gains = data.soapy_rx_gains;
-      radio->info.soapy.tx_gains = data.soapy_tx_gains;
-      radio->info.soapy.tx_channels = data.soapy_tx_channels;
-      radio->info.soapy.rx_has_automatic_gain = data.soapy_rx_has_automatic_gain;
+      radio->soapy.rx[0].antennas = data.soapy_rx1_antennas;
+      radio->soapy.rx[1].antennas = data.soapy_rx2_antennas;
+      radio->soapy.tx.antennas = data.soapy_tx_antennas;
+      radio->soapy.rx[0].gains = data.soapy_rx1_gains;
+      radio->soapy.rx[1].gains = data.soapy_rx2_gains;
+      radio->soapy.tx.gains = data.soapy_tx_gains;
+      radio->soapy.tx_channels = data.soapy_tx_channels;
+      radio->soapy.rx[0].has_automatic_gain = data.soapy_rx1_has_automatic_gain;
+      radio->soapy.rx[1].has_automatic_gain = data.soapy_rx2_has_automatic_gain;
       //
-      memcpy(radio->info.soapy.hardware_key, data.soapy_hardware_key, 64);
-      memcpy(radio->info.soapy.driver_key, data.soapy_driver_key, 64);
+      memcpy(radio->soapy.hardware_key, data.soapy_hardware_key, 64);
+      memcpy(radio->soapy.driver_key, data.soapy_driver_key, 64);
 
-      for (int i = 0; i < radio->info.soapy.rx_antennas; i++) {
-        memcpy(radio->info.soapy.rx_antenna[i], data.soapy_rx_antenna[i], 64);
+      for (int i = 0; i < radio->soapy.rx[0].antennas; i++) {
+        memcpy(radio->soapy.rx[0].antenna[i], data.soapy_rx1_antenna[i], 64);
       }
 
-      for (int i = 0; i < radio->info.soapy.tx_antennas; i++) {
-        memcpy(radio->info.soapy.tx_antenna[i], data.soapy_tx_antenna[i], 64);
+      for (int i = 0; i < radio->soapy.rx[1].antennas; i++) {
+        memcpy(radio->soapy.rx[1].antenna[i], data.soapy_rx2_antenna[i], 64);
       }
 
-      for (int i = 0; i < radio->info.soapy.rx_gains; i++) {
-        memcpy(radio->info.soapy.rx_gain_elem_name[i], data.soapy_rx_gain_elem_name[i], 64);
+      for (int i = 0; i < radio->soapy.tx.antennas; i++) {
+        memcpy(radio->soapy.tx.antenna[i], data.soapy_tx_antenna[i], 64);
       }
 
-      for (int i = 0; i < radio->info.soapy.tx_gains; i++) {
-        memcpy(radio->info.soapy.tx_gain_elem_name[i], data.soapy_tx_gain_elem_name[i], 64);
+      for (int i = 0; i < radio->soapy.rx[0].gains; i++) {
+        memcpy(radio->soapy.rx[0].gain_elem_name[i], data.soapy_rx1_gain_elem_name[i], 64);
+      }
+
+      for (int i = 0; i < radio->soapy.rx[1].gains; i++) {
+        memcpy(radio->soapy.rx[1].gain_elem_name[i], data.soapy_rx2_gain_elem_name[i], 64);
+      }
+
+      for (int i = 0; i < radio->soapy.tx.gains; i++) {
+        memcpy(radio->soapy.tx.gain_elem_name[i], data.soapy_tx_gain_elem_name[i], 64);
       }
 
       //
@@ -3093,23 +3094,32 @@ static void *client_thread(void* arg) {
         pa_trim[i] = from_double(data.pa_trim[i]);
       }
 
-      radio->info.soapy.rx_gain_step = from_double(data.soapy_rx_gain_step);
-      radio->info.soapy.rx_gain_min  = from_double(data.soapy_rx_gain_min );
-      radio->info.soapy.rx_gain_max  = from_double(data.soapy_rx_gain_max );
-      radio->info.soapy.tx_gain_step = from_double(data.soapy_tx_gain_step);
-      radio->info.soapy.tx_gain_min  = from_double(data.soapy_tx_gain_min );
-      radio->info.soapy.tx_gain_max  = from_double(data.soapy_tx_gain_max );
+      radio->soapy.rx[0].gain_step = from_double(data.soapy_rx1_gain_step);
+      radio->soapy.rx[0].gain_min  = from_double(data.soapy_rx1_gain_min );
+      radio->soapy.rx[0].gain_max  = from_double(data.soapy_rx1_gain_max );
+      radio->soapy.rx[1].gain_step = from_double(data.soapy_rx2_gain_step);
+      radio->soapy.rx[1].gain_min  = from_double(data.soapy_rx2_gain_min );
+      radio->soapy.rx[1].gain_max  = from_double(data.soapy_rx2_gain_max );
+      radio->soapy.tx.gain_step = from_double(data.soapy_tx_gain_step);
+      radio->soapy.tx.gain_min  = from_double(data.soapy_tx_gain_min );
+      radio->soapy.tx.gain_max  = from_double(data.soapy_tx_gain_max );
 
-      for (int i = 0; i < radio->info.soapy.rx_gains; i++) {
-        radio->info.soapy.rx_gain_elem_step[i] = from_double(data.soapy_rx_gain_elem_step[i]);
-        radio->info.soapy.rx_gain_elem_min [i] = from_double(data.soapy_rx_gain_elem_min [i]);
-        radio->info.soapy.rx_gain_elem_max [i] = from_double(data.soapy_rx_gain_elem_max [i]);
+      for (int i = 0; i < radio->soapy.rx[0].gains; i++) {
+        radio->soapy.rx[0].gain_elem_step[i] = from_double(data.soapy_rx1_gain_elem_step[i]);
+        radio->soapy.rx[0].gain_elem_min [i] = from_double(data.soapy_rx1_gain_elem_min [i]);
+        radio->soapy.rx[0].gain_elem_max [i] = from_double(data.soapy_rx1_gain_elem_max [i]);
       }
 
-      for (int i = 0; i < radio->info.soapy.tx_gains; i++) {
-        radio->info.soapy.tx_gain_elem_step[i] = from_double(data.soapy_tx_gain_elem_step[i]);
-        radio->info.soapy.tx_gain_elem_min [i] = from_double(data.soapy_tx_gain_elem_min [i]);
-        radio->info.soapy.tx_gain_elem_max [i] = from_double(data.soapy_tx_gain_elem_max [i]);
+      for (int i = 0; i < radio->soapy.rx[1].gains; i++) {
+        radio->soapy.rx[1].gain_elem_step[i] = from_double(data.soapy_rx2_gain_elem_step[i]);
+        radio->soapy.rx[1].gain_elem_min [i] = from_double(data.soapy_rx2_gain_elem_min [i]);
+        radio->soapy.rx[1].gain_elem_max [i] = from_double(data.soapy_rx2_gain_elem_max [i]);
+      }
+
+      for (int i = 0; i < radio->soapy.tx.gains; i++) {
+        radio->soapy.tx.gain_elem_step[i] = from_double(data.soapy_tx_gain_elem_step[i]);
+        radio->soapy.tx.gain_elem_min [i] = from_double(data.soapy_tx_gain_elem_min [i]);
+        radio->soapy.tx.gain_elem_max [i] = from_double(data.soapy_tx_gain_elem_max [i]);
       }
 
       //
@@ -3119,22 +3129,12 @@ static void *client_thread(void* arg) {
       radio->frequency_max = from_ll(data.radio_frequency_max);
 
       if (protocol == SOAPYSDR_PROTOCOL) {
-        radio->info.soapy.sample_rate = soapy_radio_sample_rate;
+        radio->soapy.sample_rate = soapy_radio_sample_rate;
       }
 
-      g_idle_add(ext_att_type_changed, NULL);
+      g_idle_add(sliders_att_type_changed, NULL);
       snprintf(title, sizeof(title), "piHPSDR: %s remote at %s", radio->name, server);
       g_idle_add(ext_set_title, (void *)title);
-    }
-    break;
-
-    case INFO_DAC: {
-      DAC_DATA data;
-
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(DAC_DATA) - sizeof(HEADER)) < 0) { return NULL; }
-
-      dac.antenna = data.antenna;
-      dac.gain = from_double(data.gain);
     }
     break;
 
@@ -3144,6 +3144,12 @@ static void *client_thread(void* arg) {
       if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(ADC_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       int i = data.adc;
+      adc[i].preamp = data.preamp;
+      adc[i].dither = data.dither;
+      adc[i].random = data.random;
+      adc[i].antenna = data.antenna;
+      adc[i].alex_attenuation = data.alex_attenuation;
+      adc[i].filter_bypass = data.filter_bypass;
       adc[i].antenna = from_short(data.antenna);
       adc[i].attenuation = from_short(data.attenuation);
       adc[i].gain = from_double(data.gain);
@@ -3174,11 +3180,6 @@ static void *client_thread(void* arg) {
       rx->display_detector_mode = data.display_detector_mode;
       rx->display_average_mode  = data.display_average_mode;
       rx->zoom                  = data.zoom;
-      rx->dither                = data.dither;
-      rx->random                = data.random;
-      rx->preamp                = data.preamp;
-      rx->alex_antenna          = data.alex_antenna;
-      rx->alex_attenuation      = data.alex_attenuation;
       rx->squelch_enable        = data.squelch_enable;
       rx->binaural              = data.binaural;
       rx->eq_enable             = data.eq_enable;
@@ -3241,7 +3242,7 @@ static void *client_thread(void* arg) {
       transmitter->display_detector_mode     = data.display_detector_mode;
       transmitter->display_average_mode      = data.display_average_mode;
       transmitter->use_rx_filter             = data.use_rx_filter;
-      transmitter->alex_antenna              = data.alex_antenna;
+      transmitter->antenna                   = data.antenna;
       transmitter->puresignal                = data.puresignal;
       transmitter->feedback                  = data.feedback;
       transmitter->auto_on                   = data.auto_on;
@@ -3465,17 +3466,8 @@ static void *client_thread(void* arg) {
       int id = header.b1;
       long long rate = from_ll(cmd.u64);
 
-      if (protocol == NEW_PROTOCOL) {
-        receiver[id]->sample_rate = (int)rate;
-        receiver[id]->hz_per_pixel = (double)receiver[id]->sample_rate / (double)receiver[id]->pixels;
-      } else {
-        soapy_radio_sample_rate = (int)rate;
-
-        for (id = 0; id < receivers; id++) {
-          receiver[id]->sample_rate = (int)rate;
-          receiver[id]->hz_per_pixel = (double)receiver[id]->sample_rate / (double)receiver[id]->pixels;
-        }
-      }
+      receiver[id]->sample_rate = (int)rate;
+      receiver[id]->hz_per_pixel = (double)receiver[id]->sample_rate / (double)receiver[id]->pixels;
     }
     break;
 
@@ -3612,7 +3604,8 @@ static void *client_thread(void* arg) {
 
     case CMD_ATTENUATION: {
       int id = header.b1;
-      adc[receiver[id]->adc].attenuation = from_short(header.s1);
+      double value = (double) from_short(header.s1);
+      radio_set_attenuation(id, value);
     }
     break;
 
@@ -3788,12 +3781,11 @@ static int remote_command(void *data) {
     snprintf(band->title, sizeof(band->title), "%s", band_data->title);
     band->OCrx = band_data->OCrx;
     band->OCtx = band_data->OCtx;
-    band->alexRxAntenna = band_data->alexRxAntenna;
-    band->alexTxAntenna = band_data->alexTxAntenna;
-    band->alexAttenuation = band_data->alexAttenuation;
+    band->RxAntenna = band_data->RxAntenna;
+    band->TxAntenna = band_data->TxAntenna;
     band->disablePA = band_data->disablePA;
     band->bandstack->current_entry = band_data->current;
-    band->gain = from_short(band_data->gain);
+    band->gaincalib = from_short(band_data->gaincalib);
     band->pa_calibration = from_double(band_data->pa_calibration);
     band->frequencyMin = from_ll(band_data->frequencyMin);
     band->frequencyMax = from_ll(band_data->frequencyMax);
@@ -3802,7 +3794,7 @@ static int remote_command(void *data) {
     //
     // make some changes effective
     //
-    radio_set_alex_antennas();
+    radio_apply_band_settings(0);
     radio_calc_drive_level();
     schedule_high_priority();
   }
@@ -3841,34 +3833,19 @@ static int remote_command(void *data) {
   break;
 
   case INFO_ADC: {
-    //
-    // Sending ADC data from the client to the server has a very limited scope:
-    // - antenna (for SoapySDR)
-    //
     const ADC_DATA *command = (ADC_DATA *)data;
     int id = command->adc;
+    adc[id].preamp = command->preamp;
+    adc[id].dither = command->dither;
+    adc[id].random = command->random;
+    adc[id].antenna = command->antenna;
+    adc[id].alex_attenuation = command->alex_attenuation;
+    adc[id].filter_bypass = command->filter_bypass;
     adc[id].antenna = from_short(command->antenna);
 #ifdef SOAPYSDR
 
-    if (id == 0 && device == SOAPYSDR_USB_DEVICE) {
-      soapy_protocol_set_rx_antenna(receiver[0], adc[0].antenna);
-    }
-
-#endif
-  }
-  break;
-
-  case INFO_DAC: {
-    //
-    // Sending DAC data from the client to the server has a very limited scope:
-    // - antenna (for SoapySDR)
-    //
-    const DAC_DATA *command = (DAC_DATA *)data;
-    dac.antenna = from_short(command->antenna);
-#ifdef SOAPYSDR
-
-    if (device == SOAPYSDR_USB_DEVICE && can_transmit) {
-      soapy_protocol_set_tx_antenna(transmitter, dac.antenna);
+    if (device == SOAPYSDR_USB_DEVICE) {
+      soapy_protocol_set_rx_antenna(id, adc[id].antenna);
     }
 
 #endif
@@ -3993,19 +3970,19 @@ static int remote_command(void *data) {
 
   case CMD_VOLUME: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *)data;
-    set_af_gain(command->header.b1, from_double(command->dbl));
+    radio_set_af_gain(command->header.b1, from_double(command->dbl));
   }
   break;
 
   case CMD_MICGAIN: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *)data;
-    set_mic_gain(from_double(command->dbl));
+    radio_set_mic_gain(from_double(command->dbl));
   }
   break;
 
   case CMD_DRIVE: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *)data;
-    set_drive(from_double(command->dbl));
+    radio_set_drive(from_double(command->dbl));
   }
   break;
 
@@ -4088,7 +4065,7 @@ static int remote_command(void *data) {
     if (r < receivers) {
       RECEIVER *rx = receiver[r];
       rx->agc_hang_threshold = from_double(agc_gain_command->hang_thresh);
-      set_agc_gain(r, from_double(agc_gain_command->gain));
+      radio_set_agc_gain(r, from_double(agc_gain_command->gain));
       rx_set_agc(rx);
       //
       // Now hang and thresh have been calculated and need be sent back
@@ -4100,26 +4077,25 @@ static int remote_command(void *data) {
 
   case CMD_RFGAIN: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *) data;
-    set_rf_gain(command->header.b1, from_double(command->dbl));
+    radio_set_rf_gain(command->header.b1, from_double(command->dbl));
   }
   break;
 
   case CMD_ATTENUATION: {
-    int att = from_short(header->s1);
-    set_attenuation_value((double)att);
-    send_attenuation(remoteclient.socket, active_receiver->id, att);
+    int id = header->b1;
+    double att = (double) from_short(header->s1);
+    radio_set_attenuation(id, att);
+    send_attenuation(remoteclient.socket, id, att);
   }
   break;
 
   case CMD_SQUELCH: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *)data;
-    int r = command->header.b1;
-
-    if (r < receivers) {
-      receiver[r]->squelch_enable = command->header.b2;
-      receiver[r]->squelch = from_double(command->dbl);
-      set_squelch(receiver[r]);
-    }
+    int id = command->header.b1;
+    int en = command->header.b2;
+    double val = from_double(command->dbl);
+    radio_set_squelch(id, val);
+    radio_set_squelch_enable(id, en);
   }
   break;
 
@@ -4293,9 +4269,11 @@ static int remote_command(void *data) {
 
   case CMD_SOAPY_RXANT: {
     if (device == SOAPYSDR_USB_DEVICE) {
-      adc[0].antenna = header->b1;
+      int id = header->b1;
+      int ant = header->b2;
+      adc[id].antenna = ant;
 #ifdef SOAPYSDR
-      soapy_protocol_set_rx_antenna(receiver[0], adc[0].antenna);
+      soapy_protocol_set_rx_antenna(id, ant);
 #endif
     }
   }
@@ -4303,9 +4281,9 @@ static int remote_command(void *data) {
 
   case CMD_SOAPY_TXANT: {
     if (device == SOAPYSDR_USB_DEVICE && can_transmit) {
-      dac.antenna = header->b1;
+      transmitter->antenna = header->b1;
 #ifdef SOAPYSDR
-      soapy_protocol_set_tx_antenna(transmitter, dac.antenna);
+      soapy_protocol_set_tx_antenna(transmitter->antenna);
 #endif
     }
   }
@@ -4317,9 +4295,9 @@ static int remote_command(void *data) {
       int agc = header->b2;
       adc[id].agc = agc;
 #ifdef SOAPYSDR
-      soapy_protocol_set_automatic_gain(active_receiver, agc);
+      soapy_protocol_set_automatic_gain(id, agc);
 
-      if (!agc) { soapy_protocol_set_gain(active_receiver); }
+      if (!agc) { soapy_protocol_set_rx_gain(id); }
 
 #endif
     }
@@ -4640,13 +4618,24 @@ static int remote_command(void *data) {
   break;
 
   case CMD_RXMENU: {
+    //
+    // cannot use send_agc since we transfer bypass info
+    // from both ADCs
+    // Data included here is what is changed in the RX menu
+    //
     const RXMENU_DATA *command = (RXMENU_DATA *)data;
     int id = command->id;
-    receiver[id]->dither = command->dither;
-    receiver[id]->random = command->random;
-    receiver[id]->preamp = command->preamp;
-    adc0_filter_bypass = command->adc0_filter_bypass;
-    adc1_filter_bypass = command->adc1_filter_bypass;
+    adc[id].dither = command->dither;
+    adc[id].random = command->random;
+    adc[id].preamp = command->preamp;
+    adc[id].alex_attenuation = command->alex_attenuation;
+    adc[0].filter_bypass = command->adc0_filter_bypass;
+    adc[1].filter_bypass = command->adc1_filter_bypass;
+
+    if (id == 0) {
+      radio_set_alex_attenuation(command->alex_attenuation);
+    }
+
     schedule_receive_specific();
     schedule_high_priority();
   }
@@ -4708,7 +4697,7 @@ static int remote_command(void *data) {
     drive_digi_max = from_double(command->dbl);
 
     if ((mode == modeDIGL || mode == modeDIGU) && transmitter->drive > drive_digi_max + 0.5) {
-      set_drive(drive_digi_max);
+      radio_set_drive(drive_digi_max);
     }
   }
   break;
@@ -4800,7 +4789,7 @@ static int remote_command(void *data) {
       transmitter->auto_on = header->b1;
       transmitter->feedback = header->b2;
       transmitter->attenuation = from_short(header->s1);
-      receiver[PS_RX_FEEDBACK]->alex_antenna = from_short(header->s2);
+      adc[2].antenna = from_short(header->s2);
       schedule_high_priority();
     }
   }

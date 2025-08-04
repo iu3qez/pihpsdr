@@ -202,18 +202,22 @@ void waterfall_update(RECEIVER *rx) {
       int id = rx->id;
       int b = vfo[id].band;
       const BAND *band = band_get_band(b);
-      int calib = rx_gain_calibration - band->gain;
+      int calib = rx_gain_calibration - band->gaincalib;
       //
       // soffset contains all corrections due to attenuation, preamps, etc.
       //
       soffset = (float)(calib + adc[rx->adc].attenuation - adc[rx->adc].gain);
 
       if (filter_board == ALEX && rx->adc == 0) {
-        soffset += (float)(10 * rx->alex_attenuation - 20 * rx->preamp);
+        soffset += (float)(10 * adc[0].alex_attenuation);
       }
 
       if (filter_board == CHARLY25 && rx->adc == 0) {
-        soffset += (float)(12 * rx->alex_attenuation - 18 * rx->preamp - 18 * rx->dither);
+        soffset += (float)(12 * adc[0].alex_attenuation - 18 * (adc[0].preamp + adc[0].dither));
+      }
+
+      if (have_preamp && filter_board != CHARLY25) {
+        soffset -= (float)(20 * adc[rx->adc].preamp);
       }
 
       average = 0.0F;

@@ -40,6 +40,8 @@ static GtkWidget *dialog = NULL;
 static GtkWidget *local_audio_b = NULL;
 static GtkWidget *output = NULL;
 static RECEIVER *myrx;
+static int myadc;
+static int myid;
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -58,42 +60,23 @@ static gboolean close_cb () {
 }
 
 static void dither_cb(GtkWidget *widget, gpointer data) {
-  myrx->dither = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-  if (radio_is_remote) {
-    send_rxmenu(client_socket, myrx->id);
-    return;
-  }
-
-  schedule_receive_specific();
+  int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  radio_set_dither(myid, val);
 }
 
 static void random_cb(GtkWidget *widget, gpointer data) {
-  myrx->random = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-  if (radio_is_remote) {
-    send_rxmenu(client_socket, myrx->id);
-    return;
-  }
-
-  schedule_receive_specific();
+  int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  radio_set_random(myid, val);
 }
 
 static void preamp_cb(GtkWidget *widget, gpointer data) {
-  myrx->preamp = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-  if (radio_is_remote) {
-    send_rxmenu(client_socket, myrx->id);
-  }
-
-  schedule_receive_specific();
+  int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  radio_set_preamp(myid, val);
 }
 
 static void alex_att_cb(GtkWidget *widget, gpointer data) {
-  if (have_alex_att) {
-    int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-    radio_set_alex_attenuation(val);
-  }
+  int val = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+  radio_set_alex_attenuation(val);
 }
 
 static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
@@ -107,17 +90,18 @@ static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
   if (sscanf(p, "%d", &samplerate) != 1) { return; }
 
   if (radio_is_remote) {
-    send_sample_rate(client_socket, myrx->id, samplerate);
-  } else {
-    rx_change_sample_rate(myrx, samplerate);
+    send_sample_rate(client_socket, myid, samplerate);
+    return;
   }
+
+  rx_change_sample_rate(myrx, samplerate);
 }
 
 static void adc_cb(GtkToggleButton *widget, gpointer data) {
   myrx->adc = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
   if (radio_is_remote) {
-    send_adc(client_socket, myrx->id, myrx->adc);
+    send_adc(client_socket, myid, myadc);
     return;
   }
 
@@ -125,7 +109,7 @@ static void adc_cb(GtkToggleButton *widget, gpointer data) {
 }
 
 static void local_audio_cb(GtkWidget *widget, gpointer data) {
-  t_print("local_audio_cb: rx=%d\n", myrx->id);
+  t_print("local_audio_cb: rx=%d\n", myid);
 
   if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
     if (audio_open_output(myrx) == 0) {
@@ -153,24 +137,16 @@ static void mute_radio_cb(GtkWidget *widget, gpointer data) {
   myrx->mute_radio = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 }
 
-static void adc0_filter_bypass_cb(GtkWidget *widget, gpointer data) {
-  adc0_filter_bypass = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+static void adc_filter_bypass_cb(GtkWidget *widget, gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  adc[id].filter_bypass = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_rxmenu(client_socket, myrx->id);
-  } else {
-    schedule_high_priority();
+    send_rxmenu(client_socket, myadc);
+    return;
   }
-}
 
-static void adc1_filter_bypass_cb(GtkWidget *widget, gpointer data) {
-  adc1_filter_bypass = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-  if (radio_is_remote) {
-    send_rxmenu(client_socket, myrx->id);
-  } else {
-    schedule_high_priority();
-  }
+  schedule_high_priority();
 }
 
 //
@@ -185,7 +161,7 @@ static void local_output_changed_cb(GtkWidget *widget, gpointer data) {
   }
 
   if (i >= 0) {
-    t_print("local_output_changed rx=%d %s\n", myrx->id, output_devices[i].name);
+    t_print("local_output_changed rx=%d %s\n", myid, output_devices[i].name);
     snprintf(myrx->audio_name, sizeof(myrx->audio_name), "%s", output_devices[i].name);
   }
 
@@ -196,7 +172,7 @@ static void local_output_changed_cb(GtkWidget *widget, gpointer data) {
     }
   }
 
-  t_print("local_output_changed rx=%d local_audio=%d\n", myrx->id, myrx->local_audio);
+  t_print("local_output_changed rx=%d local_audio=%d\n", myid, myrx->local_audio);
 }
 
 static void audio_channel_cb(GtkWidget *widget, gpointer data) {
@@ -226,7 +202,9 @@ void rx_menu(GtkWidget *parent) {
   // This guards against changing the active receivere while the menu is open
   //
   myrx = active_receiver;
-  snprintf(title, sizeof(title), "piHPSDR - Receive (RX%d VFO-%s)", myrx->id + 1, myrx->id == 0 ? "A" : "B");
+  myadc = myrx->adc;
+  myid = myrx->id;
+  snprintf(title, sizeof(title), "piHPSDR - Receive (RX%d VFO-%s)", myid + 1, myid == 0 ? "A" : "B");
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
@@ -293,9 +271,9 @@ void rx_menu(GtkWidget *parent) {
     break;
     }
 
-    if (filter_board == ALEX && myrx->adc == 0 && have_alex_att) {
+    if (filter_board == ALEX && myadc == 0 && have_alex_att) {
       //
-      // The "Alex ATT" value is stored in receiver[0] no matter how the ADCs are selected
+      // The "Alex ATT" only exists for ADC0
       //
       GtkWidget *alex_att_label = gtk_label_new("Alex Attenuator");
       gtk_widget_set_name(alex_att_label, "boldlabel");
@@ -306,7 +284,7 @@ void rx_menu(GtkWidget *parent) {
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(alex_att_combo_box), NULL, "10 dB");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(alex_att_combo_box), NULL, "20 dB");
       gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(alex_att_combo_box), NULL, "30 dB");
-      gtk_combo_box_set_active(GTK_COMBO_BOX(alex_att_combo_box), receiver[0]->alex_attenuation);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(alex_att_combo_box), adc[0].alex_attenuation);
       my_combo_attach(GTK_GRID(grid), alex_att_combo_box, 1, row, 1, 1);
       g_signal_connect(alex_att_combo_box, "changed", G_CALLBACK(alex_att_cb), NULL);
       row++;
@@ -331,7 +309,7 @@ void rx_menu(GtkWidget *parent) {
         gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(adc_combo_box), NULL, label);
       }
 
-      gtk_combo_box_set_active(GTK_COMBO_BOX(adc_combo_box), myrx->adc);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(adc_combo_box), myadc);
       my_combo_attach(GTK_GRID(grid), adc_combo_box, 1, row, 1, 1);
       g_signal_connect(adc_combo_box, "changed", G_CALLBACK(adc_cb), NULL);
       row++;
@@ -341,12 +319,12 @@ void rx_menu(GtkWidget *parent) {
       // We assume  Dither/Random are either both available or both not available
       GtkWidget *dither_b = gtk_check_button_new_with_label("Dither");
       gtk_widget_set_name(dither_b, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), myrx->dither);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dither_b), adc[myadc].dither);
       gtk_grid_attach(GTK_GRID(grid), dither_b, 0, row, 1, 1);
       g_signal_connect(dither_b, "toggled", G_CALLBACK(dither_cb), NULL);
       GtkWidget *random_b = gtk_check_button_new_with_label("Random");
       gtk_widget_set_name(random_b, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), myrx->random);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (random_b), adc[myadc].random);
       gtk_grid_attach(GTK_GRID(grid), random_b, 1, row, 1, 1);
       g_signal_connect(random_b, "toggled", G_CALLBACK(random_cb), NULL);
       row++;
@@ -355,7 +333,7 @@ void rx_menu(GtkWidget *parent) {
     if (have_preamp) {
       GtkWidget *preamp_b = gtk_check_button_new_with_label("Preamp");
       gtk_widget_set_name(preamp_b, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (preamp_b), myrx->preamp);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (preamp_b), adc[myadc].preamp);
       gtk_grid_attach(GTK_GRID(grid), preamp_b, 0, row, 1, 1);
       g_signal_connect(preamp_b, "toggled", G_CALLBACK(preamp_cb), NULL);
       row++;
@@ -385,16 +363,16 @@ void rx_menu(GtkWidget *parent) {
   if (filter_board == ALEX) {
     GtkWidget *adc0_filter_bypass_b = gtk_check_button_new_with_label("Bypass ADC0 RX filters");
     gtk_widget_set_name(adc0_filter_bypass_b, "boldlabel");
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (adc0_filter_bypass_b), adc0_filter_bypass);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (adc0_filter_bypass_b), adc[0].filter_bypass);
     gtk_grid_attach(GTK_GRID(grid), adc0_filter_bypass_b, 0, row, 2, 1);
-    g_signal_connect(adc0_filter_bypass_b, "toggled", G_CALLBACK(adc0_filter_bypass_cb), NULL);
+    g_signal_connect(adc0_filter_bypass_b, "toggled", G_CALLBACK(adc_filter_bypass_cb), GINT_TO_POINTER(0));
 
     if (device == DEVICE_ORION2 || device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN) {
       GtkWidget *adc1_filter_bypass_b = gtk_check_button_new_with_label("Bypass ADC1 RX filters");
       gtk_widget_set_name(adc1_filter_bypass_b, "boldlabel");
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (adc1_filter_bypass_b), adc1_filter_bypass);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (adc1_filter_bypass_b), adc[1].filter_bypass);
       gtk_grid_attach(GTK_GRID(grid), adc1_filter_bypass_b, 2, row, 1, 1);
-      g_signal_connect(adc1_filter_bypass_b, "toggled", G_CALLBACK(adc1_filter_bypass_cb), NULL);
+      g_signal_connect(adc1_filter_bypass_b, "toggled", G_CALLBACK(adc_filter_bypass_cb), GINT_TO_POINTER(1));
     }
   }
 

@@ -595,43 +595,43 @@ void new_protocol_init() {
     }
 
     // bind to the interface
-    if (bind(data_socket, (struct sockaddr * )&radio->info.network.interface_address,
-             radio->info.network.interface_length) < 0) {
+    if (bind(data_socket, (struct sockaddr * )&radio->network.interface_address,
+             radio->network.interface_length) < 0) {
       t_perror("bind socket failed for data_socket:");
       g_idle_add(fatal_error, "FATAL: P2 Bind failed for data socket");
     }
 
     t_print("new_protocol_init: data_socket %d bound to interface %s:%d\n", data_socket,
-            inet_ntoa(radio->info.network.interface_address.sin_addr), ntohs(radio->info.network.interface_address.sin_port));
-    memcpy(&base_addr, &radio->info.network.address, radio->info.network.address_length);
-    base_addr_length = radio->info.network.address_length;
+            inet_ntoa(radio->network.interface_address.sin_addr), ntohs(radio->network.interface_address.sin_port));
+    memcpy(&base_addr, &radio->network.address, radio->network.address_length);
+    base_addr_length = radio->network.address_length;
     base_addr.sin_port = htons(GENERAL_REGISTERS_FROM_HOST_PORT);
-    //t_print("base_addr=%s\n",inet_ntoa(radio->info.network.address.sin_addr));
-    memcpy(&receiver_addr, &radio->info.network.address, radio->info.network.address_length);
-    receiver_addr_length = radio->info.network.address_length;
+    //t_print("base_addr=%s\n",inet_ntoa(radio->network.address.sin_addr));
+    memcpy(&receiver_addr, &radio->network.address, radio->network.address_length);
+    receiver_addr_length = radio->network.address_length;
     receiver_addr.sin_port = htons(RECEIVER_SPECIFIC_REGISTERS_FROM_HOST_PORT);
-    //t_print("receive_addr=%s\n",inet_ntoa(radio->info.network.address.sin_addr));
-    memcpy(&transmitter_addr, &radio->info.network.address, radio->info.network.address_length);
-    transmitter_addr_length = radio->info.network.address_length;
+    //t_print("receive_addr=%s\n",inet_ntoa(radio->network.address.sin_addr));
+    memcpy(&transmitter_addr, &radio->network.address, radio->network.address_length);
+    transmitter_addr_length = radio->network.address_length;
     transmitter_addr.sin_port = htons(TRANSMITTER_SPECIFIC_REGISTERS_FROM_HOST_PORT);
-    //t_print("transmit_addr=%s\n",inet_ntoa(radio->info.network.address.sin_addr));
-    memcpy(&high_priority_addr, &radio->info.network.address, radio->info.network.address_length);
-    high_priority_addr_length = radio->info.network.address_length;
+    //t_print("transmit_addr=%s\n",inet_ntoa(radio->network.address.sin_addr));
+    memcpy(&high_priority_addr, &radio->network.address, radio->network.address_length);
+    high_priority_addr_length = radio->network.address_length;
     high_priority_addr.sin_port = htons(HIGH_PRIORITY_FROM_HOST_PORT);
-    //t_print("high_priority_addr=%s\n",inet_ntoa(radio->info.network.address.sin_addr));
+    //t_print("high_priority_addr=%s\n",inet_ntoa(radio->network.address.sin_addr));
     //t_print("new_protocol_thread: high_priority_addr setup for port %d\n",HIGH_PRIORITY_FROM_HOST_PORT);
-    memcpy(&audio_addr, &radio->info.network.address, radio->info.network.address_length);
-    audio_addr_length = radio->info.network.address_length;
+    memcpy(&audio_addr, &radio->network.address, radio->network.address_length);
+    audio_addr_length = radio->network.address_length;
     audio_addr.sin_port = htons(AUDIO_FROM_HOST_PORT);
-    //t_print("audio_addr=%s\n",inet_ntoa(radio->info.network.address.sin_addr));
-    memcpy(&iq_addr, &radio->info.network.address, radio->info.network.address_length);
-    iq_addr_length = radio->info.network.address_length;
+    //t_print("audio_addr=%s\n",inet_ntoa(radio->network.address.sin_addr));
+    memcpy(&iq_addr, &radio->network.address, radio->network.address_length);
+    iq_addr_length = radio->network.address_length;
     iq_addr.sin_port = htons(TX_IQ_FROM_HOST_PORT);
 
-    //t_print("iq_addr=%s\n",inet_ntoa(radio->info.network.address.sin_addr));
+    //t_print("iq_addr=%s\n",inet_ntoa(radio->network.address.sin_addr));
     for (i = 0; i < MAX_DDC; i++) {
-      memcpy(&data_addr[i], &radio->info.network.address, radio->info.network.address_length);
-      data_addr_length[i] = radio->info.network.address_length;
+      memcpy(&data_addr[i], &radio->network.address, radio->network.address_length);
+      data_addr_length[i] = radio->network.address_length;
       data_addr[i].sin_port = htons(RX_IQ_TO_HOST_PORT_0 + i);
     }
   }
@@ -903,7 +903,7 @@ static void new_protocol_high_priority() {
   // Orion2/G2 XVTR relay and audio disable
   //
   if (device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN) {
-    if (receiver[0]->alex_antenna == 5) {
+    if (adc[0].antenna == 5) {
       //
       //                  route TXout to XvtrOut out when using XVTR input
       //                  (this is the condition also implemented in old_protocol)
@@ -958,7 +958,7 @@ static void new_protocol_high_priority() {
     //
     // ANAN7000/8000 and SATURN do not have ALEX attenuators.
     //
-    switch (receiver[0]->alex_attenuation) {
+    switch (adc[0].alex_attenuation) {
     case 0:
       alex0 |= ALEX_ATTENUATION_0dB;
       break;
@@ -1033,7 +1033,7 @@ static void new_protocol_high_priority() {
       BPFfreq = DDCfrequency[0];
     }
 
-    if (adc0_filter_bypass) {
+    if (adc[0].filter_bypass) {
       BPFfreq = 0LL;
     }
 
@@ -1072,7 +1072,7 @@ static void new_protocol_high_priority() {
       BPFfreq = DDCfrequency[0];
     }
 
-    if (adc1_filter_bypass) {
+    if (adc[1].filter_bypass) {
       BPFfreq = 0LL;
     }
 
@@ -1122,9 +1122,9 @@ static void new_protocol_high_priority() {
     }
 
     // Bypass HPFs if using EXT1 for PureSignal feedback!
-    if (xmit && transmitter->puresignal && receiver[PS_RX_FEEDBACK]->alex_antenna == 6) { HPFfreq = 0LL; }
+    if (xmit && transmitter->puresignal && adc[2].antenna == 6) { HPFfreq = 0LL; }
 
-    if (adc0_filter_bypass) {
+    if (adc[0].filter_bypass) {
       HPFfreq = 0LL;
     }
 
@@ -1156,7 +1156,7 @@ static void new_protocol_high_priority() {
   //
   LPFfreq = DUCfrequency;
 
-  if (!xmit && (device != NEW_DEVICE_ORION2 && device != NEW_DEVICE_SATURN) && receiver[0]->alex_antenna < 3) {
+  if (!xmit && (device != NEW_DEVICE_ORION2 && device != NEW_DEVICE_SATURN) && adc[0].antenna < 3) {
     LPFfreq = 40000000LL;  // disable the LPF
 
     if (receiver[0]->adc == 0) {
@@ -1169,7 +1169,7 @@ static void new_protocol_high_priority() {
       }
     }
 
-    if (adc0_filter_bypass) {
+    if (adc[0].filter_bypass) {
       LPFfreq = 40000000LL;   // disable LPF
     }
   }
@@ -1212,16 +1212,16 @@ static void new_protocol_high_priority() {
   //
   //  Set bits that route Ext1/Ext2/XVRTin to the RX
   //
-  //  If transmitting with PureSignal, we must use the alex_antenna
+  //  If transmitting with PureSignal, we must use the antenna
   //  settings of the PS_RX_FEEDBACK receiver
   //
   //  ANAN-7000 routes signals differently (these bits have no function on ANAN-80000)
   //            and uses ALEX0(14) to connnect Ext/XvrtIn to the RX.
   //
-  rxant = receiver[0]->alex_antenna;                      // 0,1,2  or 3,4,5
+  rxant = adc[0].antenna;                      // 0,1,2  or 3,4,5
 
   if (xmit && transmitter->puresignal) {
-    rxant = receiver[PS_RX_FEEDBACK]->alex_antenna;     // 0, 6, or 7
+    rxant = adc[2].antenna;     // 0, 6, or 7
   }
 
   if (device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN) {
@@ -1291,20 +1291,19 @@ static void new_protocol_high_priority() {
   //  If receiving, let alex0 reflect the ANT1/2/3 setting for RX
   //  and alex1 that for TX. If transmitting, both reflect TX.
   //
-  txant = transmitter->alex_antenna;
-  // ASSUMPTION: receiver[0] is associated with the first ADC
-  rxant = receiver[0]->alex_antenna;
+  txant = transmitter->antenna;
+  rxant = adc[0].antenna;
 
   //
   // PARANOIA:
   // TX antenna outside allowed range: this cannot happen.
   // But we want to make *absolutely* sure that one of ANT1/2/2
   // is actually switched. So in the "impossible" case of an
-  // illegal value for transmitter->alex_antenna, set it to ANT1.
+  // illegal value for transmitter->antenna, set it to ANT1.
   //
   if (txant < 0 || txant > 2) {
     t_print("WARNING: illegal TX antenna chosen, using ANT1\n");
-    transmitter->alex_antenna = 0;
+    transmitter->antenna = 0;
     txant = 0;
   }
 
@@ -1553,6 +1552,8 @@ static void new_protocol_receive_specific() {
   receive_specific_buffer[2] = (rx_specific_sequence >>  8) & 0xFF;
   receive_specific_buffer[3] = (rx_specific_sequence      ) & 0xFF;
   receive_specific_buffer[4] = n_adc; // number of ADCs
+  receive_specific_buffer[5] = adc[0].dither | (adc[1].dither << 1);
+  receive_specific_buffer[6] = adc[0].random | (adc[1].random << 1);
 
   for (i = 0; i < receivers; i++) {
     // note that for HERMES, receiver[i] is associated with DDC(i) but beyond
@@ -1561,13 +1562,6 @@ static void new_protocol_receive_specific() {
 
     if (device == NEW_DEVICE_ANGELIA  || device == NEW_DEVICE_ORION ||
         device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN) { ddc = 2 + i; }
-
-    //
-    // If there is at least one RX which has the dither or random bit set,
-    // this bit is set for the corresponding ADC
-    //
-    receive_specific_buffer[5] |= receiver[i]->dither << receiver[i]->adc; // dither enable
-    receive_specific_buffer[6] |= receiver[i]->random << receiver[i]->adc; // random enable
 
     if (!xmit && !diversity_enabled) {
       // normal RX without diversity
@@ -1611,12 +1605,10 @@ static void new_protocol_receive_specific() {
     //    Some things are fixed.
     //    We always use DDC0 for the signals from ADC0, and DDC1 for the signals from ADC1
     //    The sample rate of both DDCs is that of receiver[0].
-    //    Boths ADCs take the dither/random setting from receiver[0]
+    //    Boths ADCs take the dither/random setting from ADC0
     //
-    receive_specific_buffer[5] |= receiver[0]->dither;                             // dither DDC0: take value from RX1
-    receive_specific_buffer[5] |= (receiver[0]->dither) << 1;                      // dither DDC1: take value from RX1
-    receive_specific_buffer[6] |= receiver[0]->random;                             // random DDC0: take value from RX1
-    receive_specific_buffer[6] |= (receiver[0]->random) << 1;                      // random DDC1: take value from RX1
+    receive_specific_buffer[5] = adc[0].dither | (adc[0].dither >> 1);
+    receive_specific_buffer[6] = adc[0].random | (adc[0].random >> 1);
     receive_specific_buffer[17] = 0;                                               // ADC0 associated with DDC0
     receive_specific_buffer[18] = ((receiver[0]->sample_rate / 1000) >> 8) & 0xFF; // sample rate MSB
     receive_specific_buffer[19] = ((receiver[0]->sample_rate / 1000)     ) & 0xFF; // sample rate LSB
@@ -2501,8 +2493,8 @@ static void process_high_priority() {
 
   tx_fifo_overrun |= (buffer[4] & 0x40) >> 6;
   tx_fifo_underrun |= (buffer[4] & 0x20) >> 5;
-  adc0_overload |= buffer[5] & 0x01;
-  adc1_overload |= ((buffer[5] & 0x02) >> 1);
+  adc[0].overload |= buffer[5] & 0x01;
+  adc[1].overload |= ((buffer[5] & 0x02) >> 1);
   //
   // During RX, HighPrio packets arrive every 50 msec
   // During TX, HighPrio packets arrive every    msec
