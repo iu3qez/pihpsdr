@@ -1,8 +1,23 @@
 #!/bin/sh
 
+
+#####################################################
+# It has been reported that on some systems,
+# /bin/sh is not present but /bin/zsh is. While I
+# regard this as a misconfiguration, what you can do
+# in this case is to change the first line of this
+# file as to read #!/bin/zsh
+#
+# Note we cannot use "env" since this must also work
+# for users (like me) that use csh.
+#
 #####################################################
 #
-# prepeare your Macintosh for compiling piHPSDR
+# This shell script prepeares your Macintosh for
+# compiling piHPSDR. To this end,
+#
+# - the HOMEBREW universe is initialized
+# - lots of HOMEBREW libraries are installes
 #
 ######################################################
 
@@ -115,6 +130,10 @@ $BREW install openssl@3
 ################################################################
 #
 # This is for the SoapySDR universe
+# If you do not plan to compile with SOAPYSDR, then any errors
+# which might occur here are of no concern to you
+#
+################################################################
 # There are even more radios supported for which you need
 # additional modules, for a list, goto the web page
 # https://formulae.brew.sh
@@ -129,6 +148,29 @@ $BREW install python-setuptools
 # re-install may be necessary (note parts the Soapy stuff
 # is always compiled from the sources).
 #
+################################################################
+# HOMEBREW/POTHOSWARE PROBLEM:
+#
+# Some SoapySDR modules cannot be compiled using the lastest
+# version (4) of CMAKE unless the option
+#
+# -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+#
+# is given during compilation.
+# To enable compilation of these modules, the file
+# (Homebrew)/Library/Homebrew/extend/os/mac/formula.rb needs
+# modification. Locate the following spot
+# (the last line has been added):
+#
+#       # Ensure CMake is using the same SDK we are using.
+#       args << "-DCMAKE_OSX_SYSROOT=#{MacOS.sdk_for_formula(self).path}" if MacOS.sdk_root_needed?
+#       args << "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+#
+# so the required option is added to the "standard cmake args"
+# unfortunately, this change is lost whenever you
+# update/upgrade homebrew.
+################################################################
+
 $BREW tap pothosware/pothos
 $BREW reinstall soapysdr
 $BREW reinstall pothosware/pothos/soapyplutosdr
@@ -136,10 +178,11 @@ $BREW reinstall pothosware/pothos/limesuite
 $BREW reinstall pothosware/pothos/soapyrtlsdr
 $BREW reinstall pothosware/pothos/soapyairspy
 #
-# NOTE: due to an error in the homebrew formula, airspayhf will not build
-#       on M2 macs since its homebrew formula contains an explicit reference
-#       to /usr/local. If /usr/local is sym-linked to /opt/homebrew/local,
-#       it works fine but this cannot be enforced.
+# NOTE: due to an error in the homebrew formula, airspayhf will
+#       not build on AppleSilicon macs since its homebrew formula
+#       contains an explicit reference to /usr/local.
+#       If /usr/local is sym-linked to /opt/homebrew/local,
+#       it works fine.
 #
 $BREW reinstall pothosware/pothos/soapyairspyhf
 $BREW reinstall pothosware/pothos/soapyhackrf
