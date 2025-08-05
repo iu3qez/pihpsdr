@@ -37,9 +37,17 @@ THISDIR="$(cd "$(dirname "$0")" && pwd -P)"
 ################################################################
   
 #
-# This installes the core of the homebrew universe
+# This installes the core of the homebrew universe, if it is not already present
 #
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+if [ -x /usr/local/bin/brew ] || [ -x /opt/homebrew/bin/brew ]; then
+  echo "==============================="
+  echo "=                             ="
+  echo "= HOMEBREW already installed! ="
+  echo "=                             ="
+  echo "==============================="
+else
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+fi
 
 #
 # At this point, there is a "brew" command either in /usr/local/bin (Intel Mac) or in
@@ -159,16 +167,21 @@ $BREW install python-setuptools
 # is given during compilation.
 # To enable compilation of these modules, the file
 # (Homebrew)/Library/Homebrew/extend/os/mac/formula.rb needs
-# modification. Locate the following spot
-# (the last line has been added):
+# modification. Here, (Homebrew) is /usr/local/homebrew on
+# Intel Macs and /opt/homebrew on AppleSilicon Macs.
+#
+# Locate the following spot (the last line has been added):
 #
 #       # Ensure CMake is using the same SDK we are using.
 #       args << "-DCMAKE_OSX_SYSROOT=#{MacOS.sdk_for_formula(self).path}" if MacOS.sdk_root_needed?
 #       args << "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 #
 # so the required option is added to the "standard cmake args"
-# unfortunately, this change is lost whenever you
-# update/upgrade homebrew.
+# Note this change is lost whenever you update/upgrade homebrew.
+#
+# You can apply the above fix and simply re-run this script,
+# since HOMEBREW will not be re-installed if already present.
+#
 ################################################################
 
 $BREW tap pothosware/pothos
