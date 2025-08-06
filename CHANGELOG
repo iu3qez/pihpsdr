@@ -3,6 +3,11 @@ LIST OF RECENT PIHPSDR CHANGES
 July 2025:
 ----------
 
+- The position of the ATT or RF-gain slider is now
+  stored "with the band", and upon band change,
+  the previously used attenuation/gain on that band
+  is restored (only for RX1)
+
 - added an option to mute the ANAN-7000/G2 speaker amp
   during transmit only (might be helpful if there are RFI
   problems).
@@ -10,8 +15,7 @@ July 2025:
 - added option to get a side tone while TUNE-ing which
   indicates the SWR.
 
-- SOAPY: better support for LIME-SDR, both the LIME-SDR
-  with 2RX and the LIME-Mini with 1RX
+- SOAPY: support for radios with 2RX, especially LIME
 
 June 2025:
 ----------

@@ -162,6 +162,7 @@ the waterfall is user-adjustable.}
 \item{Text-to-Speech now also in the discovery screen, and Text-to-Speech uses the MacOS native
 capability if compiled on MacOS.}
 \item{Better support for LIME-SDR (2RX) and LIME-mini (1RX) radios.}
+\item{Option to have an SWR-dependent side tone while TUNE-ing.}
 \end{itemize}
 
 \medskip
@@ -605,6 +606,10 @@ The \rett{ATT} slider controls a programmable attenuator in the RF front end of 
 HPSDR hardware, it goes from 0 to 31 dB. The HermesLite-II has a slider named \rett{RF} at this place,
 since this radio has a programmable preamplifier/attenuator that goes from -12 to +48 dB. For the STEMlab
 (RedPitaya based) radios, you find a combo-box here where you can select the fixed attenuators/preamps.
+Radios which have a programmable RF gain rather than an attenuator (e.g. the HermesLite-II) have an
+\rett{RF gain} slider at this position. Note that the position of these sliders is stored internally
+for each band, and restored upon a band change. The idea behind this is that one usually wants no
+attenuation, say, on the 10m band while it might be necessary to have some attenuation on the 80m band.
 
 The \rett{Mic} slider adds an amplification from -12 to +50 dB to the audio signal fed to the transmitter.
 This amplification is purely done numerically (no effect on any hardware) and applies to the audio signal
@@ -4798,7 +4803,9 @@ only one receiver is running.}
 {\color{red} This command is connected to the \texttt{ATT} slider in the slider area.}
 Changes the value (0-31 dB) of the step attenuator of the active receiver.
 This function is only available for radios that have such an attenuator. Increasing the attenuation
-is required if ADC overload occurs, otherwise there is little reason for having high attenuation.}
+is required if ADC overload occurs, otherwise there is little reason for having high attenuation.
+If the attenuation value is changed for RX1, this is stored "with the band" in a database.
+Changing the band for RX1 will set the attenuation from that database.}
 
 \phcommand{Band 10}{10}{B}
 {Change band of the active receiver to the 10m band. If already on that band, move to
@@ -5243,14 +5250,18 @@ radios that have such a
 gain control. Most HPSDR radios do not have RF  gain, they have a step attenuator in the RF front end
 instead. Small SDR radios
 using the AD9866 chip (HermesLite, RadioBerry) and radios connected via the SoapySDR library usually do have
-an RF gain control. If ADC overload occurs, one has to decrease the RF gain.}
+an RF gain control. If ADC overload occurs, one has to decrease the RF gain.
+If the attenuation value is changed for RX1, this is stored "with the band" in a database.
+Changing the band for RX1 will set the attenuation from that database.}
 
 \phcommand{RF Gain RX1}{RFGAIN1}{PE}{Set the gain of the RF front end of RX1. Only effective for radios that
 have such a
 gain control. Most HPSDR radios do not have RF  gain, they have a step attenuator in the RF front end
 instead. Small SDR radios
 using the AD9866 chip (HermesLite, RadioBerry) and radios connected via the SoapySDR library usually do have
-an RF gain control. If ADC overload occurs, one has to decrease the RF gain.}
+an RF gain control. If ADC overload occurs, one has to decrease the RF gain.
+If the attenuation value is changed for RX1, this is stored "with the band" in a database.
+Changing the band for RX1 will set the attenuation from that database.}
 
 \phcommand{RF Gain RX2}{RFGAIN2}{PE}{Set the gain of the RF front end of RX2. Only effective for radios that
 have such a
