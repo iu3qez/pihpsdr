@@ -273,7 +273,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(topgrid), label, 1, 1, 3, 1);
-  snprintf(text, sizeof(text), "Built %s, Version %s(%s)\nOptions: %s\nAudio module: %s",
+  snprintf(text, sizeof(text), "Built %s, Version %s (commit=%s)\nOptions: %s\nAudio module: %s",
            build_date, build_version, build_commit, build_options, build_audio);
   label = gtk_label_new(text);
   gtk_widget_set_name(label, "med_txt");
