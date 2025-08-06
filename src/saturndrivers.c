@@ -121,7 +121,6 @@ int DMAWriteToFPGA(int fd, unsigned char*SrcData, uint32_t Length, uint32_t AXIA
   ssize_t rc;                 // response code
   off_t OffsetAddr;
   OffsetAddr = AXIAddr;
-
   // write data to FPGA from memory buffer
   rc = pwrite(fd, SrcData, Length, OffsetAddr);
 
@@ -146,7 +145,6 @@ int DMAReadFromFPGA(int fd, unsigned char*DestData, uint32_t Length, uint32_t AX
   ssize_t rc;                 // response code
   off_t OffsetAddr;
   OffsetAddr = AXIAddr;
-
   // read data from FPGA to memory buffer
   rc = pread(fd, DestData, Length, OffsetAddr);
 

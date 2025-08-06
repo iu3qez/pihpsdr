@@ -2212,6 +2212,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       break;
 
     case 'U': //ZZGU
+
       //CATDEF    ZZGU
       //DESCR     Set/Read RX2 AGC
       //SET       ZZGUx;
@@ -2221,16 +2222,17 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //ENDDEF
       if (receivers > 1) {
         if (command[4] == ';') {
-        snprintf(reply,  sizeof(reply), "ZZGU%d;", receiver[1]->agc);
+          snprintf(reply,  sizeof(reply), "ZZGU%d;", receiver[1]->agc);
           send_resp(client->fd, reply) ;
         } else if (command[5] == ';') {
-        int agc = atoi(&command[4]);
+          int agc = atoi(&command[4]);
           // update RX2 AGC
           receiver[1]->agc = agc;
           rx_set_agc(receiver[1]);
           g_idle_add(ext_vfo_update, NULL);
         }
       }
+
       break;
 
     default:
@@ -2278,6 +2280,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       break;
 
     case 'C': //ZZLC
+
       //CATDEF    ZZLC
       //DESCR     Set/Read RX2 volume (AF slider)
       //SET       ZZLCxxx;
@@ -2287,9 +2290,9 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //ENDDEF
       if (receivers > 1) {
         if (command[4] == ';') {
-        // send reply back
-        snprintf(reply,  sizeof(reply), "ZZLC%03d;", (int)(255.0 * pow(10.0, 0.05 * receiver[1]->volume)));
-        send_resp(client->fd, reply) ;
+          // send reply back
+          snprintf(reply,  sizeof(reply), "ZZLC%03d;", (int)(255.0 * pow(10.0, 0.05 * receiver[1]->volume)));
+          send_resp(client->fd, reply) ;
         } else {
           int gain = atoi(&command[4]);
           double volume;
@@ -2304,6 +2307,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           radio_set_af_gain(1, volume);
         }
       }
+
       break;
 
     case 'I': //ZZLI
@@ -2359,6 +2363,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       break;
 
     case 'B': //ZZMB
+
       //CATDEF    ZZMB
       //DESCR     Mute/Unmute RX2
       //SET       ZZMBx;
@@ -2368,13 +2373,14 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
       //ENDDEF
       if (receivers > 1) {
         if (command[4] == ';') {
-        snprintf(reply,  sizeof(reply), "ZZMA%d;", receiver[1]->mute_radio);
+          snprintf(reply,  sizeof(reply), "ZZMA%d;", receiver[1]->mute_radio);
           send_resp(client->fd, reply) ;
         } else {
           int mute = atoi(&command[4]);
           receiver[1]->mute_radio = mute;
         }
       }
+
       break;
 
     case 'D': //ZZMD
@@ -3603,6 +3609,7 @@ static int parse_cmd(void *data) {
       //ENDDEF
       if (command[3] == ';') {
         int id = SET(command[2] == '1');
+
         if (id >= 0 && id < receivers) {
           snprintf(reply,  sizeof(reply), "AG%1d%03d;", id, (int)(255.0 * pow(10.0, 0.05 * receiver[id]->volume)));
           send_resp(client->fd, reply);
@@ -3912,9 +3919,11 @@ static int parse_cmd(void *data) {
         send_resp(client->fd, reply) ;
       } else if (command[3] == ';') {
         int id = SET(command[2] == '1');
+
         if (receivers > id) {
           schedule_action(id == 0 ? RX1 : RX2, PRESSED, 0);
         }
+
         g_idle_add(ext_vfo_update, NULL);
       }
 
@@ -5183,11 +5192,14 @@ static int parse_cmd(void *data) {
       //ENDDEF
       if (command[3] == ';') {
         int id = atoi(&command[2]);
+
         if (id >= 0 && id < receivers) {
           int val = (int)((receiver[id]->meter + 127.0) * 0.277778);
 
           if (val > 30) { val = 30; }
+
           if (val < 0 ) { val = 0; }
+
           snprintf(reply,  sizeof(reply), "SM%d%04d;", id, val);
           send_resp(client->fd, reply);
         }
@@ -5207,6 +5219,7 @@ static int parse_cmd(void *data) {
       //ENDDEF
       if (command[3] == ';') {
         int id = atoi(&command[2]);
+
         if (id >= 0 && id < receivers) {
           snprintf(reply,  sizeof(reply), "SQ%d%03d;", id, (int)((double)receiver[id]->squelch / 100.0 * 255.0 + 0.5));
           send_resp(client->fd, reply);

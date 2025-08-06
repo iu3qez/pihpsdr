@@ -60,9 +60,9 @@ enum _band_enum {
 struct _BAND {
   char title[16];                 // band title
   BANDSTACK *bandstack;           // pointer to band stack
-//
-// Data that can be changed via menus etc.
-//
+  //
+  // Data that can be changed via menus etc.
+  //
   unsigned char OCrx;             // OC bit pattern for RX
   unsigned char OCtx;             // OC bit pattern for TX
   int gaincalib;                  // band dependent RX gain offset
@@ -74,10 +74,10 @@ struct _BAND {
   long long frequencyLO;          // frequency offset
   long long errorLO;              // band dependent LO frequency correction
   int disablePA;                  // if 1, PA is disabled for this band
-//
-// Data that is automatically stored here, and applied whenever
-// a band change is done
-//
+  //
+  // Data that is automatically stored here, and applied whenever
+  // a band change is done
+  //
   int preamp;                     // This is to support C25 attenuation storage
   int dither;                     // This is to support C25 attenuation storage
   double gain;                    // position of the RF gain slider

@@ -106,63 +106,63 @@ static void modesettingsSaveState() {
   ASSERT_SERVER();
 
   for (int i = 0; i < MODES; i++) {
-    SetPropI1("modeset.%d.filter", i,                mode_settings[i].filter);
-    SetPropI1("modeset.%d.cwPeak", i,                mode_settings[i].cwPeak);
-    SetPropI1("modeset.%d.step", i,                  mode_settings[i].step);
-    SetPropI1("modeset.%d.rit_step", i,              mode_settings[i].rit_step);
-    SetPropI1("modeset.%d.nb", i,                    mode_settings[i].nb);
-    SetPropF1("modeset.%d.nb_tau", i,                mode_settings[i].nb_tau);
-    SetPropF1("modeset.%d.nb_hang", i,               mode_settings[i].nb_hang);
-    SetPropF1("modeset.%d.nb_advtime", i,            mode_settings[i].nb_advtime);
-    SetPropF1("modeset.%d.nb_thresh", i,             mode_settings[i].nb_thresh);
-    SetPropI1("modeset.%d.nb2_mode", i,              mode_settings[i].nb2_mode);
-    SetPropI1("modeset.%d.nr", i,                    mode_settings[i].nr);
-    SetPropI1("modeset.%d.nr_agc", i,                mode_settings[i].nr_agc);
-    SetPropI1("modeset.%d.nr2_gain_method", i,       mode_settings[i].nr2_gain_method);
-    SetPropI1("modeset.%d.nr2_npe_method", i,        mode_settings[i].nr2_npe_method);
-    SetPropI1("modeset.%d.nr2_ae", i,                mode_settings[i].nr2_ae);
-    SetPropF1("modeset.%d.nr2_trained_threshold", i, mode_settings[i].nr2_trained_threshold);
-    SetPropF1("modeset.%d.nr2_trained_t2", i,        mode_settings[i].nr2_trained_t2);
+    SetPropI1("modeset.%d.filter", i,                 mode_settings[i].filter);
+    SetPropI1("modeset.%d.cwPeak", i,                 mode_settings[i].cwPeak);
+    SetPropI1("modeset.%d.step", i,                   mode_settings[i].step);
+    SetPropI1("modeset.%d.rit_step", i,               mode_settings[i].rit_step);
+    SetPropI1("modeset.%d.nb", i,                     mode_settings[i].nb);
+    SetPropF1("modeset.%d.nb_tau", i,                 mode_settings[i].nb_tau);
+    SetPropF1("modeset.%d.nb_hang", i,                mode_settings[i].nb_hang);
+    SetPropF1("modeset.%d.nb_advtime", i,             mode_settings[i].nb_advtime);
+    SetPropF1("modeset.%d.nb_thresh", i,              mode_settings[i].nb_thresh);
+    SetPropI1("modeset.%d.nb2_mode", i,               mode_settings[i].nb2_mode);
+    SetPropI1("modeset.%d.nr", i,                     mode_settings[i].nr);
+    SetPropI1("modeset.%d.nr_agc", i,                 mode_settings[i].nr_agc);
+    SetPropI1("modeset.%d.nr2_gain_method", i,        mode_settings[i].nr2_gain_method);
+    SetPropI1("modeset.%d.nr2_npe_method", i,         mode_settings[i].nr2_npe_method);
+    SetPropI1("modeset.%d.nr2_ae", i,                 mode_settings[i].nr2_ae);
+    SetPropF1("modeset.%d.nr2_trained_threshold", i,  mode_settings[i].nr2_trained_threshold);
+    SetPropF1("modeset.%d.nr2_trained_t2", i,         mode_settings[i].nr2_trained_t2);
 #ifdef EXTNR
-    SetPropF1("modeset.%d.nr4_reduction_amount", i,  mode_settings[i].nr4_reduction_amount);
-    SetPropF1("modeset.%d.nr4_smoothing_factor", i,  mode_settings[i].nr4_smoothing_factor);
-    SetPropF1("modeset.%d.nr4_whitening_factor", i,  mode_settings[i].nr4_whitening_factor);
-    SetPropF1("modeset.%d.nr4_noise_rescale", i,     mode_settings[i].nr4_noise_rescale);
-    SetPropF1("modeset.%d.nr4_post_threshold", i,    mode_settings[i].nr4_post_threshold);
-#endif
-    SetPropI1("modeset.%d.anf", i,                   mode_settings[i].anf);
-    SetPropI1("modeset.%d.snb", i,                   mode_settings[i].snb);
-    SetPropI1("modeset.%d.agc", i,                   mode_settings[i].agc);
-    SetPropI1("modeset.%d.en_rxeq", i,               mode_settings[i].en_rxeq);
-    SetPropI1("modeset.%d.en_txeq", i,               mode_settings[i].en_txeq);
-    SetPropI1("modeset.%d.compressor", i,            mode_settings[i].compressor);
-    SetPropF1("modeset.%d.compressor_level", i,      mode_settings[i].compressor_level);
-    SetPropF1("modeset.%d.mic_gain", i,              mode_settings[i].mic_gain);
-    SetPropI1("modeset.%d.dexp", i,                  mode_settings[i].dexp);
-    SetPropI1("modeset.%d.dexp_trigger", i,          mode_settings[i].dexp_trigger);
-    SetPropF1("modeset.%d.dexp_tau", i,              mode_settings[i].dexp_tau);
-    SetPropF1("modeset.%d.dexp_attack", i,           mode_settings[i].dexp_attack);
-    SetPropF1("modeset.%d.dexp_release", i,          mode_settings[i].dexp_release);
-    SetPropF1("modeset.%d.dexp_hold", i,             mode_settings[i].dexp_hold);
-    SetPropI1("modeset.%d.dexp_exp", i,              mode_settings[i].dexp_exp);
-    SetPropF1("modeset.%d.dexp_hyst", i,             mode_settings[i].dexp_hyst);
-    SetPropI1("modeset.%d.dexp_filter", i,           mode_settings[i].dexp_filter);
-    SetPropI1("modeset.%d.dexp_filter_low", i,       mode_settings[i].dexp_filter_low);
-    SetPropI1("modeset.%d.dexp_filter_high", i,      mode_settings[i].dexp_filter_high);
-    SetPropI1("modeset.%d.cfc", i,                   mode_settings[i].cfc);
-    SetPropI1("modeset.%d.cfc_eq", i,                mode_settings[i].cfc_eq);
-    SetPropI1("modeset.%d.tx_default_filter_low", i, mode_settings[i].tx_default_filter_low);
-    SetPropI1("modeset.%d.tx_default_filter_high", i,mode_settings[i].tx_default_filter_high);
-    SetPropI1("modeset.%d.use_rx_filter", i,         mode_settings[i].use_rx_filter);
+    SetPropF1("modeset.%d.nr4_reduction_amount", i,   mode_settings[i].nr4_reduction_amount);
+    SetPropF1("modeset.%d.nr4_smoothing_factor", i,   mode_settings[i].nr4_smoothing_factor);
+    SetPropF1("modeset.%d.nr4_whitening_factor", i,   mode_settings[i].nr4_whitening_factor);
+    SetPropF1("modeset.%d.nr4_noise_rescale", i,      mode_settings[i].nr4_noise_rescale);
+    SetPropF1("modeset.%d.nr4_post_threshold", i,     mode_settings[i].nr4_post_threshold);
+#endi f
+    SetPropI1("modeset.%d.anf", i,                    mode_settings[i].anf);
+    SetPropI1("modeset.%d.snb", i,                    mode_settings[i].snb);
+    SetPropI1("modeset.%d.agc", i,                    mode_settings[i].agc);
+    SetPropI1("modeset.%d.en_rxeq", i,                mode_settings[i].en_rxeq);
+    SetPropI1("modeset.%d.en_txeq", i,                mode_settings[i].en_txeq);
+    SetPropI1("modeset.%d.compressor", i,             mode_settings[i].compressor);
+    SetPropF1("modeset.%d.compressor_level", i,       mode_settings[i].compressor_level);
+    SetPropF1("modeset.%d.mic_gain", i,               mode_settings[i].mic_gain);
+    SetPropI1("modeset.%d.dexp", i,                   mode_settings[i].dexp);
+    SetPropI1("modeset.%d.dexp_trigger", i,           mode_settings[i].dexp_trigger);
+    SetPropF1("modeset.%d.dexp_tau", i,               mode_settings[i].dexp_tau);
+    SetPropF1("modeset.%d.dexp_attack", i,            mode_settings[i].dexp_attack);
+    SetPropF1("modeset.%d.dexp_release", i,           mode_settings[i].dexp_release);
+    SetPropF1("modeset.%d.dexp_hold", i,              mode_settings[i].dexp_hold);
+    SetPropI1("modeset.%d.dexp_exp", i,               mode_settings[i].dexp_exp);
+    SetPropF1("modeset.%d.dexp_hyst", i,              mode_settings[i].dexp_hyst);
+    SetPropI1("modeset.%d.dexp_filter", i,            mode_settings[i].dexp_filter);
+    SetPropI1("modeset.%d.dexp_filter_low", i,        mode_settings[i].dexp_filter_low);
+    SetPropI1("modeset.%d.dexp_filter_high", i,       mode_settings[i].dexp_filter_high);
+    SetPropI1("modeset.%d.cfc", i,                    mode_settings[i].cfc);
+    SetPropI1("modeset.%d.cfc_eq", i,                 mode_settings[i].cfc_eq);
+    SetPropI1("modeset.%d.tx_default_filter_low", i,  mode_settings[i].tx_default_filter_low);
+    SetPropI1("modeset.%d.tx_default_filter_high", i, mode_settings[i].tx_default_filter_high);
+    SetPropI1("modeset.%d.use_rx_filter", i,          mode_settings[i].use_rx_filter);
 
     for (int j = 0; j < 11; j++) {
-      SetPropF2("modeset.%d.txeq.%d", i, j,          mode_settings[i].tx_eq_gain[j]);
-      SetPropF2("modeset.%d.txeqfrq.%d", i, j,       mode_settings[i].tx_eq_freq[j]);
-      SetPropF2("modeset.%d.rxeq.%d", i, j,          mode_settings[i].rx_eq_gain[j]);
-      SetPropF2("modeset.%d.rxeqfrq.%d", i, j,       mode_settings[i].rx_eq_freq[j]);
-      SetPropF2("modeset.%d.cfc_frq.%d", i, j,       mode_settings[i].cfc_freq[j]);
-      SetPropF2("modeset.%d.cfc_lvl.%d", i, j,       mode_settings[i].cfc_lvl[j]);
-      SetPropF2("modeset.%d.cfc_post.%d", i, j,      mode_settings[i].cfc_post[j]);
+      SetPropF2("modeset.%d.txeq.%d", i, j,           mode_settings[i].tx_eq_gain[j]);
+      SetPropF2("modeset.%d.txeqfrq.%d", i, j,        mode_settings[i].tx_eq_freq[j]);
+      SetPropF2("modeset.%d.rxeq.%d", i, j,           mode_settings[i].rx_eq_gain[j]);
+      SetPropF2("modeset.%d.rxeqfrq.%d", i, j,        mode_settings[i].rx_eq_freq[j]);
+      SetPropF2("modeset.%d.cfc_frq.%d", i, j,        mode_settings[i].cfc_freq[j]);
+      SetPropF2("modeset.%d.cfc_lvl.%d", i, j,        mode_settings[i].cfc_lvl[j]);
+      SetPropF2("modeset.%d.cfc_post.%d", i, j,       mode_settings[i].cfc_post[j]);
     }
   }
 }

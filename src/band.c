@@ -557,7 +557,6 @@ void bandRestoreState() {
     }
 
     if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
-
       if (bands[b].TxAntenna > 2 || bands[b].TxAntenna < 0) {
         bands[b].TxAntenna = 0;
       }
@@ -733,7 +732,6 @@ int TransmitAllowed() {
         break;
       }
     }
-
   } else {
     //
     // For other bands, return true if signal within band

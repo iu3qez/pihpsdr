@@ -714,7 +714,6 @@ RECEIVER *rx_create_receiver(int id, int pixels, int width, int height) {
   }
 
   rx->sample_rate = 48000;
-
   rx->resampler = NULL;
   rx->resample_input = NULL;
   rx->resample_output = NULL;

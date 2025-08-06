@@ -602,6 +602,7 @@ int audio_write (RECEIVER *rx, float left, float right) {
   if (rx == active_receiver && radio_is_transmitting()) {
     // radio_is_transmitting() ensures we have a transmitter
     if (txmode == modeCWU || txmode == modeCWL) { return 0; }
+
     if (transmitter->tune && transmitter->swrtune) { return 0; }
   }
 

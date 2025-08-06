@@ -241,7 +241,6 @@ int sliders_att_type_changed(gpointer data) {
     //
     // The filter board is now CHARLY25, but may have been before as well
     //
-
     if (attenuation_label != NULL) { gtk_widget_hide(attenuation_label); }
 
     if (rf_gain_label != NULL) { gtk_widget_hide(rf_gain_label); }
@@ -258,7 +257,6 @@ int sliders_att_type_changed(gpointer data) {
 
     sliders_c25_att(active_receiver->id);
   } else {
-
     if (attenuation_label != NULL) { gtk_widget_show(attenuation_label); }
 
     if (rf_gain_label != NULL) { gtk_widget_show(rf_gain_label); }
@@ -274,12 +272,14 @@ int sliders_att_type_changed(gpointer data) {
     sliders_attenuation(active_receiver->id);
     sliders_rf_gain(active_receiver->id, active_receiver->adc);
   }
+
   suppress_popup_sliders = 0;
   return FALSE;
 }
 
 int sliders_active_receiver_changed(void *data) {
   suppress_popup_sliders = 1;
+
   if (display_sliders) {
     //
     // Change sliders and check-boxes to reflect the state of the
@@ -294,6 +294,7 @@ int sliders_active_receiver_changed(void *data) {
     sliders_c25_att(id);
     sliders_attenuation(id);
   }
+
   suppress_popup_sliders = 0;
   return FALSE;
 }
@@ -307,7 +308,9 @@ int sliders_active_receiver_changed(void *data) {
 
 void sliders_c25_att(int id) {
   if (id > receivers) { return; }
+
   if (filter_board != CHARLY25) { return; }
+
   //
   // Only change the combo-box (no popup slider)
   //
@@ -316,20 +319,26 @@ void sliders_c25_att(int id) {
     int rxadc = active_receiver->adc;
     int att = -12 * adc[rxadc].alex_attenuation + 18 * (adc[rxadc].dither + adc[rxadc].preamp);
     snprintf(lbl, sizeof(lbl), "%d", att);
+
     if (c25_signal_id) { g_signal_handler_block(G_OBJECT(c25_combobox), c25_signal_id); }
+
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(c25_combobox), lbl);
+
     if (c25_signal_id) { g_signal_handler_unblock(G_OBJECT(c25_combobox), c25_signal_id); }
   }
 }
 
 void sliders_attenuation(int id) {
   if (id > receivers) { return; }
+
   //
   // This ONLY moves the slider
   //
   if (display_sliders && active_receiver->id == id && attenuation_scale != 0) {
     if (att_signal_id) { g_signal_handler_block(G_OBJECT(attenuation_scale), att_signal_id); }
+
     gtk_range_set_value (GTK_RANGE(attenuation_scale), (double)adc[id].attenuation);
+
     if (att_signal_id) { g_signal_handler_unblock(G_OBJECT(attenuation_scale), att_signal_id); }
   } else {
     char title[64];
@@ -341,12 +350,15 @@ void sliders_attenuation(int id) {
 
 void sliders_agc_gain(int id) {
   if (id > receivers) { return; }
+
   //
   // This ONLY moves the slider
   //
   if (display_sliders && active_receiver->id == id && agc_scale != NULL) {
     if (agc_signal_id) { g_signal_handler_block(G_OBJECT(agc_scale), agc_signal_id); }
+
     gtk_range_set_value (GTK_RANGE(agc_scale), receiver[id]->agc_gain);
+
     if (agc_signal_id) { g_signal_handler_unblock(G_OBJECT(agc_scale), agc_signal_id); }
   } else {
     char title[64];
@@ -357,13 +369,17 @@ void sliders_agc_gain(int id) {
 
 void sliders_af_gain(int id) {
   if (id > receivers) { return; }
+
   //
   // This ONLY moves the slider
   //
   const RECEIVER *rx = receiver[id];
+
   if (display_sliders && id == active_receiver->id && af_gain_scale != NULL) {
     if (af_signal_id) { g_signal_handler_block(G_OBJECT(af_gain_scale), af_signal_id); }
+
     gtk_range_set_value (GTK_RANGE(af_gain_scale), rx->volume);
+
     if (af_signal_id) { g_signal_handler_unblock(G_OBJECT(af_gain_scale), af_signal_id); }
   } else {
     char title[64];
@@ -374,13 +390,17 @@ void sliders_af_gain(int id) {
 
 void sliders_rf_gain(int id, int rxadc) {
   if (id > receivers) { return; }
+
   if (rf_gain_scale == NULL) { return; }
+
   //
   // This ONLY moves the slider
   //
   if (display_sliders && active_receiver->id == id) {
     if (rf_signal_id) { g_signal_handler_block(G_OBJECT(rf_gain_scale), rf_signal_id); }
+
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[rxadc].gain);
+
     if (rf_signal_id) { g_signal_handler_unblock(G_OBJECT(rf_gain_scale), rf_signal_id); }
   } else {
     char title[64];
@@ -391,6 +411,7 @@ void sliders_rf_gain(int id, int rxadc) {
 
 void sliders_filter_width(int id, int width) {
   if (id > receivers) { return; }
+
   //
   // This ONLY moves the slider
   //
@@ -417,6 +438,7 @@ void sliders_filter_width(int id, int width) {
 
 void sliders_filter_shift(int id, int shift) {
   if (id > receivers) { return; }
+
   //
   // This ONLY moves the slider
   //
@@ -442,7 +464,9 @@ void sliders_mic_gain() {
   if (can_transmit) {
     if (display_sliders ) {
       if (mic_signal_id) { g_signal_handler_block(G_OBJECT(mic_gain_scale), mic_signal_id); }
+
       gtk_range_set_value (GTK_RANGE(mic_gain_scale), transmitter->mic_gain);
+
       if (mic_signal_id) { g_signal_handler_unblock(G_OBJECT(mic_gain_scale), mic_signal_id); }
     } else {
       show_popup_slider(MIC_GAIN, 0, -12.0, 50.0, 1.0, transmitter->mic_gain, "Mic Gain");
@@ -452,22 +476,26 @@ void sliders_mic_gain() {
 
 void sliders_drive(void) {
   t_print("%s\n", __FUNCTION__);
+
   //
   // This ONLY moves the slider
   //
   if (can_transmit) {
     if (display_sliders) {
       if (drive_signal_id) { g_signal_handler_block(G_OBJECT(drive_scale), drive_signal_id); }
+
       gtk_range_set_value (GTK_RANGE(drive_scale), (double) transmitter->drive);
+
       if (drive_signal_id) { g_signal_handler_unblock(G_OBJECT(drive_scale), drive_signal_id); }
     } else {
-    show_popup_slider(DRIVE, 0, drive_min, drive_max, 1.0, (double) transmitter->drive, "TX Drive");
+      show_popup_slider(DRIVE, 0, drive_min, drive_max, 1.0, (double) transmitter->drive, "TX Drive");
     }
   }
 }
 
 void sliders_filter_high(int id, int var) {
   if (id > receivers) { return; }
+
   //
   // This ONLY moves the slider
   //
@@ -492,6 +520,7 @@ void sliders_filter_high(int id, int var) {
 
 void sliders_filter_low(int id, int var) {
   if (id > receivers) { return; }
+
   //
   // This ONLY moves the slider
   //
@@ -529,6 +558,7 @@ void sliders_filter_low(int id, int var) {
 
 void sliders_squelch(int id) {
   if (id > receivers) { return; }
+
   //
   // This ONLY moves the slider and updates the checkbutton
   //
@@ -536,10 +566,14 @@ void sliders_squelch(int id) {
 
   if (display_sliders && id == active_receiver->id) {
     if (squelch_signal_id) { g_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id); }
+
     if (squelch_enable_signal_id) { g_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id); }
+
     gtk_range_set_value (GTK_RANGE(squelch_scale), rx->squelch);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), rx->squelch_enable);
+
     if (squelch_enable_signal_id) { g_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id); }
+
     if (squelch_signal_id) { g_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id); }
   } else {
     char title[64];

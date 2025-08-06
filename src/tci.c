@@ -890,7 +890,6 @@ static gpointer tci_listener(gpointer data) {
     while ((numbytes =  digest_frame(buff, msg, offset, &type)) > 0) {
       switch (type) {
       case opTEXT:
-
         if (rigctl_debug) {
           t_print("%s: TCI%d command rcvd=%s\n", __FUNCTION__, client->seq, msg);
         }

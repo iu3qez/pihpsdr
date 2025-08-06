@@ -682,7 +682,6 @@ static int send_periodic_data(gpointer arg) {
   disp_data.capture_record_pointer = to_int(capture_record_pointer);
   disp_data.capture_replay_pointer = to_int(capture_replay_pointer);
   send_bytes(remoteclient.socket, (char *)&disp_data, sizeof(DISPLAY_DATA));
-
   //
   // if sending the data failed due to an interrupted connection,
   // server_loop() will terminate and this source ID be removed
@@ -2557,7 +2556,6 @@ static void *listen_thread(void *arg) {
       break;
     }
 
-
     //
     // Set a time-out of 30 seconds. The client is supposed to send a heart-beat packet at least
     // every 15 sec
@@ -3465,7 +3463,6 @@ static void *client_thread(void* arg) {
 
       int id = header.b1;
       long long rate = from_ll(cmd.u64);
-
       receiver[id]->sample_rate = (int)rate;
       receiver[id]->hz_per_pixel = (double)receiver[id]->sample_rate / (double)receiver[id]->pixels;
     }

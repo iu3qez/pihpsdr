@@ -168,7 +168,7 @@ int hl2_cl1_input = 0;
 int anan10E = 0;
 
 int mute_spkr_amp = 0;      // Mute audio amplifier in radio                (ANAN-7000, G2)
-int mute_spkr_xmit= 0;      // Mute audio amplifier in radio upon transmit  (ANAN-7000, G2)
+int mute_spkr_xmit = 0;     // Mute audio amplifier in radio upon transmit  (ANAN-7000, G2)
 
 int tx_out_of_band_allowed = 0;
 
@@ -383,6 +383,7 @@ gboolean radio_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
   //
   switch (event->keyval) {
 #ifdef TTS
+
   case GDK_KEY_F1:
     tts_freq();
     break;
@@ -1475,6 +1476,7 @@ void radio_start_radio() {
 
   case SOAPYSDR_USB_DEVICE:
     snprintf(property_path, sizeof(property_path), "%s.props", radio->name);
+
     //
     // The LimeSDR comes in two variants, a full-fledged one with 2RX,
     // and a LimeSDR-Mini with 1RX. The driver (and thus the radio name)
@@ -1484,8 +1486,9 @@ void radio_start_radio() {
     // only activated for the LIME.
     //
     if (have_lime && radio->soapy.rx_channels > 1) {
-        snprintf(property_path, sizeof(property_path), "%s-2rx.props", radio->name);
+      snprintf(property_path, sizeof(property_path), "%s-2rx.props", radio->name);
     }
+
     break;
 
   default:
@@ -1532,7 +1535,6 @@ void radio_start_radio() {
     break;
 
   case SOAPYSDR_USB_DEVICE:
-
     if (radio->soapy.rx_channels > 1) {
       // This is to allow DIVERSITY in the future
       n_adc = 2;
@@ -1560,7 +1562,6 @@ void radio_start_radio() {
   adc[0].alex_attenuation = 0;
   adc[0].filter_bypass = 0;
   adc[0].overload = 0;
-
   adc[1].antenna = 0;
   adc[1].attenuation = 0;
   adc[1].gain = 0;
@@ -1574,7 +1575,6 @@ void radio_start_radio() {
   adc[1].alex_attenuation = 0;
   adc[1].filter_bypass = 0;
   adc[1].overload = 0;
-
   adc[2].antenna = 0;  // PS RX feedback antenna
 
   //
@@ -1587,6 +1587,7 @@ void radio_start_radio() {
   case DEVICE_STEMLAB_Z20:
     filter_board = CHARLY25;
     break;
+
   case DEVICE_HERMES_LITE:
   case DEVICE_HERMES_LITE2:
   case NEW_DEVICE_HERMES_LITE:
@@ -1606,10 +1607,11 @@ void radio_start_radio() {
     filter_board = N2ADR;
     n2adr_oc_settings(); // Apply default OC settings for N2ADR board
     break;
+
   case SOAPYSDR_USB_DEVICE:
     adc[0].min_gain = radio->soapy.rx[0].gain_min;
     adc[0].max_gain = radio->soapy.rx[0].gain_max;
-    rx_gain_calibration = 0.7*adc[0].min_gain + 0.3*adc[0].max_gain;
+    rx_gain_calibration = 0.7 * adc[0].min_gain + 0.3 * adc[0].max_gain;
     adc[0].gain = rx_gain_calibration;
     adc[1].min_gain = radio->soapy.rx[1].gain_min;
     adc[1].max_gain = radio->soapy.rx[1].gain_max;
@@ -1617,6 +1619,7 @@ void radio_start_radio() {
     soapy_radio_sample_rate = radio->soapy.sample_rate;
     filter_board = NO_FILTER_BOARD;
     break;
+
   default:
     filter_board = ALEX;
     break;
@@ -1691,9 +1694,11 @@ void radio_start_radio() {
   }
 
 #ifdef SOAPYSDR
+
   if (protocol == SOAPYSDR_PROTOCOL) {
     if (!have_lime) {
       t_print("%s: create %d SOAPY receiver(s)\n", __FUNCTION__, RECEIVERS);
+
       //
       // LIME: do not start receivers before TX is running
       //       since this starts auto-calibration.
@@ -1703,9 +1708,11 @@ void radio_start_radio() {
       case 1:
         soapy_protocol_create_single_receiver(receiver[0]);
         break;
+
       case 2:
         soapy_protocol_create_dual_receiver(receiver[0], receiver[1]);
         break;
+
       default:
         t_print("%s:WARNING:SOAPY: can only create 1 or 2 receivers\n", __FUNCTION__);
         break;
@@ -1723,6 +1730,7 @@ void radio_start_radio() {
       soapy_protocol_set_tx_gain(have_lime ? 30 : transmitter->drive);
       soapy_protocol_set_tx_frequency();
       soapy_protocol_start_transmitter();
+
       if (have_lime) {
         // LIME: set TX gain to 0 to avoid  LO leak. The TX gain
         //       is set to the nominal drive upon RX/TX transistons,
@@ -1739,12 +1747,16 @@ void radio_start_radio() {
     switch (RECEIVERS) {
     case 1:
       if (have_lime) { soapy_protocol_create_single_receiver(receiver[0]); }
+
       soapy_protocol_start_single_receiver(receiver[0]);
       break;
+
     case 2:
       if (have_lime) { soapy_protocol_create_dual_receiver(receiver[0], receiver[1]); }
+
       soapy_protocol_start_dual_receiver(receiver[0], receiver[1]);
       break;
+
     default:
       t_print("%s:WARNING:SOAPY: can only start 1 or 2 receivers\n", __FUNCTION__);
       break;
@@ -1755,7 +1767,6 @@ void radio_start_radio() {
     //
     for (int id = 0; id < RECEIVERS; id++) {
       RECEIVER *rx = receiver[id];
-
       soapy_protocol_set_automatic_gain(id, adc[id].agc);
       soapy_protocol_set_rx_antenna(id, adc[id].antenna);
       soapy_protocol_set_rx_frequency(id);
@@ -1767,8 +1778,8 @@ void radio_start_radio() {
       }
     }
   }  // protocol == SOAPYSDR
-#endif
 
+#endif
   gdk_window_set_cursor(gtk_widget_get_window(top_window), gdk_cursor_new(GDK_ARROW));
 #ifdef MIDI
 
@@ -1805,6 +1816,7 @@ void radio_start_radio() {
   if (can_transmit) {
     radio_calc_drive_level();  // This is probably not necessary
   }
+
   //
   // Switching PureSignal on/off with P2 stops/restarts
   // the protocol, so we do it here, after having
@@ -1816,7 +1828,6 @@ void radio_start_radio() {
 
   g_idle_add(ext_vfo_update, NULL);
   schedule_high_priority();
-
   //
   // Now the radio is up and running. Connect "Radio" keyboard interceptor
   //
@@ -2621,12 +2632,12 @@ void radio_calc_drive_level() {
 
 void radio_set_rf_gain(int id, double value) {
   if (id >= receivers) { return; }
+
   if (!have_rx_gain) { return; }
 
   int rxadc = receiver[id]->adc;
   adc[rxadc].gain = value;
   adc[rxadc].attenuation = 0.0;
-
   sliders_rf_gain(id, rxadc);
 
   if (radio_is_remote) {
@@ -2651,6 +2662,7 @@ void radio_set_rf_gain(int id, double value) {
 
 void radio_set_squelch_enable(int id, int enable) {
   if (id >= receivers) { return; }
+
   RECEIVER *rx = receiver[id];
   rx->squelch_enable = enable;
   rx_set_squelch(rx);
@@ -2664,11 +2676,11 @@ void radio_set_squelch(int id, double value) {
   // depending on the "new" squelch value
   //
   if (id >= receivers) { return; }
+
   RECEIVER *rx = receiver[id];
   rx->squelch = value;
   rx->squelch_enable = (rx->squelch > 0.5);
   rx_set_squelch(rx);
-
   sliders_squelch(rx->id);
 }
 
@@ -2689,6 +2701,7 @@ void radio_set_mic_gain(double value) {
     transmitter->mic_gain = value;
     tx_set_mic_gain(transmitter);
   }
+
   sliders_mic_gain();
 }
 
@@ -2698,7 +2711,6 @@ void radio_set_af_gain(int id, double value) {
   RECEIVER *rx = receiver[id];
   rx->volume = value;
   rx_set_af_gain(rx);
-
   sliders_af_gain(id);
 }
 
@@ -2707,7 +2719,6 @@ void radio_set_agc_gain(int id, double value) {
 
   receiver[id]->agc_gain = value;
   rx_set_agc(receiver[id]);
-
   sliders_agc_gain(id);
 }
 
@@ -2798,6 +2809,7 @@ void radio_set_random(int id, int value) {
 
 void radio_set_preamp(int id, int value) {
   if (id >= receivers) { return; }
+
   if (!have_preamp) { return; }
 
   int rxadc = receiver[id]->adc;
@@ -2811,10 +2823,10 @@ void radio_set_preamp(int id, int value) {
 
 void radio_set_attenuation(int id, int value) {
   if (id >= receivers) { return; }
+
   if (!have_rx_att) { return; }
 
   int rxadc = receiver[id]->adc;
-
   adc[rxadc].attenuation = value;
   adc[rxadc].gain = 0.0;
   sliders_attenuation(id);
@@ -2831,6 +2843,7 @@ void radio_set_attenuation(int id, int value) {
     BAND *band = band_get_band(vfo[id].band);
     band->attenuation = value;
   }
+
   schedule_high_priority();
 }
 
@@ -2859,6 +2872,7 @@ void radio_set_drive(double value) {
 
   case SOAPYSDR_PROTOCOL:
 #ifdef SOAPYSDR
+
     //
     // LIME: do not change TX drive if not transmitting
     //       (this is now done on each RX/TX and TX/RX transition)
@@ -2866,6 +2880,7 @@ void radio_set_drive(double value) {
     if (!have_lime || radio_is_transmitting()) {
       soapy_protocol_set_tx_gain(transmitter->drive);
     }
+
 #endif
     break;
   }
@@ -2891,7 +2906,6 @@ void radio_apply_band_settings(int flag) {
   // flag is nonzero if called from a "real" band change
   //
   const BAND *band = band_get_band(vfo[VFO_A].band);
-
   suppress_popup_sliders = 1;
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
@@ -2913,7 +2927,7 @@ void radio_apply_band_settings(int flag) {
   }
 
   if (flag) {
-    radio_set_c25_att(0,-12*band->alexAttenuation + 18*(band->preamp + band->dither));
+    radio_set_c25_att(0, -12 * band->alexAttenuation + 18 * (band->preamp + band->dither));
     radio_set_attenuation(0, band->attenuation);
     radio_set_rf_gain(0, band->gain);
   }
@@ -2946,6 +2960,7 @@ void radio_tx_vfo_changed() {
 
 void radio_set_alex_attenuation(int v) {
   if (!have_alex_att) { return; }
+
   //
   // Change the value of the ALEX attenuator. Store it
   // in the "band" data structure of the current band (this is obsolete)
@@ -3564,16 +3579,19 @@ void radio_protocol_run() {
 
   case SOAPYSDR_PROTOCOL:
 #ifdef SOAPYSDR
-    switch(RECEIVERS) {
-      case 1:
-        soapy_protocol_start_single_receiver(receiver[0]);
-        break;
-      case 2:
-        soapy_protocol_start_dual_receiver(receiver[0], receiver[1]);
-        break;
-      default:
-        t_print("%s:WARNING:SOAPY:only 1 or 2 receivers allowed\n", __FUNCTION__);
-      }
+    switch (RECEIVERS) {
+    case 1:
+      soapy_protocol_start_single_receiver(receiver[0]);
+      break;
+
+    case 2:
+      soapy_protocol_start_dual_receiver(receiver[0], receiver[1]);
+      break;
+
+    default:
+      t_print("%s:WARNING:SOAPY:only 1 or 2 receivers allowed\n", __FUNCTION__);
+    }
+
 #endif
     break;
   }

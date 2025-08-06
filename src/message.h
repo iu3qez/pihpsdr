@@ -30,9 +30,9 @@
 //#define TPRINTDEBUG 1
 
 #ifdef TPRINTDEBUG
-#define t_print printf
-#define t_perror perror
+  #define t_print printf
+  #define t_perror perror
 #else
-extern void t_print(const gchar *format, ...);
-extern void t_perror(const gchar *string);
+  extern void t_print(const gchar *format, ...);
+  extern void t_perror(const gchar *string);
 #endif

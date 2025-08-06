@@ -114,6 +114,7 @@ void set_zoom(int rx, double value) {
   if (display_zoompan && active_receiver->id == rx) {
     gtk_range_set_value (GTK_RANGE(zoom_scale), receiver[rx]->zoom);
   }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 

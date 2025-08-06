@@ -1157,6 +1157,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->mic_input_buffer = g_new(double, 2 * tx->buffer_size);
   tx->iq_output_buffer = g_new(double, 2 * tx->output_samples);
   tx->cw_sig_rf = g_new(double, tx->output_samples);
+
   //
   // p1stone is only used in P1, since there the audio samples sent to the
   // radio are tied to the outgoing TX IQ samples so we need to buffer them
@@ -1168,6 +1169,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   } else {
     tx->p1stone = NULL;
   }
+
   tx->samples = 0;
   tx->pixel_samples = g_new(float, tx->pixels);
   g_mutex_init(&tx->cw_ramp_mutex);
@@ -1445,7 +1447,6 @@ static void tx_full_buffer(TRANSMITTER *tx) {
         // An inspection of the IQ samples produced by WDSP when TUNEing shows
         // that the amplitude of the pulse is in I (in the range 0.0 - 1.0)
         // and Q should be zero
-
         for (j = 0; j < tx->output_samples; j++) {
           double ramp = tx->cw_sig_rf[j];       // between 0.0 and 1.0
           isample = floor(gain * ramp + 0.5);   // always non-negative, isample is just the pulse envelope
@@ -1629,7 +1630,6 @@ void tx_add_mic_sample(TRANSMITTER *tx, short next_mic_sample) {
 
   tx->mic_input_buffer[tx->samples * 2] = mic_sample_double;
   tx->mic_input_buffer[(tx->samples * 2) + 1] = 0.0;
-
   //
   //  CW events are obtained from a ring buffer. The variable
   //  cw_delay_time measures the time since the last CW event
@@ -1653,8 +1653,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, short next_mic_sample) {
     static int c1 = 0;
     float swrsample;
     double val;
-
-    int swrfreq = 500 + (int) (tx->swr*tx->swr*100.0);
+    int swrfreq = 500 + (int) (tx->swr * tx->swr * 100.0);
 
     if (swrfreq > 5000) {
       swrfreq = 5000;
@@ -1692,6 +1691,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, short next_mic_sample) {
       // "keyup"
       static int c2 = 0;
       c2++;
+
       if (tx->cw_ramp_audio_ptr > 0) {
         tx->cw_ramp_audio_ptr--;
       }
@@ -1699,21 +1699,21 @@ void tx_add_mic_sample(TRANSMITTER *tx, short next_mic_sample) {
       val = tx->cw_ramp_audio[tx->cw_ramp_audio_ptr];
 
       if (c2 >= 2400) { c1 = c2 = 0; }
-
     }
 
     swrsample *= val;
     g_mutex_unlock(&tx->cw_ramp_mutex);
-
     int s = (int) (swrsample * 32767.0);
 
     switch (protocol) {
     case ORIGINAL_PROTOCOL:
       tx->p1stone[tx->samples] = s;
       break;
+
     case NEW_PROTOCOL:
       new_protocol_cw_audio_samples(s, s);
       break;
+
     default:
       // do nothing
       break;
@@ -1849,29 +1849,30 @@ void tx_add_mic_sample(TRANSMITTER *tx, short next_mic_sample) {
     }
 
     switch (protocol) {
-      case NEW_PROTOCOL: {
-        int s;
-        //
-        // The scaling should ensure that a piHPSDR-generated side tone
-        // has the same volume than a FGPA-generated one.
-        //
-        if (device == NEW_DEVICE_SATURN) {
-          //
-          // This comes from an analysis of the G2 sidetone
-          // data path:
-          // level 0...127 ==> amplitude 0...32767
-          //
-          s = (int) (cwsample * 131000.0);
-        } else {
-          //
-          // This factor has been measured on my ANAN-7000 and implies
-          // level 0...127 ==> amplitude 0...8191
-          //
-          s = (int) (cwsample * 32767.0);
-        }
+    case NEW_PROTOCOL: {
+      int s;
 
-        new_protocol_cw_audio_samples(s, s);
-        break;
+      //
+      // The scaling should ensure that a piHPSDR-generated side tone
+      // has the same volume than a FGPA-generated one.
+      //
+      if (device == NEW_DEVICE_SATURN) {
+        //
+        // This comes from an analysis of the G2 sidetone
+        // data path:
+        // level 0...127 ==> amplitude 0...32767
+        //
+        s = (int) (cwsample * 131000.0);
+      } else {
+        //
+        // This factor has been measured on my ANAN-7000 and implies
+        // level 0...127 ==> amplitude 0...8191
+        //
+        s = (int) (cwsample * 32767.0);
+      }
+
+      new_protocol_cw_audio_samples(s, s);
+      break;
 
       case ORIGINAL_PROTOCOL:
         //
@@ -1952,6 +1953,7 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
                 rx_feedback->iq_input_buffer[2 * i + 1] * rx_feedback->iq_input_buffer[2 * i + 1];
 
         if (pkval > pkmax) { pkmax = pkval; }
+
         if (rxval > rxmax) { rxmax = rxval; }
       }
 
@@ -2301,7 +2303,6 @@ void tx_off(const TRANSMITTER *tx) {
   }
 
 #endif
-
 }
 
 void tx_on(const TRANSMITTER *tx) {
@@ -2317,7 +2318,6 @@ void tx_on(const TRANSMITTER *tx) {
     // connect TX antenna,
     // set nominal TX drive
     //
-
     if (!duplex) {
       for (int i = 0; i < RECEIVERS; i++) {
         soapy_protocol_rx_attenuate(i);
@@ -2335,7 +2335,6 @@ void tx_on(const TRANSMITTER *tx) {
   }
 
 #endif
-
 }
 
 void tx_ps_getinfo(TRANSMITTER *tx) {

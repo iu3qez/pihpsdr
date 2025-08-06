@@ -410,7 +410,7 @@ static int ozy_load_fpga(const char *rbf_fnamep) {
     // If fread() results in a "short read", the file pointer is undefined
     // so do not continue
     //
-    if (bytes_read < (int)sizeof(buf)) break;
+    if (bytes_read < (int)sizeof(buf)) { break; }
   }
 
   t_print("%d bytes transferred.\n", total_bytes_xferd);

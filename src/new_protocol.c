@@ -2607,7 +2607,8 @@ static void process_mic_data(const unsigned char *buffer) {
 void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sample) {
   int txmode = vfo_get_tx_mode();
 
-  if (radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL || (transmitter->tune && transmitter->swrtune))) {
+  if (radio_is_transmitting() &&
+      (txmode == modeCWU || txmode == modeCWL || (transmitter->tune && transmitter->swrtune))) {
     //
     // Only process samples if there can be a sidetone
     //
@@ -2672,7 +2673,8 @@ void new_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
   //
   // Only process samples if there can be no sidetone
   //
-  if (radio_is_transmitting() && (txmode == modeCWU || txmode == modeCWL || (transmitter->tune && transmitter->swrtune))) { return; }
+  if (radio_is_transmitting() &&
+      (txmode == modeCWU || txmode == modeCWL || (transmitter->tune && transmitter->swrtune))) { return; }
 
   pthread_mutex_lock(&send_rxaudio_mutex);
 

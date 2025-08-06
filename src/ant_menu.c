@@ -93,7 +93,7 @@ static void adc_antenna_cb(GtkComboBox *widget, gpointer data) {
 
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio_is_remote) {
-      send_soapy_rxant(client_socket,id);
+      send_soapy_rxant(client_socket, id);
     } else {
 #ifdef SOAPYSDR
       soapy_protocol_set_rx_antenna(id, ant);
@@ -104,6 +104,7 @@ static void adc_antenna_cb(GtkComboBox *widget, gpointer data) {
 
 static void dac_antenna_cb(GtkComboBox *widget, gpointer data) {
   if (!can_transmit) { return; }
+
   if (radio_is_transmitting()) {
     //
     // Suppress TX antenna changes while transmitting
@@ -370,13 +371,12 @@ void ant_menu(GtkWidget *parent) {
   }
 
   if (device == SOAPYSDR_USB_DEVICE) {
-
     int row = 1;
 
     for (int id = 0; id < RECEIVERS; id++) {
       if (radio->soapy.rx[id].antennas > 0) {
         char text[64];
-        snprintf(text, sizeof(text), "RX%d Antenna:", id+1);
+        snprintf(text, sizeof(text), "RX%d Antenna:", id + 1);
         GtkWidget *label = gtk_label_new(text);
         gtk_widget_set_name(label, "boldlabel");
         gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);

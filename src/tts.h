@@ -17,12 +17,12 @@
 */
 
 #ifdef TTS
-void tts_send(char *msg);
-void tts_freq(void);
-void tts_mode(void);
-void tts_filter(void);
-void tts_smeter(void);
-void tts_txdrive(void);
-void tts_atten(void);
+  void tts_send(char *msg);
+  void tts_freq(void);
+  void tts_mode(void);
+  void tts_filter(void);
+  void tts_smeter(void);
+  void tts_txdrive(void);
+  void tts_atten(void);
 #endif
 

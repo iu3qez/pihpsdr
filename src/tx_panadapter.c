@@ -118,6 +118,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
 
     if (txmode != modeCWU && txmode != modeCWL) {
       cairo_set_source_rgba(cr, COLOUR_PAN_FILTER);
+
       if (txmode == modeFMN) {
         //
         // The bandpass filter used in FM  is applied *before* the FM
@@ -129,6 +130,7 @@ void tx_panadapter_update(TRANSMITTER *tx) {
         filter_left = (double)mywidth / 2.0 + ((double)tx->filter_low / hz_per_pixel);
         filter_right = (double)mywidth / 2.0 + ((double)tx->filter_high / hz_per_pixel);
       }
+
       cairo_rectangle(cr, filter_left, 0.0, filter_right - filter_left, (double)myheight);
       cairo_fill(cr);
     }

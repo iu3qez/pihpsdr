@@ -99,6 +99,7 @@ static void* wisdom_thread(void *arg) {
   } else {
     t_print("%s: Re-using existing WDSP wisdom file.\n", __FUNCTION__);
   }
+
   wisdom_running = 0;
   return NULL;
 }

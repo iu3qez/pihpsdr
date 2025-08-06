@@ -63,7 +63,7 @@
 #include "vfo.h"
 
 #ifdef __APPLE__
-#include "MacTTS.h"
+  #include "MacTTS.h"
 #endif
 
 //
@@ -72,6 +72,7 @@
 //
 void tts_send(char *msg) {
   int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
   if (sock >= 0) {
     int optval = 1;
     struct sockaddr_in addr;
@@ -86,6 +87,7 @@ void tts_send(char *msg) {
     sendto(sock, msg, strlen(msg), 0, (struct sockaddr * ) &addr, sizeof(addr));
     close(sock);
   }
+
 #ifdef __APPLE__
   MacTTS(msg);
 #endif

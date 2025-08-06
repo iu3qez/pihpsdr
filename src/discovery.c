@@ -94,10 +94,11 @@ static void print_devices(void) {
   t_print("%s: discovery found %d devices\n", __FUNCTION__, devices);
 
   for (int i = 0; i < devices; i++) {
-    switch(discovered[i].protocol) {
+    switch (discovered[i].protocol) {
     case ORIGINAL_PROTOCOL:
     case NEW_PROTOCOL:
-      t_print("%s: found protocol=%d device=%d software_version=%d status=%d address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s\n", __FUNCTION__,
+      t_print("%s: found protocol=%d device=%d software_version=%d status=%d address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s\n",
+              __FUNCTION__,
               discovered[i].protocol,
               discovered[i].device,
               discovered[i].software_version,
@@ -111,6 +112,7 @@ static void print_devices(void) {
               discovered[i].network.mac_address[5],
               discovered[i].network.interface_name);
       break;
+
     case SOAPYSDR_PROTOCOL:
       t_print("%s: found protocol=%d driver=%s software_version=%d driver_key=%s hardware_key=%s on %s\n", __FUNCTION__,
               discovered[i].protocol,
@@ -420,12 +422,14 @@ gboolean discovery_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer d
 #ifdef TTS
   char text[2048];
 #endif
+
   //
   // This is called when an "intercepted" key stroke is
   // received before the radio starts
   //
   switch (event->keyval) {
 #ifdef TTS
+
   case GDK_KEY_F1:
     switch (discovery_state) {
     case DISCOVERY_VIRGIN:
@@ -445,28 +449,33 @@ gboolean discovery_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer d
       tts_send("Just starting a radio\n");
       break;
     }
+
     break;
 
   case GDK_KEY_F2:
     if (devices > 0) {
       const char *p;
       const char *r;
-      switch(discovered[0].protocol) {
+
+      switch (discovered[0].protocol) {
       case ORIGINAL_PROTOCOL:
         p = "running Protocol 1";
         break;
+
       case NEW_PROTOCOL:
         p = "running Protocol 2";
         break;
+
       case SOAPYSDR_PROTOCOL:
         p = "run by the Soapy Library";
         break;
+
       default:
         p = "run by unknown protocol";
         break;
       }
 
-      switch(discovered[0].device) {
+      switch (discovered[0].device) {
       case DEVICE_OZY:
         r = "Old Ozy";
         break;
@@ -527,6 +536,7 @@ gboolean discovery_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer d
     } else {
       tts_send("No info, no radio has been found");
     }
+
     break;
 #endif
 
@@ -541,6 +551,7 @@ gboolean discovery_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer d
       tts_send("Cannot start, no radio has been found");
 #endif
     }
+
     break;
 
   case GDK_KEY_F4:
@@ -555,12 +566,14 @@ gboolean discovery_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer d
       tts_send("Discovery not yet complete, cannot restart");
 #endif
     }
+
     break;
 
   default:
     // do not intercept
     ret = FALSE;
   }
+
   return ret;
 }
 
@@ -946,6 +959,7 @@ static void discovery() {
       if (start_cb(NULL, NULL, (gpointer)d)) { return; }
     }
   }
+
   discovery_state = DISCOVERY_COMPLETE;
 }
 

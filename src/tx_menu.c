@@ -600,7 +600,7 @@ void tx_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(sel_cb), GINT_TO_POINTER(DEXP_CONTAINER));
   row++;
-  col=1;
+  col = 1;
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(mbtn), "Peak Labels");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), (which_container == PEAKS_CONTAINER));
@@ -758,7 +758,6 @@ void tx_menu(GtkWidget *parent) {
   gtk_combo_box_set_active(GTK_COMBO_BOX(btn), transmitter->ctcss);
   my_combo_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "changed", G_CALLBACK(ctcss_frequency_cb), NULL);
-
   row++;
   col = 0;
   label = gtk_label_new("Panadapter High");
@@ -786,7 +785,6 @@ void tx_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)transmitter->am_carrier_level);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value_changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_AM_CARRIER));
-
   row++;
   col = 0;
   label = gtk_label_new("Panadapter Low");
@@ -809,7 +807,6 @@ void tx_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), drive_digi_max);
   gtk_grid_attach(GTK_GRID(tx_grid), btn, col, row, 1, 1);
   g_signal_connect(btn, "value-changed", G_CALLBACK(spinbtn_cb), GINT_TO_POINTER(TX_DIGI_DRIVE));
-
   row++;
   col = 0;
   label = gtk_label_new("Panadapter Step");
@@ -1121,7 +1118,7 @@ void tx_menu(GtkWidget *parent) {
 
   if (have_swr) {
     row++;
-    col=0;
+    col = 0;
     label = gtk_label_new("SWR alarm at");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
@@ -1137,7 +1134,6 @@ void tx_menu(GtkWidget *parent) {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), transmitter->swr_protection);
     gtk_grid_attach(GTK_GRID(swr_grid), btn, col, row, 1, 1);
     g_signal_connect(btn, "toggled", G_CALLBACK(chkbtn_cb), GINT_TO_POINTER(TX_SWR_PROTECTION));
-
     row++;
     col = 0;
     label = gtk_label_new("Tune Sidetone Volume");
