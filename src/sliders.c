@@ -577,7 +577,7 @@ void sliders_squelch(int id) {
     if (squelch_signal_id) { g_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id); }
   } else {
     char title[64];
-    snprintf(title, sizeof(title), "Squelch RX%d (Hz)", id + 1);
+    snprintf(title, sizeof(title), "Squelch RX%d", id + 1);
     show_popup_slider(SQUELCH, id, 0.0, 100.0, 1.0, rx->squelch, title);
   }
 }
