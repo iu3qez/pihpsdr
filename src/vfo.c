@@ -129,7 +129,7 @@ static void modesettingsSaveState() {
     SetPropF1("modeset.%d.nr4_whitening_factor", i,   mode_settings[i].nr4_whitening_factor);
     SetPropF1("modeset.%d.nr4_noise_rescale", i,      mode_settings[i].nr4_noise_rescale);
     SetPropF1("modeset.%d.nr4_post_threshold", i,     mode_settings[i].nr4_post_threshold);
-#endi f
+#endif
     SetPropI1("modeset.%d.anf", i,                    mode_settings[i].anf);
     SetPropI1("modeset.%d.snb", i,                    mode_settings[i].snb);
     SetPropI1("modeset.%d.agc", i,                    mode_settings[i].agc);
