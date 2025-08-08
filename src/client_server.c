@@ -3130,7 +3130,6 @@ static void *client_thread(void* arg) {
         radio->soapy.sample_rate = soapy_radio_sample_rate;
       }
 
-      g_idle_add(sliders_att_type_changed, NULL);
       snprintf(title, sizeof(title), "piHPSDR: %s remote at %s", radio->name, server);
       g_idle_add(ext_set_title, (void *)title);
     }
