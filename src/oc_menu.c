@@ -275,8 +275,8 @@ void oc_menu(GtkWidget *parent) {
   width  = nat.width;
   height = nat.height;
 
-  if (nat.height > display_height) {
-    height = display_height - 50;
+  if (nat.height > display_height[display_size]) {
+    height = display_height[display_size] - 50;
     width += 25;  // This accounts for the scroll bar
   }
 

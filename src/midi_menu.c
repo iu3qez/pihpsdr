@@ -686,7 +686,7 @@ void midi_menu(GtkWidget *parent) {
   col = 0;
   scrolled_window = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  height = display_height - 180 -  15 * ((n_midi_devices + 1) / 3);
+  height = display_height[display_size] - 180 -  15 * ((n_midi_devices + 1) / 3);
 
   if (height > 400) { height = 400; }
 

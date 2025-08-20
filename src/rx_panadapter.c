@@ -320,7 +320,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     }
   }
 
-  if (remoteclient.running) {
+  if (remoteclient.running && rx->id == 0) {
     char text[64];
     cairo_select_font_face(cr, DISPLAY_FONT_FACE, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_source_rgba(cr, COLOUR_SHADE);

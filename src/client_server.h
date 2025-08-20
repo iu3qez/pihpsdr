@@ -139,7 +139,7 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01000013 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01000014 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
 #define AUDIO_DATA_SIZE 1024             // 1024 stereo samples
 
@@ -368,6 +368,7 @@ typedef struct __attribute__((__packed__)) _radio_data {
   uint8_t  soapy_tx_channels;
   uint8_t  soapy_rx1_has_automatic_gain;
   uint8_t  soapy_rx2_has_automatic_gain;
+  uint8_t  display_size;
   //
   char     soapy_hardware_key[64];
   char     soapy_driver_key[64];
@@ -885,7 +886,7 @@ extern void send_rx_select(int s, int rx);
 extern void send_rxmenu(int s, int id);
 extern void send_sample_rate(int s, int rx, int sample_rate);
 extern void send_sat(int s, int sat);
-extern void send_screen(int s, int hstack, int width);
+extern void send_screen(int s, int hstack, int size, int width);
 extern void send_sidetone_freq(int s, int freq);
 extern void send_soapy_rxant(int s, int id);
 extern void send_soapy_txant(int s);

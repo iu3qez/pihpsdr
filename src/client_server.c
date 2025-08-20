@@ -875,6 +875,7 @@ void send_radio_data(int sock) {
   data.soapy_tx_channels = radio->soapy.tx_channels;
   data.soapy_rx1_has_automatic_gain = radio->soapy.rx[0].has_automatic_gain;
   data.soapy_rx2_has_automatic_gain = radio->soapy.rx[1].has_automatic_gain;
+  data.display_size = display_size;
   //
   memcpy(data.soapy_hardware_key, radio->soapy.hardware_key, 64);
   memcpy(data.soapy_driver_key, radio->soapy.driver_key, 64);
@@ -910,7 +911,7 @@ void send_radio_data(int sock) {
   data.cw_keyer_sidetone_frequency = to_short(cw_keyer_sidetone_frequency);
   data.rx_gain_calibration = to_short(rx_gain_calibration);
   data.device = to_short(device);
-  data.display_width = to_short(display_width);
+  data.display_width = to_short(display_width[1]);
   //
   data.drive_min = to_double(drive_min);
   data.drive_max = to_double(drive_max);
@@ -1716,11 +1717,12 @@ void send_meter(int s, int metermode, int alcmode) {
   send_bytes(s, (char *)&header, sizeof(HEADER));
 }
 
-void send_screen(int s, int hstack, int width) {
+void send_screen(int s, int hstack, int size, int width) {
   HEADER header;
   SYNC(header.sync);
   header.data_type = to_short(CMD_SCREEN);
   header.b1 = hstack;
+  header.b2 = size;
   header.s1 = to_short(width);
   send_bytes(s, (char *)&header, sizeof(HEADER));
 }
@@ -3045,6 +3047,7 @@ static void *client_thread(void* arg) {
       radio->soapy.tx_channels = data.soapy_tx_channels;
       radio->soapy.rx[0].has_automatic_gain = data.soapy_rx1_has_automatic_gain;
       radio->soapy.rx[1].has_automatic_gain = data.soapy_rx2_has_automatic_gain;
+      display_size = data.display_size;
       //
       memcpy(radio->soapy.hardware_key, data.soapy_hardware_key, 64);
       memcpy(radio->soapy.driver_key, data.soapy_driver_key, 64);
@@ -3080,7 +3083,7 @@ static void *client_thread(void* arg) {
       cw_keyer_sidetone_frequency = from_short(data.cw_keyer_sidetone_frequency);
       rx_gain_calibration = from_short(data.rx_gain_calibration);
       device = radio->device = from_short(data.device);
-      display_width = from_short(data.display_width);
+      display_width[1] = from_short(data.display_width);
       //
       drive_min = from_double(data.drive_min);
       drive_max = from_double(data.drive_max);
@@ -3952,7 +3955,8 @@ static int remote_command(void *data) {
 
   case CMD_SCREEN: {
     rx_stack_horizontal = header->b1;
-    display_width = from_short(header->s1);
+    display_size = header->b2;
+    display_width[1] = from_short(header->s1);
     radio_reconfigure_screen();
   }
   break;

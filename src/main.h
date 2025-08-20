@@ -34,13 +34,11 @@ enum _controller_enum {
 extern int controller;
 
 extern GdkScreen *screen;
-extern int display_width;
-extern int display_height;
-extern int screen_width;
-extern int screen_height;
+extern int display_size;       // pointer into display_width and display_height, 0 means FullScreen
+extern int display_width[6];   // custom size: width
+extern int display_height[6];  // custom size: height
 extern int this_monitor;
 
-extern int full_screen;
 extern GtkWidget *top_window;
 extern GtkWidget *topgrid;
 extern void status_text(const char *text);

@@ -220,7 +220,7 @@ void setDuplex() {
     gtk_container_remove(GTK_CONTAINER(content), transmitter->panel);
     gtk_widget_destroy(transmitter->dialog);
     transmitter->dialog = NULL;
-    int width = full_screen ? screen_width : display_width;
+    int width = display_width[display_size];
     tx_reconfigure(transmitter, width, width, rx_height);
   }
 

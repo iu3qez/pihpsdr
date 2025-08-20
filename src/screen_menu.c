@@ -32,6 +32,7 @@ static GtkWidget *wide_b = NULL;
 static GtkWidget *height_b = NULL;
 static GtkWidget *full_b = NULL;
 static GtkWidget *vfo_b = NULL;
+static GtkWidget *size_b = NULL;
 static gulong vfo_signal_id;
 static guint apply_timeout = 0;
 
@@ -40,7 +41,7 @@ static guint apply_timeout = 0;
 //
 static int my_display_width;
 static int my_display_height;
-static int my_full_screen;
+static int my_display_size;
 static int my_vfo_layout;
 static int my_rx_stack_horizontal;
 
@@ -53,11 +54,11 @@ static int my_rx_stack_horizontal;
 //
 static int apply(gpointer data) {
   apply_timeout = 0;
-  display_width       = my_display_width;
-  display_height      = my_display_height;
+  display_width[1]    = my_display_width;
+  display_height[1]   = my_display_height;
 
-  if (!radio_is_remote) {
-    full_screen         = my_full_screen;
+  if (!radio_is_remote || display_size > 0) {
+    display_size        = my_display_size;
   }
 
   vfo_layout          = my_vfo_layout;
@@ -65,7 +66,7 @@ static int apply(gpointer data) {
   radio_reconfigure_screen();
 
   if (radio_is_remote) {
-    send_screen(client_socket, rx_stack_horizontal, display_width);
+    send_screen(client_socket, rx_stack_horizontal, display_size, display_width[1]);
   }
 
   //
@@ -112,6 +113,13 @@ static void font_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
+static void size_cb(GtkWidget *widget, gpointer data) {
+  my_display_size = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  gtk_widget_set_sensitive(wide_b, my_display_size == 1);
+  gtk_widget_set_sensitive(height_b, my_display_size == 1);
+  schedule_apply();
+}
+
 static void vfo_cb(GtkWidget *widget, gpointer data) {
   my_vfo_layout = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
   VFO_HEIGHT = vfo_layout_list[my_vfo_layout].height;
@@ -119,11 +127,26 @@ static void vfo_cb(GtkWidget *widget, gpointer data) {
 
   if (needed % 32 != 0) { needed = 32 * (needed / 32 + 1); }
 
-  if (needed > screen_width) { needed = screen_width; }
+  if (needed > display_width[0]) { needed = display_width[0]; }
 
-  if (needed > my_display_width && wide_b) {
+  //
+  // If we have a "standard" size, look whether we need to advance to
+  // a larger "standard" size.
+  // If we have a "custom" size, increase it as needed
+  //
+
+  if (display_size == 1 && needed > my_display_width) {
     my_display_width = needed;
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(wide_b), (double) my_display_width);
+  }
+
+  if (display_size > 1) {
+    for (int i = display_size; i < 6; i++) {
+      if (needed <= display_width[i]) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(size_b), i);
+        break;
+      }
+    }
   }
 
   schedule_apply();
@@ -145,7 +168,7 @@ static void horizontal_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void full_cb(GtkWidget *widget, gpointer data) {
-  my_full_screen = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  my_display_size = 0;
   schedule_apply();
 }
 
@@ -175,9 +198,9 @@ static void display_pacurr_cb(GtkWidget *widget, gpointer data) {
 void screen_menu(GtkWidget *parent) {
   GtkWidget *label;
   GtkWidget *button;
-  my_display_width       = display_width;
-  my_display_height      = display_height;
-  my_full_screen         = full_screen;
+  my_display_width       = display_width[1];
+  my_display_height      = display_height[1];
+  my_display_size        = display_size;
   my_vfo_layout          = vfo_layout;
   my_rx_stack_horizontal = rx_stack_horizontal;
   dialog = gtk_dialog_new();
@@ -218,17 +241,37 @@ void screen_menu(GtkWidget *parent) {
   g_signal_connect(button, "changed", G_CALLBACK(font_cb), NULL);
   row++;
   col = 0;
-  label = gtk_label_new("Window Width/Height:");
+  label = gtk_label_new("Window size:");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
-  wide_b = gtk_spin_button_new_with_range(640.0, (double) screen_width, 32.0);
+  size_b = gtk_combo_box_text_new();
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(size_b), NULL, "Full Screen");
+  gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(size_b), NULL, "Custom");
+
+  for (int i = 2; i < 6; i++) {
+    char txt[64];
+    snprintf(txt, sizeof(txt), "%d * %d", display_width[i], display_height[i]);
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(size_b), NULL, txt);
+  }
+
+  gtk_combo_box_set_active(GTK_COMBO_BOX(size_b), display_size);
+  my_combo_attach(GTK_GRID(grid), size_b, col, row, 2, 1);
+  g_signal_connect(size_b, "changed", G_CALLBACK(size_cb), NULL);
+  row++;
+  col = 0;
+  label = gtk_label_new("Custom Width/Height:");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
+  col++;
+  wide_b = gtk_spin_button_new_with_range(640.0, (double) display_width[0], 32.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(wide_b), (double) my_display_width);
   gtk_grid_attach(GTK_GRID(grid), wide_b, col, row, 1, 1);
   g_signal_connect(wide_b, "value-changed", G_CALLBACK(width_cb), NULL);
   col++;
-  height_b = gtk_spin_button_new_with_range(400.0, (double) screen_height, 16.0);
+  height_b = gtk_spin_button_new_with_range(400.0, (double) display_height[0], 16.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(height_b), (double) my_display_height);
   gtk_grid_attach(GTK_GRID(grid), height_b, col, row, 1, 1);
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
@@ -263,7 +306,7 @@ void screen_menu(GtkWidget *parent) {
   if (!radio_is_remote) {
     full_b = gtk_check_button_new_with_label("Full Screen Mode");
     gtk_widget_set_name(full_b, "boldlabel");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(full_b), my_full_screen);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(full_b), SET(display_size == 0));
     gtk_grid_attach(GTK_GRID(grid), full_b, 2, row, 1, 1);
     g_signal_connect(full_b, "toggled", G_CALLBACK(full_cb), NULL);
   }
@@ -304,6 +347,8 @@ void screen_menu(GtkWidget *parent) {
     g_signal_connect(b_display_pacurr, "toggled", G_CALLBACK(display_pacurr_cb), NULL);
   }
 
+  gtk_widget_set_sensitive(wide_b, display_size == 1);
+  gtk_widget_set_sensitive(height_b, display_size == 1);
   gtk_container_add(GTK_CONTAINER(content), grid);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);

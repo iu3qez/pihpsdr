@@ -108,9 +108,9 @@ int action_dialog(GtkWidget *parent, int filter, enum ACTION currentAction) {
 
   if (width < 750) { width = 750; }
 
-  if (nat.width  > display_width -  50) { width  = display_width -  50; }
+  if (nat.width  > display_width[display_size] -  50) { width  = display_width[display_size] -  50; }
 
-  if (nat.height > display_height - 50) { height = display_height - 50; }
+  if (nat.height > display_height[display_size] - 50) { height = display_height[display_size] - 50; }
 
   gtk_widget_set_size_request(scrolled_window, width, height);
   //

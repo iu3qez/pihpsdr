@@ -65,11 +65,9 @@
 struct utsname unameData;
 
 GdkScreen *screen;
-int display_width;
-int display_height;
-int screen_height;
-int screen_width;
-int full_screen;
+int display_size;
+int display_width[6] = {0, 0, 640, 800, 1024, 1280};
+int display_height[6] = {0, 0, 400, 480, 600, 720};
 int this_monitor;
 
 static GdkCursor *cursor_arrow;
@@ -221,35 +219,37 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   //
   GdkRectangle rect;
   gdk_screen_get_monitor_geometry(screen, this_monitor, &rect);
-  screen_width = rect.width;
-  screen_height = rect.height;
-  t_print("%s: Monitor: width=%d height=%d\n", __FUNCTION__, screen_width, screen_height);
   // Start with 800x480, since this width is required for the "discovery" screen.
   // Go to "full screen" mode if display nearly matches 800x480
   // This is all overridden later for the radio from the props file
-  display_width  = 800;
-  display_height = 480;
-  full_screen    = 0;
+  display_width[0] = rect.width;
+  display_height[0] = rect.height;
+  display_width[1]  = 800;
+  display_height[1] = 480;
+  display_size   = 1;  // Custom
+  t_print("%s: Monitor: width=%d height=%d\n", __FUNCTION__, display_width[0], display_height[0]);
 
   //
   // Go to full-screen mode by default, if the screen size is approx. 800*480
   //
-  if (screen_width > 780 && screen_width < 820 && screen_height > 460 && screen_height < 500) {
-    full_screen = 1;
-    display_width = screen_width;
-    display_height = screen_height;
+  if (display_width[0] > 780 && display_width[0] < 820 && display_height[0] > 460 && display_height[0] < 500) {
+    display_size = 0;   // FullScreen
   }
 
-  t_print("%s: display_width=%d display_height=%d\n", __FUNCTION__, display_width, display_height);
+  t_print("%s: display_width=%d display_height=%d\n", __FUNCTION__,
+          display_width[display_size], display_height[display_size]);
 
-  if (full_screen) {
+  if (display_size == 0) {
     t_print("%s: Going full screen\n", __FUNCTION__);
     gtk_window_fullscreen_on_monitor(GTK_WINDOW(top_window), screen, this_monitor);
+  } else {
+    t_print("%s: display_width=%d display_height=%d\n", __FUNCTION__,
+            display_width[display_size], display_height[display_size]);
   }
 
   g_signal_connect (top_window, "delete-event", G_CALLBACK (main_delete), NULL);
   topgrid = gtk_grid_new();
-  gtk_widget_set_size_request(topgrid, display_width, display_height);
+  gtk_widget_set_size_request(topgrid, display_width[display_size], display_height[display_size]);
   gtk_grid_set_row_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_homogeneous(GTK_GRID(topgrid), FALSE);
   gtk_grid_set_column_spacing (GTK_GRID(topgrid), 10);
