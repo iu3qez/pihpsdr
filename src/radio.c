@@ -90,16 +90,16 @@
 #define min(x,y) (x<y?x:y)
 #define max(x,y) (x<y?y:x)
 
-int MENU_HEIGHT = 30;             // always set to VFO_HEIGHT/2
-int MENU_WIDTH = 65;              // nowhere changed
+const int MIN_METER_WIDTH = 200;  // nowhere changed
+const int MENU_WIDTH = 65;        // nowhere changed
+
 int VFO_HEIGHT = 60;              // taken from the current VFO bar layout
 int VFO_WIDTH = 530;              // taken from the current VFO bar layout
-const int MIN_METER_WIDTH = 200;  // nowhere changed
-int METER_HEIGHT = 60;            // always set to  VFO_HEIGHT
 int METER_WIDTH = 200;            // dynamically set in choose_vfo_layout
-int ZOOMPAN_HEIGHT = 50;
-int SLIDERS_HEIGHT = 100;
-int TOOLBAR_HEIGHT = 30;
+
+static int ZOOMPAN_HEIGHT = 50;   // dynamically adjusted to the display height
+static int SLIDERS_HEIGHT = 100;  // dynamically adjusted to the display height
+static int TOOLBAR_HEIGHT = 30;   // dynamically adjusted to the display height
 
 int rx_stack_horizontal = 0;
 int suppress_popup_sliders = 0;
@@ -663,8 +663,6 @@ void radio_reconfigure_screen() {
 
   choose_vfo_layout();
   VFO_HEIGHT = vfo_layout_list[vfo_layout].height;
-  MENU_HEIGHT = VFO_HEIGHT / 2;
-  METER_HEIGHT = VFO_HEIGHT;
 
   //
   // If there is enough space, increase the meter width
@@ -695,15 +693,15 @@ void radio_reconfigure_screen() {
   }
 
   gtk_window_resize(GTK_WINDOW(top_window), my_width, my_height);
-  gtk_widget_set_size_request(hide_b, MENU_WIDTH, MENU_HEIGHT);
-  gtk_widget_set_size_request(menu_b, MENU_WIDTH, MENU_HEIGHT);
-  gtk_widget_set_size_request(meter,  METER_WIDTH, METER_HEIGHT);
+  gtk_widget_set_size_request(hide_b, MENU_WIDTH, VFO_HEIGHT / 2);
+  gtk_widget_set_size_request(menu_b, MENU_WIDTH, VFO_HEIGHT / 2);
+  gtk_widget_set_size_request(meter,  METER_WIDTH, VFO_HEIGHT);
   gtk_widget_set_size_request(vfo_panel, VFO_WIDTH, VFO_HEIGHT);
   //
   // Move Hide and Menu buttons, meter to new position
   //
   gtk_fixed_move(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, 0);
-  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, MENU_HEIGHT);
+  gtk_fixed_move(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, VFO_HEIGHT / 2);
   gtk_fixed_move(GTK_FIXED(fixed), meter, VFO_WIDTH, 0);
 
   //
@@ -930,20 +928,20 @@ static void radio_create_visual() {
   VFO_WIDTH = my_width - MENU_WIDTH - METER_WIDTH;
   vfo_panel = vfo_init(VFO_WIDTH, VFO_HEIGHT);
   gtk_fixed_put(GTK_FIXED(fixed), vfo_panel, 0, y);
-  meter = meter_init(METER_WIDTH, METER_HEIGHT);
+  meter = meter_init(METER_WIDTH, VFO_HEIGHT);
   gtk_fixed_put(GTK_FIXED(fixed), meter, VFO_WIDTH, y);
   hide_b = gtk_button_new_with_label("Hide");
   gtk_widget_set_name(hide_b, "boldlabel");
-  gtk_widget_set_size_request (hide_b, MENU_WIDTH, MENU_HEIGHT);
+  gtk_widget_set_size_request (hide_b, MENU_WIDTH, VFO_HEIGHT / 2);
   g_signal_connect(hide_b, "button-press-event", G_CALLBACK(hideall_cb), NULL);
   gtk_fixed_put(GTK_FIXED(fixed), hide_b, VFO_WIDTH + METER_WIDTH, y);
-  y += MENU_HEIGHT;
+  y += VFO_HEIGHT / 2;
   menu_b = gtk_button_new_with_label("Menu");
   gtk_widget_set_name(menu_b, "boldlabel");
-  gtk_widget_set_size_request (menu_b, MENU_WIDTH, MENU_HEIGHT);
+  gtk_widget_set_size_request (menu_b, MENU_WIDTH, VFO_HEIGHT / 2);
   g_signal_connect (menu_b, "button-press-event", G_CALLBACK(menu_cb), NULL) ;
   gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y);
-  y += MENU_HEIGHT;
+  y += VFO_HEIGHT / 2;
   rx_height = my_height - VFO_HEIGHT;
 
   if (display_zoompan) {

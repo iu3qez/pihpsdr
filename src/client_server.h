@@ -886,7 +886,7 @@ extern void send_rx_select(int s, int rx);
 extern void send_rxmenu(int s, int id);
 extern void send_sample_rate(int s, int rx, int sample_rate);
 extern void send_sat(int s, int sat);
-extern void send_screen(int s, int hstack, int size, int width);
+extern void send_screen(int s, int hstack, int width);
 extern void send_sidetone_freq(int s, int freq);
 extern void send_soapy_rxant(int s, int id);
 extern void send_soapy_txant(int s);

@@ -275,8 +275,7 @@ extern int VFO_WIDTH;
 extern int VFO_HEIGHT;
 extern const int MIN_METER_WIDTH;
 extern int METER_WIDTH;
-extern int METER_HEIGHT;
-extern int MENU_WIDTH;
+extern const int MENU_WIDTH;
 
 extern int rx_stack_horizontal;
 extern int suppress_popup_sliders;

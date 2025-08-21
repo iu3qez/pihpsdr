@@ -60,7 +60,7 @@ meter_configure_event_cb (GtkWidget         *widget,
   }
 
   meter_surface = gdk_window_create_similar_surface (gtk_widget_get_window (widget),
-                  CAIRO_CONTENT_COLOR, METER_WIDTH, METER_HEIGHT);
+                  CAIRO_CONTENT_COLOR, METER_WIDTH, VFO_HEIGHT);
   /* Initialise the surface to black */
   cairo_t *cr;
   cr = cairo_create (meter_surface);
@@ -213,10 +213,10 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       double radius = cx - 25.0;
       double min_angle, max_angle, bydb;
 
-      if (cx - 0.342 * radius < METER_HEIGHT - 5) {
+      if (cx - 0.342 * radius < VFO_HEIGHT - 5) {
         min_angle = 200.0;
         max_angle = 340.0;
-      } else if (cx - 0.5 * radius < METER_HEIGHT - 5) {
+      } else if (cx - 0.5 * radius < VFO_HEIGHT - 5) {
         min_angle = 210.0;
         max_angle = 330.0;
       } else {
@@ -349,10 +349,10 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
           interval = 0.1 * pp;
         }
 
-        if (cx - 0.342 * radius < METER_HEIGHT - 5) {
+        if (cx - 0.342 * radius < VFO_HEIGHT - 5) {
           min_angle = 200.0;
           max_angle = 340.0;
-        } else if (cx - 0.5 * radius < METER_HEIGHT - 5) {
+        } else if (cx - 0.5 * radius < VFO_HEIGHT - 5) {
           min_angle = 210.0;
           max_angle = 330.0;
         } else {
@@ -531,7 +531,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
     // Mic level display
     //
     int text_location;
-    int Y0 = (METER_HEIGHT - 65) / 2;
+    int Y0 = (VFO_HEIGHT - 65) / 2;
     int Y1 = Y0 + 15;
     int Y2 = Y1 + 24;
     int Y4 = Y2 + 24;
@@ -691,7 +691,7 @@ void meter_update(RECEIVER *rx, int meter_type, double value, double alc, double
       //
       size = (METER_WIDTH - text_location) / 5;
 
-      if (size > METER_HEIGHT / 3) { size = METER_HEIGHT / 3; }
+      if (size > VFO_HEIGHT / 3) { size = VFO_HEIGHT / 3; }
 
       cairo_set_source_rgba(cr, COLOUR_ATTN);
       cairo_set_font_size(cr, size);

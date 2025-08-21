@@ -65,6 +65,7 @@ static gboolean close_cb () {
 
 static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
   if (device == SOAPYSDR_USB_DEVICE) {
+#ifdef SOAPYSDR
     int id = GPOINTER_TO_INT(data);
     double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
@@ -76,7 +77,6 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
       return;
     }
 
-#ifdef SOAPYSDR
     soapy_protocol_set_rx_gain_element(id, (char *)gtk_widget_get_name(widget), gain);
     sliders_rf_gain(id, id);
 #endif
@@ -85,6 +85,7 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
 
 static void tx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit && device == SOAPYSDR_USB_DEVICE) {
+#ifdef SOAPYSDR
     double gain = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
     if (radio_is_remote) {
@@ -95,7 +96,6 @@ static void tx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
       return;
     }
 
-#ifdef SOAPYSDR
     soapy_protocol_set_tx_gain_element((char *)gtk_widget_get_name(widget), (int) gain);
     sliders_drive();
 #endif

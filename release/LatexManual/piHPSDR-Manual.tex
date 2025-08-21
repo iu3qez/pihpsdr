@@ -1480,22 +1480,18 @@ the size of the \pH main
 window, it also lets you choose between different VFO bar layouts that are designed to fit
 on a screen with a given width. Furthermore, one
 can select whether the Zoom/Pan, the Sliders, or the Toolbar area are shown or hidden.
-The possibility to adjust
-the screen size has been the most frequent feature request in the last years,
-so I finally decided to implement it. The menu is opened
+ The menu is opened
 via the main menu and the \bltt{Screen} button and is shown in Fig. \ref{fig:ScreenMenu}.
-To demonstrate the effect of choosing another font, the entire \pH window is shown,
-the \rett{Roboto Mono} font has just been chosen. The figure shows how the menu window,
-the slider area and the VFO bar have switched to  the new font.
 
 \begin{figure}[ht]
 \center
-\includegraphics[scale=0.45]{ScreenMenu.png}
+\includegraphics[scale=0.35]{ScreenMenu.png}
 \caption{The \bltt{Screen} menu.}
 \label{fig:ScreenMenu}
 \end{figure}
 
-In the first line there is a combo-box for choosing the font. Currently, the choices
+In the first line, starting with \rett{Font used:},
+ there is a combo-box for choosing the font. Currently, the choices
 are \rett{FreeSans}, \rett{Roboto Mono}, \rett{Open Sans} and \rett{Piboto}. Changing
 the font affects all menus, the slider, zoom and tool bars, as well as the VFO bar.
 The default font is \rett{FreeSans} simply because it is supposed to be available on all
@@ -1503,9 +1499,9 @@ systems. The \rett{Open Sans} and \rett{Piboto} fonts are often told to have a
 better on-screen legibility. Some people prefer mono-spaced fonts, therefore \rett{Roboto Mono}
 is included in the list.
 
-It is possible that the VFO bar layout looks not OK if you choose a font
+It is possible that the VFO bar layout does not look OK if you choose a font
 that is not installed on your system because the system then falls back to some
-other font that is hard to predict. The list of fonts currently installed can be
+default that is hard to predict. The list of fonts currently installed can be
 obtained with the \texttt{fc-list} command, but
 if one or more of these fonts are not available on your system, this can easily be
 cured: all fonts offered in the menu can be downloaded
@@ -1516,14 +1512,17 @@ font files (\texttt{*.otf} or \texttt{*.ttf}) to that directory and run the comm
 double-clicking a font  (\texttt{*.ttf}) file will open the MacOS FontBook application
 which shows you the new font, and then click on the "Install" button.
 
-The spin buttons in the next line can be used to adjust the window width and height.
-The minimum values for width and height are 640 and 400, the maximum values are determined by
-the size of the monitor. If more than one monitor is attached, the dimension
-of the monitor on which the initial \pH window was opened determines
-the maximum width and height. Changes made in the spin buttons become effective
-immediately. If \pH is in full screen mode (see below), you can change the
-values of the window width and height, but they do not become effective until
-you leave the full screen mode.
+In the second line, starting with \rett{Window size:}, one can choose the size of the \pH window.
+Currently the choices are \rett{Full Screen}, \rett{Custom}, \rett{640*400}, \rett{800*480},
+\rett{1024*600}, and \rett{1280*720}. For the \rett{Full Screen}  choice, the \pH will occupy the entire
+screen space (in a multi-monitor setup, this is the area of the monitor
+on which the \pH window was opened upon program start).
+For \rett{Custom}, \pH uses the screen dimensions specified by the spin buttons
+in the third line. Note these buttons are only active if a custom layout is chosen. The other choices
+set the screen dimensions as indicated. One can, for example, set and use a preferred custom size,
+and temporarily switch to a small pre-defined geometry if one
+needs screen space for other work. Switching back to \rett{Custom} then restores the preferred
+window size.
 
 \begin{figure}[ht!]
 \center
@@ -1532,14 +1531,12 @@ you leave the full screen mode.
 \label{fig:VFObarChoice}
 \end{figure}
 
-If the window width is decreased such that the VFO bar chosen does no longer fit,
-the first one in the list that does fit is automatically selected, and the
+If the window width is decreased such that the VFO bar currently chosen does no longer fit,
+\pH automatically switches to a smaller VFO bar, the
 current choice shown in the
 pop-down menu \rett{Select VFO bar layout} is updated. This menu lets you choose
 the layout of the VFO
 bar. In Fig. \ref{fig:VFObarChoice} five pre-defined layouts are shown.
-
-
 
 These layouts require a screen size of 1152, 1024, 896, 800, and 640 pixels (from top to
 bottom). Screens slightly wider (about 50 pixel) than these minimal values then allow for a larger meter
@@ -1548,11 +1545,12 @@ width permits. There is one even larger VFO bar (for a screen width of 1960 pixe
 that is not shown but does not look different from the topmost one in Fig. \ref{fig:VFObarChoice}.
 The VFO bar has been described in detail in chapter
 \ref{sec:VFObar}. If you choose a VFO bar layout that is wider than the current
-window width allows, the window width is automatically adjusted (increased). On the
+window width allows, the window width is automatically adjusted (increased) when using a custom
+dimension, and one advances to a larger pre-defined size if using a non-custom size. On the
 other hand, choosing a VFO bar layout that is smaller than before does not affect
 the screen dimensions, but there will then be some empty space between the VFO-B
-frequency and the meter. The smallest VFO bars do not offer enough space to display all controls
-For example, the indicator for the downward expander and the actual filter edges are  missing
+frequency and the meter. Note that the smallest VFO bars do not offer enough space to display all controls:
+for example, the indicator for the downward expander and the actual filter edges are  missing
 in  the smallest layouts, but if one is restricted to such small screen one has to live with it.
 
 \begin{figure}[ht!]
@@ -1564,26 +1562,15 @@ in  the smallest layouts, but if one is restricted to such small screen one has 
 
 Fig. \ref{fig:640x400} shows, as an example, \pH running in a window as small
 as 640*400 pixels. It is admitted that this looks rather squeezed, and this
-will only be useful if a single receiver is run with no waterfall. However, for
+will probably look over-crowded when running two receivers. However, for
 portable operations such small windows are often desired,
-if \pH is to be run alongside with a logbook and digi mode program on a  laptop.
-Note that the \pH menus are designed to fit on a window 800*480 pixels large, so
-it is not recommended to run \pH on a \textit{screen} that small. On the other hand,
-if \pH is run on a laptop in a small 640*400 window, then menus may be larger than
-that but still fit well on the screen (thus hiding, momentarily, the window of some
-other program) and are perfectly usable.
+if \pH is to be run alongside with a logbook and digi mode program on a laptop.
+Note that the \pH menus are designed to fit on a window 800*480 pixels large and might
+not fit into a \pH window smaller than that.
 
 \rett{Stack receivers horizontally}. If checked, this puts the panels
 of the two receivers (if two receivers are used) side-by-side instead of on top
 of each other.
-
-
-\rett{Full Screen Mode}. If you check this option, \pH goes to full screen mode.
-In this mode, the window width and height is ignore, instead, \pH occupies
-the whole area of the screen. In a multi-monitor setup, the area of the monitor
-on which the \pH window was opened upon program start is filled.
-If you leave full screen mode, the size of the \pH window is again
-determined by the width and height chosen above.
 
 \rett{Display Zoom/Pan} This option can be used to show/hide the Zoom and
 Pan slider below the RX or TX panel. If you do not use Zoom, or control
@@ -5580,7 +5567,7 @@ that is instrumented to use  the \texttt{eSpeak} program. It is the task of the 
 make good use of the data contained in the UDP packet.
 
 Additionally, the MacOS builtin speech synthesiser is used so there should be no need
-for the \texttt{udplistener.c} program there. piHPSDR specifies english (en-GB)
+for the \texttt{udplistener.c} program there. \pH specifies english (en-GB)
 language for the text to be spoken.
 
 The whole text-to-speech feature, if it is not needed, can be suppressed by compiling

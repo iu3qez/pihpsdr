@@ -1717,12 +1717,15 @@ void send_meter(int s, int metermode, int alcmode) {
   send_bytes(s, (char *)&header, sizeof(HEADER));
 }
 
-void send_screen(int s, int hstack, int size, int width) {
+void send_screen(int s, int hstack, int width) {
+//
+// The client sends this, if its screen size or the RX stacking
+// has changed. The server needs to re-init the WDSP analyzers
+//
   HEADER header;
   SYNC(header.sync);
   header.data_type = to_short(CMD_SCREEN);
   header.b1 = hstack;
-  header.b2 = size;
   header.s1 = to_short(width);
   send_bytes(s, (char *)&header, sizeof(HEADER));
 }
@@ -2613,6 +2616,16 @@ static void *listen_thread(void *arg) {
       //
       g_idle_add(ext_set_mox, GINT_TO_POINTER(0));
       remoteclient.running = TRUE;
+
+      //
+      // In order to be prepeared for varying screen dimensions,
+      // we switch the display to "custom" geometry.
+      //
+      display_width[1] = display_width[display_size];
+      display_height[1] = display_height[display_size];
+      display_size = 1;
+      rx_stack_horizontal = 0;
+      radio_reconfigure_screen();
 
       for (int id = 0; id < RECEIVERS; id++) {
         remoteclient.send_rx_spectrum[id] = FALSE;
@@ -3955,7 +3968,7 @@ static int remote_command(void *data) {
 
   case CMD_SCREEN: {
     rx_stack_horizontal = header->b1;
-    display_size = header->b2;
+    display_size = 1;
     display_width[1] = from_short(header->s1);
     radio_reconfigure_screen();
   }
