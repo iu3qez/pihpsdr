@@ -545,6 +545,7 @@ static void choose_vfo_layout() {
   // b) secure that the VFO layout width fits
   //
   int rc;
+  int layout=display_vfobar[display_size];
   const VFO_BAR_LAYOUT *vfl;
   rc = 1;
   vfl = vfo_layout_list;
@@ -553,13 +554,13 @@ static void choose_vfo_layout() {
   for (;;) {
     if (vfl->width < 0) { break; }
 
-    if ((vfl - vfo_layout_list) == vfo_layout) { rc = 0; }
+    if ((vfl - vfo_layout_list) == layout) { rc = 0; }
 
     vfl++;
   }
 
   if (rc) {
-    vfo_layout = 0;
+    layout = 0;
   }
 
   METER_WIDTH = MIN_METER_WIDTH;
@@ -571,7 +572,7 @@ static void choose_vfo_layout() {
   // Choose the first largest layout that fits
   // with a minimum-width meter
   //
-  if (vfo_layout_list[vfo_layout].width > VFO_WIDTH) {
+  if (vfo_layout_list[layout].width > VFO_WIDTH) {
     vfl = vfo_layout_list;
 
     for (;;) {
@@ -585,18 +586,20 @@ static void choose_vfo_layout() {
       vfl++;
     }
 
-    vfo_layout = vfl - vfo_layout_list;
-    t_print("%s: vfo_layout changed (width=%d)\n", __FUNCTION__, vfl->width);
+    layout = vfl - vfo_layout_list;
+    //t_print("%s: vfo_layout changed (width=%d)\n", __FUNCTION__, vfl->width);
   }
 
   //
   // If chosen layout leaves at least 50 pixels unused:
   // give 50 extra pixels to the meter
   //
-  if (vfo_layout_list[vfo_layout].width < VFO_WIDTH - 50) {
+  if (vfo_layout_list[layout].width < VFO_WIDTH - 50) {
     VFO_WIDTH -= 50;
     METER_WIDTH += 50;
   }
+
+  display_vfobar[display_size] = layout;
 }
 
 static guint full_screen_timeout = 0;
@@ -662,7 +665,7 @@ void radio_reconfigure_screen() {
   }
 
   choose_vfo_layout();
-  VFO_HEIGHT = vfo_layout_list[vfo_layout].height;
+  VFO_HEIGHT = vfo_layout_list[display_vfobar[display_size]].height;
 
   //
   // If there is enough space, increase the meter width
@@ -3027,7 +3030,6 @@ static void radio_restore_state() {
   GetPropI0("display_sliders",                               display_sliders);
   GetPropI0("display_toolbar",                               display_toolbar);
   GetPropI0("display_height",                                display_height[1]);
-  GetPropI0("vfo_layout",                                    vfo_layout);
   GetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   GetPropI0("which_css_font",                                which_css_font);
   GetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
@@ -3042,6 +3044,10 @@ static void radio_restore_state() {
   GetPropI0("tci_enable",                                    tci_enable);
   GetPropI0("tci_port",                                      tci_port);
   GetPropI0("tci_txonly",                                    tci_txonly);
+
+  for (int i = 0; i < 6; i++) {
+    GetPropI1("display_vfobar[%d]", i,                       display_vfobar[i]);
+  }
 
   if (!radio_is_remote) {
     GetPropI0("rx_stack_horizontal",                         rx_stack_horizontal);
@@ -3237,7 +3243,6 @@ void radio_save_state() {
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
   SetPropI0("display_toolbar",                               hide_status ? old_tool : display_toolbar);
   SetPropI0("display_height",                                display_height[1]);
-  SetPropI0("vfo_layout",                                    vfo_layout);
   SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   SetPropI0("which_css_font",                                which_css_font);
   SetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
@@ -3252,6 +3257,10 @@ void radio_save_state() {
   SetPropI0("tci_enable",                                    tci_enable);
   SetPropI0("tci_port",                                      tci_port);
   SetPropI0("tci_txonly",                                    tci_txonly);
+
+  for (int i = 0; i < 6; i++) {
+    SetPropI1("display_vfobar[%d]", i,                       display_vfobar[i]);
+  }
 
   if (!radio_is_remote) {
     SetPropI0("rx_stack_horizontal",                         rx_stack_horizontal);

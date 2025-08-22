@@ -1448,7 +1448,7 @@ static gboolean vfo_draw_cb (GtkWidget *widget,
 //
 // This function re-draws the VFO bar.
 // Lot of elements are programmed, whose size and position
-// is determined by the current vfo_layout
+// is determined by the current vfo layout
 // Elements whose x-coordinate is zero are not drawn
 //
 void vfo_update() {
@@ -1496,7 +1496,7 @@ void vfo_update() {
 
   int f = vfo[id].filter;
   int txvfo = vfo_get_tx_vfo();
-  const VFO_BAR_LAYOUT *vfl = &vfo_layout_list[vfo_layout];
+  const VFO_BAR_LAYOUT *vfl = &vfo_layout_list[display_vfobar[display_size]];
   //
   // Filter used in active receiver
   //
@@ -2227,7 +2227,7 @@ static gboolean vfo_press_event_cb (GtkWidget *widget, GdkEventButton *event, gp
   case GDK_BUTTON_PRIMARY:
     v = VFO_A;
 
-    if (event->x >= abs(vfo_layout_list[vfo_layout].vfo_b_x)) { v = VFO_B; }
+    if (event->x >= abs(vfo_layout_list[display_vfobar[display_size]].vfo_b_x)) { v = VFO_B; }
 
     g_idle_add(ext_start_vfo, GINT_TO_POINTER(v));
     break;

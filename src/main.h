@@ -35,8 +35,9 @@ extern int controller;
 
 extern GdkScreen *screen;
 extern int display_size;       // pointer into display_width and display_height, 0 means FullScreen
-extern int display_width[6];   // custom size: width
-extern int display_height[6];  // custom size: height
+extern int display_width[6];
+extern int display_height[6];
+extern int display_vfobar[6];  // Store VFO bar last used with this slot
 extern int this_monitor;
 
 extern GtkWidget *top_window;

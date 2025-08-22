@@ -448,5 +448,3 @@ const VFO_BAR_LAYOUT vfo_layout_list[] = {
     .width = -1
   }
 };
-
-int vfo_layout = 0;

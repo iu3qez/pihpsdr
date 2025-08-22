@@ -53,11 +53,13 @@ static int my_rx_stack_horizontal;
 //
 static int apply(gpointer data) {
   apply_timeout = 0;
-  display_width[1]    = my_display_width;
-  display_height[1]   = my_display_height;
-  display_size        = my_display_size;
-  vfo_layout          = my_vfo_layout;
-  rx_stack_horizontal = my_rx_stack_horizontal;
+  //
+  display_width[1]             = my_display_width;
+  display_height[1]            = my_display_height;
+  display_size                 = my_display_size;
+  display_vfobar[display_size] = my_vfo_layout;
+  rx_stack_horizontal          = my_rx_stack_horizontal;
+  //
   radio_reconfigure_screen();
 
   if (radio_is_remote) {
@@ -68,12 +70,10 @@ static int apply(gpointer data) {
   // VFO layout may have been re-adjusted so update combo-box
   // (without letting it emit a signal)
   //
-  if (vfo_layout != my_vfo_layout) {
-    my_vfo_layout = vfo_layout;
-    g_signal_handler_block(G_OBJECT(vfo_b), vfo_signal_id);
-    gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), my_vfo_layout);
-    g_signal_handler_unblock(G_OBJECT(vfo_b), vfo_signal_id);
-  }
+  my_vfo_layout = display_vfobar[my_display_size];
+  g_signal_handler_block(G_OBJECT(vfo_b), vfo_signal_id);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), my_vfo_layout);
+  g_signal_handler_unblock(G_OBJECT(vfo_b), vfo_signal_id);
 
   return G_SOURCE_REMOVE;
 }
@@ -110,6 +110,10 @@ static void font_cb(GtkWidget *widget, gpointer data) {
 
 static void size_cb(GtkWidget *widget, gpointer data) {
   my_display_size = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  my_vfo_layout = display_vfobar[my_display_size];
+  g_signal_handler_block(G_OBJECT(vfo_b), vfo_signal_id);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), my_vfo_layout);
+  g_signal_handler_unblock(G_OBJECT(vfo_b), vfo_signal_id);
   gtk_widget_set_sensitive(wide_b, my_display_size == 1);
   gtk_widget_set_sensitive(height_b, my_display_size == 1);
   schedule_apply();
@@ -198,7 +202,7 @@ void screen_menu(GtkWidget *parent) {
   my_display_width       = display_width[1];
   my_display_height      = display_height[1];
   my_display_size        = display_size;
-  my_vfo_layout          = vfo_layout;
+  my_vfo_layout          = display_vfobar[display_size];
   my_rx_stack_horizontal = rx_stack_horizontal;
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
@@ -272,6 +276,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(height_b), (double) my_display_height);
   gtk_grid_attach(GTK_GRID(grid), height_b, col, row, 1, 1);
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
+
   row++;
   col = 0;
   label = gtk_label_new("Select VFO bar layout:");
@@ -293,6 +298,7 @@ void screen_menu(GtkWidget *parent) {
   // This combo-box spans three columns so the text may be really long
   my_combo_attach(GTK_GRID(grid), vfo_b, col, row, 2, 1);
   vfo_signal_id = g_signal_connect(vfo_b, "changed", G_CALLBACK(vfo_cb), NULL);
+
   row++;
   button = gtk_check_button_new_with_label("Stack receivers horizontally");
   gtk_widget_set_name(button, "boldlabel");
