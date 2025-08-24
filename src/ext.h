@@ -19,6 +19,8 @@
 
 #include "client_server.h"
 
+extern int radio_reconfigure_screen_done;
+
 extern int ext_remote_command(void *data);
 extern int ext_rx_remote_update_display(void *data);
 extern int ext_tx_remote_update_display(void *data);
@@ -43,6 +45,7 @@ extern int ext_start_vfo(void *data);
 extern int ext_start_band(void *data);
 extern int ext_set_vox(void *data);
 extern int ext_set_duplex(void *data);      // is this necessary?
+extern int ext_radio_reconfigure_screen(void *data);
 
 ///////////////////////////////////////////////////////////
 //

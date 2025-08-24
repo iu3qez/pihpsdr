@@ -74,8 +74,6 @@ typedef struct _receiver {
   int    smetermode;
   double meter;
 
-  double hz_per_pixel;
-
   //
   // Encodings for "QRM fighters"
   //
@@ -223,9 +221,8 @@ typedef struct _receiver {
   int deviation;
 
   long long waterfall_frequency;
-  int waterfall_sample_rate;
-  int waterfall_pan;
-  int waterfall_zoom;
+  double waterfall_cBp;
+  double waterfall_cB;
 
   int mute_radio;
 
@@ -236,7 +233,24 @@ typedef struct _receiver {
   int resample_buffer_size;
 
   int zoom;
-  int pan;
+  int pan;  // 0 (max.left)  ... 100 (max.right)
+  //
+  // We need two functions that depend on the panadapter width (in pixels),
+  // the zoom/pan values, and the sample rate, namly
+  // (x: pixel, f: frequency, v: center frequency), and these are given
+  // by two constants A and B
+  //
+  // f = v + A + B x
+  // x = A' (f-v) + B', with   // A' = 1/B and B' = -A/B
+  //
+  // and these coefficients can then be used to quickly calculate a pixel number from
+  // a frequency, or a frequency from a pixel number. Note the center frequency equals
+  // the vfo.frequency in most modes but is offset by the side tone freq in CWU/CWL.
+  //
+  double cA;
+  double cB;
+  double cAp;
+  double cBp;
 
   int x;
   int y;
@@ -265,7 +279,7 @@ typedef struct _receiver {
 } RECEIVER;
 
 extern RECEIVER *rx_create_pure_signal_receiver(int id, int sample_rate, int pixels, int fps);
-extern RECEIVER *rx_create_receiver(int id, int pixels, int width, int height);
+extern RECEIVER *rx_create_receiver(int id, int width, int height);
 
 extern gboolean rx_button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data);
 extern gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpointer data);
@@ -278,7 +292,7 @@ extern void   rx_add_div_iq_samples(RECEIVER *rx, double i0, double q0, double i
 extern void   rx_change_sample_rate(RECEIVER *rx, int sample_rate);
 extern void   rx_change_adc(const RECEIVER *rx);
 extern void   rx_close(const RECEIVER *rx);
-extern void   rx_create_analyzer(const RECEIVER *rx);
+extern void   rx_create_analyzer(RECEIVER *rx);
 extern void   rx_filter_changed(RECEIVER *rx);
 extern int    rx_get_pixels(RECEIVER *rx);
 extern double rx_get_smeter(const RECEIVER *rx);
@@ -296,7 +310,7 @@ extern void   rx_set_active(RECEIVER *rx);
 extern void   rx_set_af_binaural(const RECEIVER *rx);
 extern void   rx_set_af_gain(const RECEIVER *rx);
 extern void   rx_set_agc(RECEIVER *rx);
-extern void   rx_set_analyzer(const RECEIVER *rx);
+extern void   rx_set_analyzer(RECEIVER *rx);
 extern void   rx_set_average(const RECEIVER *rx);
 extern void   rx_set_bandpass(const RECEIVER *rx);
 extern void   rx_set_cw_peak(const RECEIVER *rx, int state, double freq);
@@ -316,6 +330,8 @@ extern void   rx_set_squelch(const RECEIVER *rx);
 
 extern void   rx_vfo_changed(RECEIVER *rx);
 extern void   rx_update_zoom(RECEIVER *rx);
+extern void   rx_update_width(RECEIVER *rx);
+extern void   rx_update_pan(RECEIVER *rx);
 
 extern void rx_create_remote(RECEIVER *rx);
 extern void rx_remote_update_display(RECEIVER *rx);

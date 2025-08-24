@@ -782,7 +782,7 @@ void radio_reconfigure() {
     for (i = 0; i < receivers; i++) {
       RECEIVER *rx = receiver[i];
       rx->width = my_width / receivers;
-      rx_update_zoom(rx);
+      rx_update_width(rx);
       rx_reconfigure(rx, rx_height);
 
       if (!radio_is_transmitting() || duplex) {
@@ -799,7 +799,7 @@ void radio_reconfigure() {
     for (i = 0; i < receivers; i++) {
       RECEIVER *rx = receiver[i];
       rx->width = my_width;
-      rx_update_zoom(rx);
+      rx_update_width(rx);
       rx_reconfigure(rx, rx_height / receivers);
 
       if (!radio_is_transmitting() || duplex) {
@@ -967,7 +967,7 @@ static void radio_create_visual() {
     if (radio_is_remote) {
       rx_create_remote(receiver[i]);
     } else {
-      receiver[i] = rx_create_receiver(CHANNEL_RX0 + i, my_width, my_width, rx_height / RECEIVERS);
+      receiver[i] = rx_create_receiver(CHANNEL_RX0 + i, my_width, rx_height / RECEIVERS);
       rx_set_squelch(receiver[i]);
     }
 

@@ -475,8 +475,6 @@ void sliders_mic_gain() {
 }
 
 void sliders_drive(void) {
-  t_print("%s\n", __FUNCTION__);
-
   //
   // This ONLY moves the slider
   //
@@ -600,7 +598,6 @@ GtkWidget *sliders_init(int my_width, int my_height) {
   GtkWidget *label;
   width = my_width;
   height = my_height;
-  t_print("sliders_init: width=%d height=%d\n", width, height);
   //
   // The larger the width, the smaller the fraction used for the label can be
   // font size.

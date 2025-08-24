@@ -162,8 +162,10 @@ int ext_remote_set_zoom(void *data) {
 }
 
 int ext_remote_set_pan(void *data) {
-  int pan = GPOINTER_TO_INT(data);
-  remote_set_pan(active_receiver->id, (double)pan);
+  int v = GPOINTER_TO_INT(data);
+  int id = v / 1000;
+  int pan = v % 1000;
+  remote_set_pan(id, (double)pan);
   return G_SOURCE_REMOVE;
 }
 
@@ -176,5 +178,13 @@ int ext_set_title(void *data) {
 int ext_radio_remote_change_receivers(void *data) {
   int r = GPOINTER_TO_INT(data);
   radio_remote_change_receivers(r);
+  return G_SOURCE_REMOVE;
+}
+
+int radio_reconfigure_screen_done = 0;
+
+int ext_radio_reconfigure_screen(void *data) {
+  radio_reconfigure_screen();
+  radio_reconfigure_screen_done = 1;
   return G_SOURCE_REMOVE;
 }

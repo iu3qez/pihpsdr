@@ -117,7 +117,6 @@ void rx_panadapter_update(RECEIVER *rx) {
   cairo_set_source_rgba(cr, COLOUR_PAN_BACKGND);
   cairo_rectangle(cr, 0, 0, mywidth, myheight);
   cairo_fill(cr);
-  double HzPerPixel = rx->hz_per_pixel;  // need this many times
   int mode = vfo[rx->id].mode;
   long long frequency = vfo[rx->id].frequency;
   int vfoband = vfo[rx->id].band;
@@ -143,10 +142,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     soffset -= (double)(20 * adc[rx->adc].preamp);
   }
 
-  //
-  // offset is used to calculate the filter edges. They move  with the RIT value
-  //
-
   if (vfo[rx->id].ctun) {
     offset = vfo[rx->id].offset;
   } else {
@@ -160,8 +155,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     mode = vfo[0].mode;
   }
 
-  long long half = (long long)rx->sample_rate / 2LL;
-  double vfofreq = ((double) rx->pixels * 0.5) - (double)rx->pan;
+  double rxpos = rx->cBp + offset * rx->cAp;
 
   //
   //
@@ -172,24 +166,25 @@ void rx_panadapter_update(RECEIVER *rx) {
   //
   if (mode == modeCWU) {
     frequency -= cw_keyer_sidetone_frequency;
-    vfofreq += (double) cw_keyer_sidetone_frequency / HzPerPixel;
+    rxpos += cw_keyer_sidetone_frequency * rx->cAp;
   } else if (mode == modeCWL) {
     frequency += cw_keyer_sidetone_frequency;
-    vfofreq -= (double) cw_keyer_sidetone_frequency / HzPerPixel;
+    rxpos -= cw_keyer_sidetone_frequency * rx->cAp;
   }
-
-  long long min_display = frequency - half + (long long)((double)rx->pan * HzPerPixel);
-  long long max_display = min_display + (long long)((double)rx->width * HzPerPixel);
 
   if (vfoband == band60) {
     for (int i = 0; i < channel_entries; i++) {
       long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long)2);
       long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
-      double x1 = (double) (low_freq - min_display) / HzPerPixel;
-      double x2 = (double) (hi_freq - min_display) / HzPerPixel;
-      cairo_set_source_rgba(cr, COLOUR_PAN_60M);
-      cairo_rectangle(cr, x1, 0.0, x2 - x1, myheight);
-      cairo_fill(cr);
+      double x1 = rx->cBp + (low_freq - frequency) * rx->cAp;
+      double x2 = rx->cBp + (hi_freq - frequency) * rx->cAp;
+      if (x1 < 0.0) { x1 = 0.0; }
+      if (x2 > rx->width) { x2 = rx->width; }
+      if (x2 - x1 > 1.0) {
+        cairo_set_source_rgba(cr, COLOUR_PAN_60M);
+        cairo_rectangle(cr, x1, 0.0, x2 - x1, myheight);
+        cairo_fill(cr);
+      }
     }
   }
 
@@ -197,8 +192,8 @@ void rx_panadapter_update(RECEIVER *rx) {
   // Filter edges.
   //
   cairo_set_source_rgba (cr, COLOUR_PAN_FILTER);
-  double filter_left = ((double)rx->pixels * 0.5) - (double)rx->pan + (((double)rx->filter_low + offset) / HzPerPixel);
-  double filter_right = ((double)rx->pixels * 0.5) - (double)rx->pan + (((double)rx->filter_high + offset) / HzPerPixel);
+  double filter_left = rx->cAp * (rx->filter_low + offset) + rx->cBp;
+  double filter_right = rx->cAp * (rx->filter_high + offset) + rx->cBp;
   cairo_rectangle(cr, filter_left, 0.0, filter_right - filter_left, myheight);
   cairo_fill(cr);
 
@@ -236,7 +231,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   // pixels distance between frequency markers,
   // and then round upwards to the  next 1/2/5 seris
   //
-  divisor = (rx->sample_rate * 65) / rx->pixels;
+  divisor = 65 * rx->cB;
 
   if (divisor > 500000LL) { divisor = 1000000LL; }
   else if (divisor > 200000LL) { divisor = 500000LL; }
@@ -254,7 +249,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   // (in pixels)
   //
   int marker_distance = (rx->pixels * divisor) / rx->sample_rate;
-  f = ((min_display / divisor) * divisor) + divisor;
+  f = (((frequency + (int)(rx->cA+0.5)) / divisor) * divisor);
   cairo_select_font_face(cr, DISPLAY_FONT_FACE, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   //
   // If space is available, increase font size of freq. labels a bit
@@ -262,8 +257,12 @@ void rx_panadapter_update(RECEIVER *rx) {
   int marker_extra = (marker_distance > 100) ? 2 : 0;
   cairo_set_font_size(cr, DISPLAY_FONT_SIZE2 + marker_extra);
 
-  while (f < max_display) {
-    double x = (double)(f - min_display) / HzPerPixel;
+  for (;;) {
+    f += divisor;
+    double x = rx->cBp + (double)(f - frequency) * rx->cAp;
+
+    if (x > rx->width) { break; }
+
     cairo_move_to(cr, x, 0);
     cairo_line_to(cr, x, myheight);
 
@@ -272,7 +271,7 @@ void rx_panadapter_update(RECEIVER *rx) {
     // edge, do not print a frequency since this probably won't fit
     // on the screen
     //
-    if ((f >= min_display + divisor / 2) && (f <= max_display - divisor / 2)) {
+    if ((x >= 32) && (x <= rx->width - 32)) {
       //
       // For frequencies larger than 10 GHz, we cannot
       // display all digits here so we give three dots
@@ -289,8 +288,6 @@ void rx_panadapter_update(RECEIVER *rx) {
       cairo_move_to(cr, x - (extents.width / 2.0), 10 + marker_extra);
       cairo_show_text(cr, v);
     }
-
-    f += divisor;
   }
 
   cairo_set_line_width(cr, PAN_LINE_THIN);
@@ -299,19 +296,20 @@ void rx_panadapter_update(RECEIVER *rx) {
   if (vfoband != band60) {
     // band edges
     if (band->frequencyMin != 0LL) {
+      double x;
       cairo_set_source_rgba(cr, COLOUR_ALARM);
       cairo_set_line_width(cr, PAN_LINE_THICK);
 
-      if ((min_display < band->frequencyMin) && (max_display > band->frequencyMin)) {
-        double x = (double)(band->frequencyMin - min_display) / HzPerPixel;
+      x = rx->cBp + (band->frequencyMin - frequency) * rx->cAp;
+      if (x >= 0 && x <= rx->width) {
         cairo_move_to(cr, x, 0);
         cairo_line_to(cr, x, myheight);
         cairo_set_line_width(cr, PAN_LINE_EXTRA);
         cairo_stroke(cr);
       }
 
-      if ((min_display < band->frequencyMax) && (max_display > band->frequencyMax)) {
-        double x = (double) (band->frequencyMax - min_display) / HzPerPixel;
+      x = rx->cBp + (band->frequencyMax - frequency) * rx->cAp;
+      if (x >= 0 && x <= rx->width) {
         cairo_move_to(cr, x, 0);
         cairo_line_to(cr, x, myheight);
         cairo_set_line_width(cr, PAN_LINE_EXTRA);
@@ -385,27 +383,19 @@ void rx_panadapter_update(RECEIVER *rx) {
     cairo_set_source_rgba(cr, COLOUR_ALARM_WEAK);
   }
 
-  cairo_move_to(cr, vfofreq + (offset / HzPerPixel), 0.0);
-  cairo_line_to(cr, vfofreq + (offset / HzPerPixel), myheight);
+  cairo_move_to(cr, rxpos, 0.0);
+  cairo_line_to(cr, rxpos, myheight);
   cairo_set_line_width(cr, PAN_LINE_THIN);
   cairo_stroke(cr);
   // signal
   double s1;
-  int pan = rx->pan;
 
-  if (radio_is_remote) {
-    //
-    // A client will only hold as many samples as there are pixels
-    //
-    pan = 0;
-  }
-
-  samples[pan] = -200.0;
-  samples[mywidth - 1 + pan] = -200.0;
+  samples[0] = -200.0;
+  samples[mywidth - 1] = -200.0;
   //
   // most HPSDR only have attenuation (no gain), while HermesLite-II and SOAPY use gain (no attenuation)
   //
-  s1 = (double)samples[pan] + soffset;
+  s1 = (double)samples[0] + soffset;
   s1 = floor((rx->panadapter_high - s1)
              * (double) myheight
              / (rx->panadapter_high - rx->panadapter_low));
@@ -413,7 +403,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   for (int i = 1; i < mywidth; i++) {
     double s2;
-    s2 = (double)samples[i + pan] + soffset;
+    s2 = (double)samples[i] + soffset;
     s2 = floor((rx->panadapter_high - s2)
                * (double) myheight
                / (rx->panadapter_high - rx->panadapter_low));
@@ -506,7 +496,7 @@ void rx_panadapter_update(RECEIVER *rx) {
 
       if (sorted_samples != NULL) {
         for (int i = 0; i < mywidth; i++) {
-          sorted_samples[i] = (double)samples[i + pan] + soffset;
+          sorted_samples[i] = (double)samples[i] + soffset;
         }
 
         qsort(sorted_samples, mywidth, sizeof(double), compare_doubles);
@@ -522,10 +512,10 @@ void rx_panadapter_update(RECEIVER *rx) {
 
     for (int i = 1; i < mywidth - 1; i++) {
       if (i >= filter_left_bound && i <= filter_right_bound) {
-        double s = (double)samples[i + pan] + soffset;
+        double s = (double)samples[i] + soffset;
 
         // Check if the point is a peak
-        if ((!hide_noise || s >= noise_level) && s > samples[i - 1 + pan] && s > samples[i + 1 + pan]) {
+        if ((!hide_noise || s >= noise_level) && s > samples[i - 1] && s > samples[i + 1]) {
           int replace_index = -1;
           int start_range = i - ignore_range;
           int end_range = i + ignore_range;

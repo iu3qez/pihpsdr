@@ -3,6 +3,10 @@ LIST OF RECENT PIHPSDR CHANGES
 August 2025:
 ------------
 
+- Re-wrote zoom/pan functionality. Now much larger zoom
+  factors are possible. Currently we impose a max of 32
+  but this could be even larger.
+
 - Modified the screen size menu to allow for fast switching
   between some "predefined" and a "custom" size
   (tnx Perrin for suggesting this).

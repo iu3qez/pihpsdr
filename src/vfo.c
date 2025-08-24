@@ -1191,7 +1191,7 @@ void vfo_id_set_rit_step(int id, int step) {
 }
 
 //
-// vfo_move (and vfo_id_move) are exclusively used
+// vfo_id_move is exclusively used
 // to update the radio while dragging with the
 // pointer device in the panadapter area. Therefore,
 // the behaviour is different whether we use CTUN or not.
@@ -1305,32 +1305,12 @@ void vfo_id_move(int id, long long hz, int round) {
   }
 }
 
-void vfo_move(long long hz, int round) {
-  vfo_id_move(active_receiver->id, hz, round);
-}
+void vfo_id_move_to(int id, long long f) {
 
-void vfo_move_to(long long hz) {
-  int id = active_receiver->id;
-  vfo_id_move_to(id, hz);
-}
-
-void vfo_id_move_to(int id, long long hz) {
   if (radio_is_remote) {
-    send_vfo_move_to(client_socket, id, hz);
+    send_vfo_move_to(client_socket, id, f);
     return;
   }
-
-  // hz is the offset from the min displayed frequency
-  const RECEIVER *myrx;
-
-  if (id < receivers) {
-    myrx = receiver[id];
-  } else {
-    myrx = active_receiver;
-  }
-
-  long long half = (long long)(myrx->sample_rate / 2);
-  long long f = (vfo[id].frequency - half) + hz + ((double)myrx->pan * myrx->hz_per_pixel);
 
   if (vfo[id].mode != modeCWL && vfo[id].mode != modeCWU) {
     f = ROUND(f, 0, vfo[id].step);
@@ -1342,25 +1322,11 @@ void vfo_id_move_to(int id, long long hz) {
     if (vfo[id].ctun) {
       delta = vfo[id].ctun_frequency;
       vfo[id].ctun_frequency = f;
-
-      if (vfo[id].mode == modeCWL) {
-        vfo[id].ctun_frequency += cw_keyer_sidetone_frequency;
-      } else if (vfo[id].mode == modeCWU) {
-        vfo[id].ctun_frequency -= cw_keyer_sidetone_frequency;
-      }
-
       delta = vfo[id].ctun_frequency - delta;
       vfo_id_adjust_band(id, vfo[id].ctun_frequency);
     } else {
       delta = vfo[id].frequency;
       vfo[id].frequency = f;
-
-      if (vfo[id].mode == modeCWL) {
-        vfo[id].frequency += cw_keyer_sidetone_frequency;
-      } else if (vfo[id].mode == modeCWU) {
-        vfo[id].frequency -= cw_keyer_sidetone_frequency;
-      }
-
       delta = vfo[id].frequency - delta;
       vfo_id_adjust_band(id, vfo[id].frequency);
     }

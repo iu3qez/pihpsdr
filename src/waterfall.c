@@ -37,8 +37,6 @@ static int colorHighR = 255; // yellow
 static int colorHighG = 255;
 static int colorHighB = 0;
 
-static double hz_per_pixel;
-
 static int my_width;
 static int my_heigt;
 
@@ -98,22 +96,23 @@ static gboolean waterfall_scroll_event_cb (GtkWidget *widget, GdkEventScroll *ev
 void waterfall_update(RECEIVER *rx) {
   if (rx->pixbuf) {
     const float *samples;
-    long long vfofreq = vfo[rx->id].frequency; // access only once to be thread-safe
+    int mode = vfo[rx->id].mode;
+    long long frequency = vfo[rx->id].frequency; // access only once to be thread-safe
     int  freq_changed = 0;                    // flag whether we have just "rotated"
-    int pan = rx->pan;
-
-    if (radio_is_remote) {
-      pan = 0;
-    }
 
     unsigned char *pixels = gdk_pixbuf_get_pixels (rx->pixbuf);
     int width = gdk_pixbuf_get_width(rx->pixbuf);
     int height = gdk_pixbuf_get_height(rx->pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(rx->pixbuf);
-    hz_per_pixel = (double)rx->sample_rate / ((double)my_width * rx->zoom);
+
+    if (mode == modeCWU) {
+      frequency -= cw_keyer_sidetone_frequency;
+    } else if (mode == modeCWL) {
+      frequency += cw_keyer_sidetone_frequency;
+    }
 
     //
-    // The existing waterfall corresponds to a VFO frequency rx->waterfall_frequency, a zoom value rx->waterfall_zoom and
+    // The existing waterfall corresponds to a center frequency rx->waterfall_frequency, a zoom value rx->waterfall_zoom and
     // a pan value rx->waterfall_pan. If the zoom value changes, or if the waterfill needs horizontal shifting larger
     // than the width of the waterfall (band change or big frequency jump), re-init the waterfall.
     // Otherwise, shift the waterfall by an appropriate number of pixels.
@@ -122,14 +121,13 @@ void waterfall_update(RECEIVER *rx) {
     // shifting is only a fraction of one pixel. In this case, there will be every now and then a horizontal shift that
     // corrects for a number of VFO update steps.
     //
-    if (rx->waterfall_frequency != 0 && (rx->sample_rate == rx->waterfall_sample_rate)
-        && (rx->zoom == rx->waterfall_zoom)) {
-      if (rx->waterfall_frequency != vfofreq || rx->waterfall_pan != pan) {
+    if (rx->waterfall_frequency != 0 && (rx->cB == rx->waterfall_cB)) {
+      if (rx->waterfall_frequency != frequency || rx->waterfall_cBp != rx->cBp) {
         //
         // Frequency and/or PAN value changed: possibly shift waterfall
         //
-        int rotfreq = (int)((double)(rx->waterfall_frequency - vfofreq) / hz_per_pixel); // shift due to freq. change
-        int rotpan  = rx->waterfall_pan - pan;                                        // shift due to pan   change
+        int rotfreq = (int)((double)(rx->waterfall_frequency - frequency) * rx->cAp); // shift due to freq. change
+        int rotpan  = (int)(rx->cBp - rx->waterfall_cBp);                           // shift due to pan   change
         int rotate_pixels = rotfreq + rotpan;
 
         if (rotate_pixels >= my_width || rotate_pixels <= -my_width) {
@@ -137,8 +135,8 @@ void waterfall_update(RECEIVER *rx) {
           // If horizontal shift is too large, re-init waterfall
           //
           memset(pixels, 0, my_width * my_heigt * 3);
-          rx->waterfall_frequency = vfofreq;
-          rx->waterfall_pan = pan;
+          rx->waterfall_frequency = frequency;
+          rx->waterfall_cBp = rx->cBp;
         } else {
           //
           // If rotate_pixels != 0, shift waterfall horizontally and set "freq changed" flag
@@ -163,10 +161,10 @@ void waterfall_update(RECEIVER *rx) {
 
           if (rotfreq != 0) {
             freq_changed = 1;
-            rx->waterfall_frequency -= lround(rotfreq * hz_per_pixel); // this is not necessarily vfofreq!
+            rx->waterfall_frequency -= lround(rotfreq * rx->cB); // this is not necessarily frequency!
           }
 
-          rx->waterfall_pan = pan;
+          rx->waterfall_cBp = rx->cBp;
         }
       }
     } else {
@@ -175,10 +173,9 @@ void waterfall_update(RECEIVER *rx) {
       // (re-) init waterfall
       //
       memset(pixels, 0, my_width * my_heigt * 3);
-      rx->waterfall_frequency = vfofreq;
-      rx->waterfall_pan = pan;
-      rx->waterfall_zoom = rx->zoom;
-      rx->waterfall_sample_rate = rx->sample_rate;
+      rx->waterfall_frequency = frequency;
+      rx->waterfall_cBp = rx->cBp;
+      rx->waterfall_cB = rx->cB;
     }
 
     //
@@ -223,7 +220,7 @@ void waterfall_update(RECEIVER *rx) {
       average = 0.0F;
 
       for (int i = 0; i < width; i++) {
-        average += (samples[i + pan] + soffset);
+        average += (samples[i] + soffset);
       }
 
       if (rx->waterfall_automatic) {
@@ -237,7 +234,7 @@ void waterfall_update(RECEIVER *rx) {
       rangei = 1.0F / (wf_high - wf_low);
 
       for (int i = 0; i < width; i++) {
-        float sample = samples[i + pan] + soffset;
+        float sample = samples[i] + soffset;
 
         if (sample < wf_low) {
           *p++ = colorLowR;
@@ -299,7 +296,6 @@ void waterfall_init(RECEIVER *rx, int width, int height) {
   my_heigt = height;
   rx->pixbuf = NULL;
   rx->waterfall_frequency = 0;
-  rx->waterfall_sample_rate = 0;
   rx->waterfall = gtk_drawing_area_new ();
   gtk_widget_set_size_request (rx->waterfall, width, height);
   /* Signals used to handle the backing surface */

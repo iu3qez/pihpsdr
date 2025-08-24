@@ -534,8 +534,10 @@ void remote_send_rxspectrum(int id) {
   //
   spectrum_data.id = id;
   const RECEIVER *rx = receiver[id];
-  spectrum_data.zoom  = rx->zoom;
-  spectrum_data.pan   = to_short(rx->pan);
+  spectrum_data.cA = to_double(rx->cA);
+  spectrum_data.cB = to_double(rx->cB);
+  spectrum_data.cAp = to_double(rx->cAp);
+  spectrum_data.cBp = to_double(rx->cBp);
   spectrum_data.meter = to_double(rx->meter);
   spectrum_data.width = to_short(rx->width);
   samples = rx->pixel_samples;
@@ -544,7 +546,7 @@ void remote_send_rxspectrum(int id) {
   if (numsamples > SPECTRUM_DATA_SIZE) { numsamples = SPECTRUM_DATA_SIZE; }
 
   for (int i = 0; i < numsamples; i++) {
-    int s = ((int) samples[i + rx->pan]) + 200;  // -200dBm ... 55dBm maps to 0 ... 55
+    int s = ((int) samples[i]) + 200;  // -200dBm ... 55dBm maps to 0 ... 55
 
     if (s < 0) { s = 0; }
 
@@ -1075,15 +1077,18 @@ static void send_rx_data(int sock, int id) {
   data.eq_enable             = rx->eq_enable;
   data.smetermode            = rx->smetermode;
   data.low_latency           = rx->low_latency;
+  data.pan                   = rx->pan;
   //
   data.fps                   = to_short(rx->fps);
   data.filter_low            = to_short(rx->filter_low);
   data.filter_high           = to_short(rx->filter_high);
   data.deviation             = to_short(rx->deviation);
-  data.pan                   = to_short(rx->pan);
   data.width                 = to_short(rx->width);
   //
-  data.hz_per_pixel          = to_double(rx->hz_per_pixel);
+  data.cA                    = to_double(rx->cA);
+  data.cB                    = to_double(rx->cB);
+  data.cAp                   = to_double(rx->cAp);
+  data.cBp                   = to_double(rx->cBp);
   data.squelch               = to_double(rx->squelch);
   data.display_average_time  = to_double(rx->display_average_time);
   data.volume                = to_double(rx->volume);
@@ -1633,11 +1638,11 @@ void send_vfo_frequency(int s, int v, long long hz) {
   send_bytes(s, (char *)&command, sizeof(command));
 }
 
-void send_vfo_move_to(int s, int v, long long hz) {
+void send_vfo_move_to(int s, int id, long long hz) {
   U64_COMMAND command;
   SYNC(command.header.sync);
   command.header.data_type = to_short(CMD_MOVETO);
-  command.header.b1 = v;
+  command.header.b1 = id;
   command.u64 = to_ll(hz);
   send_bytes(s, (char *)&command, sizeof(command));
 }
@@ -1735,7 +1740,7 @@ void send_pan(int s, const RECEIVER *rx) {
   SYNC(header.sync);
   header.data_type = to_short(CMD_PAN);
   header.b1 = rx->id;
-  header.s1 = to_short(rx->pan);
+  header.b2 = rx->pan;
   send_bytes(s, (char *)&header, sizeof(HEADER));
 }
 
@@ -2573,7 +2578,7 @@ static void *listen_thread(void *arg) {
     unsigned char s[2 * SHA512_DIGEST_LENGTH];
     unsigned char sha[SHA512_DIGEST_LENGTH];
     inet_ntop(AF_INET, &(((struct sockaddr_in *)&remoteclient.address)->sin_addr), (char *)s, 2 * SHA512_DIGEST_LENGTH);
-    t_print("%s: client_connected from %s\n", __FUNCTION__, s);
+    t_print("%s: client connected from %s\n", __FUNCTION__, s);
     //
     // send version number to the client
     //
@@ -2625,7 +2630,10 @@ static void *listen_thread(void *arg) {
       display_height[1] = display_height[display_size];
       display_size = 1;
       rx_stack_horizontal = 0;
-      radio_reconfigure_screen();
+      radio_reconfigure_screen_done = 0;
+      g_idle_add(ext_radio_reconfigure_screen, NULL);
+
+      while (!radio_reconfigure_screen_done) usleep(100000);
 
       for (int id = 0; id < RECEIVERS; id++) {
         remoteclient.send_rx_spectrum[id] = FALSE;
@@ -3198,15 +3206,18 @@ static void *client_thread(void* arg) {
       rx->eq_enable             = data.eq_enable;
       rx->smetermode            = data.smetermode;
       rx->low_latency           = data.low_latency;
+      rx->pan                   = data.pan;
       //
       rx->fps                   = from_short(data.fps);
       rx->filter_low            = from_short(data.filter_low);
       rx->filter_high           = from_short(data.filter_high);
       rx->deviation             = from_short(data.deviation);
-      rx->pan                   = from_short(data.pan);
       rx->width                 = from_short(data.width);
       //
-      rx->hz_per_pixel          = from_double(data.hz_per_pixel);
+      rx->cA                    = from_double(data.cA);
+      rx->cB                    = from_double(data.cB);
+      rx->cAp                   = from_double(data.cAp);
+      rx->cBp                   = from_double(data.cBp);
       rx->squelch               = from_double(data.squelch);
       rx->display_average_time  = from_double(data.display_average_time);
       rx->volume                = from_double(data.volume);
@@ -3383,8 +3394,10 @@ static void *client_thread(void* arg) {
 
       if (type == INFO_RX_SPECTRUM && spectrum_data.id < receivers) {
         RECEIVER *rx = receiver[spectrum_data.id];
-        rx->zoom = spectrum_data.zoom;
-        rx->pan  = from_short(spectrum_data.pan);
+        rx->cA = from_double(spectrum_data.cA);
+        rx->cB = from_double(spectrum_data.cB);
+        rx->cAp = from_double(spectrum_data.cAp);
+        rx->cBp = from_double(spectrum_data.cBp);
         rx->meter = from_double(spectrum_data.meter);
         int width = from_short(spectrum_data.width);
 
@@ -3479,7 +3492,6 @@ static void *client_thread(void* arg) {
       int id = header.b1;
       long long rate = from_ll(cmd.u64);
       receiver[id]->sample_rate = (int)rate;
-      receiver[id]->hz_per_pixel = (double)receiver[id]->sample_rate / (double)receiver[id]->pixels;
     }
     break;
 
@@ -3580,8 +3592,9 @@ static void *client_thread(void* arg) {
     break;
 
     case CMD_PAN: {
-      int pan = from_short(header.s1);
-      g_idle_add(ext_remote_set_pan, GINT_TO_POINTER(pan));
+      int id = header.b1;
+      int pan = header.b2;
+      g_idle_add(ext_remote_set_pan, GINT_TO_POINTER(1000*id + pan));
     }
     break;
 
@@ -3766,6 +3779,8 @@ int radio_connect_remote(char *host, int port, const char *pwd) {
 // Because of the response required, we cannot just
 // delegate to actions.c
 //
+// This is executed on the server side only.
+//
 //
 static int remote_command(void *data) {
   HEADER *header = (HEADER *)data;
@@ -3894,7 +3909,7 @@ static int remote_command(void *data) {
     const U64_COMMAND *command = (U64_COMMAND *)data;
     int pan = active_receiver->pan;
     long long hz = from_ll(command->u64);
-    vfo_move(hz, command->header.b2);
+    vfo_id_move(command->header.b1, hz, command->header.b2);
     send_vfo_data(remoteclient.socket, VFO_A);  // need both in case of SAT/RSAT
     send_vfo_data(remoteclient.socket, VFO_B);  // need both in case of SAT/RSAT
 
@@ -3908,7 +3923,7 @@ static int remote_command(void *data) {
     const  U64_COMMAND *command = (U64_COMMAND *)data;
     int pan = active_receiver->pan;
     long long hz = from_ll(command->u64);
-    vfo_move_to(hz);
+    vfo_id_move_to(command->header.b1, hz);
     send_vfo_data(remoteclient.socket, VFO_A);  // need both in case of SAT/RSAT
     send_vfo_data(remoteclient.socket, VFO_B);  // need both in case of SAT/RSAT
 
@@ -3920,9 +3935,13 @@ static int remote_command(void *data) {
 
   case CMD_ZOOM: {
     int id = header->b1;
-    set_zoom(id, (double)header->b2);
-    send_zoom(remoteclient.socket, active_receiver);
-    send_pan(remoteclient.socket, active_receiver);
+    int zoom = header->b2;
+    set_zoom(id, zoom);
+
+    if (receiver[id]->zoom != zoom) {
+      send_zoom(remoteclient.socket, receiver[id]);
+      send_pan (remoteclient.socket, receiver[id]);
+    }
   }
   break;
 
@@ -3976,8 +3995,12 @@ static int remote_command(void *data) {
 
   case CMD_PAN: {
     int id = header->b1;
-    set_pan(id, (double)from_short(header->s1));
-    send_pan(remoteclient.socket, receiver[id]);
+    int pan = header->b2;
+    set_pan(id, pan);
+
+    if (pan != receiver[id]->pan) {
+      send_pan(remoteclient.socket, receiver[id]);
+    }
   }
   break;
 
@@ -4474,6 +4497,8 @@ static int remote_command(void *data) {
         radio_change_sample_rate((int)rate);
       }
 
+      // If the sample rate was illegal, the actual sample rate is
+      // not what has been sent. So return the actual value.
       send_sample_rate(remoteclient.socket, id, receiver[id]->sample_rate);
     }
   }

@@ -139,7 +139,7 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01000014 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01000015 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
 #define AUDIO_DATA_SIZE 1024             // 1024 stereo samples
 
@@ -566,15 +566,18 @@ typedef struct __attribute__((__packed__)) _receiver_data {
   uint8_t eq_enable;
   uint8_t smetermode;
   uint8_t low_latency;
+  uint8_t pan;
   //
   uint16_t fps;
   uint16_t filter_low;
   uint16_t filter_high;
   uint16_t deviation;
-  uint16_t pan;
   uint16_t width;
   //
-  mydouble hz_per_pixel;
+  mydouble cA;
+  mydouble cB;
+  mydouble cAp;
+  mydouble cBp;
   mydouble squelch;
   mydouble display_average_time;
   mydouble volume;
@@ -640,9 +643,7 @@ typedef struct __attribute__((__packed__)) _vfo_data {
 typedef struct __attribute__((__packed__)) _spectrum_data {
   HEADER header;
   uint8_t id;
-  uint8_t zoom;
   uint16_t width;
-  uint16_t pan;
   //
   uint64_t vfo_a_freq;
   uint64_t vfo_b_freq;
@@ -655,6 +656,10 @@ typedef struct __attribute__((__packed__)) _spectrum_data {
   mydouble alc;
   mydouble fwd;
   mydouble swr;
+  mydouble cA;
+  mydouble cB;
+  mydouble cAp;
+  mydouble cBp;
   //
   uint8_t sample[SPECTRUM_DATA_SIZE];
 } SPECTRUM_DATA;

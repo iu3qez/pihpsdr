@@ -1346,19 +1346,19 @@ int process_action(void *data) {
     break;
 
   case PAN:
-    set_pan(active_receiver->id,  active_receiver->pan + 100 * a->val);
+    set_pan(active_receiver->id,  active_receiver->pan + a->val);
     break;
 
   case PAN_MINUS:
     if (a->mode == PRESSED) {
-      set_pan(active_receiver->id,  active_receiver->pan - 100);
+      set_pan(active_receiver->id,  active_receiver->pan - 5);
     }
 
     break;
 
   case PAN_PLUS:
     if (a->mode == PRESSED) {
-      set_pan(active_receiver->id,  active_receiver->pan + 100);
+      set_pan(active_receiver->id,  active_receiver->pan + 5);
     }
 
     break;
@@ -1865,7 +1865,7 @@ int process_action(void *data) {
     break;
 
   case ZOOM:
-    value = KnobOrWheel(a, active_receiver->zoom, 1.0, 8.0, 1.0);
+    value = KnobOrWheel(a, active_receiver->zoom, 1.0, MAX_ZOOM, 1.0);
     set_zoom(active_receiver->id, (int)  value);
     break;
 

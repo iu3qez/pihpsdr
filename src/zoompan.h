@@ -19,6 +19,8 @@
 
 #include <gtk/gtk.h>
 
+#define MAX_ZOOM 32
+
 extern GtkWidget *zoompan_init(int my_width, int my_height);
 extern int zoompan_active_receiver_changed(void *data);
 
