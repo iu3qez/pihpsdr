@@ -22,7 +22,9 @@
 #define MAX_ZOOM 32
 
 extern GtkWidget *zoompan_init(int my_width, int my_height);
-extern int zoompan_active_receiver_changed(void *data);
+extern int zoompan_active_receiver_changed(gpointer data);
+extern int sliders_pan(gpointer data);
+extern int sliders_zoom(gpointer data);
 
 extern void set_pan(int rx, double value);
 extern void set_zoom(int rx, double value);

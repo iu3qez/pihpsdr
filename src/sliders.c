@@ -255,7 +255,7 @@ int sliders_att_type_changed(gpointer data) {
 
     if (c25_label != NULL) { gtk_widget_show(c25_label); }
 
-    sliders_c25_att(active_receiver->id);
+    sliders_c25_att(GINT_TO_POINTER(active_receiver->id));
   } else {
     if (attenuation_label != NULL) { gtk_widget_show(attenuation_label); }
 
@@ -269,12 +269,13 @@ int sliders_att_type_changed(gpointer data) {
 
     if (c25_label != NULL) { gtk_widget_hide(c25_label); }
 
-    sliders_attenuation(active_receiver->id);
-    sliders_rf_gain(active_receiver->id, active_receiver->adc);
+    // no need to call these through the event queue
+    sliders_attenuation(GINT_TO_POINTER(active_receiver->id));
+    sliders_rf_gain(GINT_TO_POINTER(active_receiver->id));
   }
 
   suppress_popup_sliders = 0;
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 int sliders_active_receiver_changed(void *data) {
@@ -283,12 +284,11 @@ int sliders_active_receiver_changed(void *data) {
   if (display_sliders) {
     //
     // Change sliders and check-boxes to reflect the state of the
-    // new active receiver
+    // new active receiver. No need to call these through the event queue.
     //
-    int id = active_receiver->id;
-    int rxadc = active_receiver->adc;
+    gpointer id = GINT_TO_POINTER(active_receiver->id);
     sliders_af_gain(id);
-    sliders_rf_gain(id, rxadc);
+    sliders_rf_gain(id);
     sliders_agc_gain(id);
     sliders_squelch(id);
     sliders_c25_att(id);
@@ -304,12 +304,16 @@ int sliders_active_receiver_changed(void *data) {
 // change sliders/buttons to reflect the current radio status.
 // Usually sliders are "blocked" while their value is changed
 // to prevent them to emit a signal.
+// These functions are intended to be called through the GTK
+// event queue but may be called "directly" if you are sure
+// you are in the main GTK thread.
 //
 
-void sliders_c25_att(int id) {
-  if (id > receivers) { return; }
+int sliders_c25_att(gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
-  if (filter_board != CHARLY25) { return; }
+  if (filter_board != CHARLY25) { return G_SOURCE_REMOVE; }
 
   //
   // Only change the combo-box (no popup slider)
@@ -326,10 +330,13 @@ void sliders_c25_att(int id) {
 
     if (c25_signal_id) { g_signal_handler_unblock(G_OBJECT(c25_combobox), c25_signal_id); }
   }
+
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_attenuation(int id) {
-  if (id > receivers) { return; }
+int sliders_attenuation(gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
@@ -346,10 +353,13 @@ void sliders_attenuation(int id) {
     show_popup_slider(ATTENUATION, id, 0.0, 31.0, 1.0, (double)adc[id].attenuation,
                       title);
   }
+
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_agc_gain(int id) {
-  if (id > receivers) { return; }
+int sliders_agc_gain(gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
@@ -365,10 +375,13 @@ void sliders_agc_gain(int id) {
     snprintf(title, sizeof(title), "AGC Gain RX%d", id + 1);
     show_popup_slider(AGC_GAIN, id, -20.0, 120.0, 1.0, receiver[id]->agc_gain, title);
   }
+
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_af_gain(int id) {
-  if (id > receivers) { return; }
+int sliders_af_gain(gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
@@ -386,16 +399,20 @@ void sliders_af_gain(int id) {
     snprintf(title, sizeof(title), "AF Gain RX%d", id + 1);
     show_popup_slider(AF_GAIN, id, -40.0, 0.0, 1.0, rx->volume, title);
   }
+
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_rf_gain(int id, int rxadc) {
-  if (id > receivers) { return; }
+int sliders_rf_gain(gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
-  if (rf_gain_scale == NULL) { return; }
+  if (rf_gain_scale == NULL) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
   //
+  int rxadc = receiver[id]->adc;
   if (display_sliders && active_receiver->id == id) {
     if (rf_signal_id) { g_signal_handler_block(G_OBJECT(rf_gain_scale), rf_signal_id); }
 
@@ -407,10 +424,15 @@ void sliders_rf_gain(int id, int rxadc) {
     snprintf(title, sizeof(title), "RF Gain ADC %d", rxadc);
     show_popup_slider(RF_GAIN, rxadc, adc[rxadc].min_gain, adc[rxadc].max_gain, 1.0, adc[rxadc].gain, title);
   }
+
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_filter_width(int id, int width) {
-  if (id > receivers) { return; }
+int sliders_filter_width(gpointer data) {
+  int v = GPOINTER_TO_INT(data);
+  int id = v / 100000;
+  int width = v % 100000 - 50000;
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
@@ -434,10 +456,15 @@ void sliders_filter_width(int id, int width) {
   }
 
   show_popup_slider(IF_WIDTH, id, (double)(min), (double)(max), 1.0, (double) width, title);
+
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_filter_shift(int id, int shift) {
-  if (id > receivers) { return; }
+int sliders_filter_shift(gpointer data) {
+  int v = GPOINTER_TO_INT(data);
+  int id = v / 100000;
+  int shift = v % 100000 - 50000;
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
@@ -448,16 +475,18 @@ void sliders_filter_shift(int id, int shift) {
   min = shift - 500;
   max = shift + 500;
   show_popup_slider(IF_SHIFT, id, (double)(min), (double) (max), 1.0, (double) shift, title);
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_linein_gain() {
+int sliders_linein_gain(gpointer data) {
   //
   // This ONLY moves the slider
   //
   show_popup_slider(LINEIN_GAIN, 0, -34.0, 12.0, 1.0, linein_gain, "LineIn Gain");
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_mic_gain() {
+int sliders_mic_gain(gpointer data) {
   //
   // This ONLY moves the slider
   //
@@ -472,9 +501,10 @@ void sliders_mic_gain() {
       show_popup_slider(MIC_GAIN, 0, -12.0, 50.0, 1.0, transmitter->mic_gain, "Mic Gain");
     }
   }
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_drive(void) {
+int sliders_drive(gpointer data) {
   //
   // This ONLY moves the slider
   //
@@ -489,10 +519,14 @@ void sliders_drive(void) {
       show_popup_slider(DRIVE, 0, drive_min, drive_max, 1.0, (double) transmitter->drive, "TX Drive");
     }
   }
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_filter_high(int id, int var) {
-  if (id > receivers) { return; }
+int sliders_filter_high(gpointer data) {
+  int v = GPOINTER_TO_INT(data);
+  int id = v / 100000;
+  int var = v % 100000 - 50000;
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
@@ -514,10 +548,14 @@ void sliders_filter_high(int id, int var) {
   }
 
   show_popup_slider(FILTER_CUT_HIGH, id, (double)(min), (double)(max), 1.00, (double) var, title);
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_filter_low(int id, int var) {
-  if (id > receivers) { return; }
+int sliders_filter_low(gpointer data) {
+  int v = GPOINTER_TO_INT(data);
+  int id = v / 100000;
+  int var = v % 100000 - 50000;
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
@@ -552,10 +590,12 @@ void sliders_filter_low(int id, int var) {
   }
 
   show_popup_slider(FILTER_CUT_LOW, id, (double)(min), (double)(max), 1.00, (double) var, title);
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_squelch(int id) {
-  if (id > receivers) { return; }
+int sliders_squelch(gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider and updates the checkbutton
@@ -578,20 +618,24 @@ void sliders_squelch(int id) {
     snprintf(title, sizeof(title), "Squelch RX%d", id + 1);
     show_popup_slider(SQUELCH, id, 0.0, 100.0, 1.0, rx->squelch, title);
   }
+
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_diversity_gain() {
+int sliders_diversity_gain(gpointer data) {
   //
   // This ONLY moves the slider and updates the checkbutton
   //
   show_popup_slider(DIV_GAIN, 0, -27.0, 27.0, 0.01, div_gain, "Diversity Gain");
+  return G_SOURCE_REMOVE;
 }
 
-void sliders_diversity_phase() {
+int sliders_diversity_phase(gpointer data) {
   //
   // This ONLY moves the slider and updates the checkbutton
   //
   show_popup_slider(DIV_PHASE, 0, -180.0, 180.0, 0.1, div_phase, "Diversity Phase");
+  return G_SOURCE_REMOVE;
 }
 
 GtkWidget *sliders_init(int my_width, int my_height) {

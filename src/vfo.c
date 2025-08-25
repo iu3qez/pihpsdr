@@ -1251,7 +1251,7 @@ void vfo_id_move(int id, long long hz, int round) {
       // *Subtract* the shift (hz) from the VFO frequency
       vfo[id].frequency = vfo[id].frequency - hz;
 
-      if (round && (vfo[id].mode != modeCWL && vfo[id].mode != modeCWU)) {
+      if (round) {
         vfo[id].frequency = ROUND(vfo[id].frequency, 0, vfo[id].step);
       }
 
@@ -1305,14 +1305,14 @@ void vfo_id_move(int id, long long hz, int round) {
   }
 }
 
-void vfo_id_move_to(int id, long long f) {
+void vfo_id_move_to(int id, long long f, int round) {
 
   if (radio_is_remote) {
-    send_vfo_move_to(client_socket, id, f);
+    send_vfo_move_to(client_socket, id, f, round);
     return;
   }
 
-  if (vfo[id].mode != modeCWL && vfo[id].mode != modeCWU) {
+  if (round) {
     f = ROUND(f, 0, vfo[id].step);
   }
 

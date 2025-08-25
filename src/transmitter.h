@@ -246,8 +246,7 @@ extern void   tx_set_twotone(TRANSMITTER *tx, int state);
 extern void   tx_queue_cw_event(int state, int wait);
 
 extern void tx_create_remote(TRANSMITTER *rx);
-extern void tx_remote_update_display(TRANSMITTER *rx);
-extern void tx_remote_update_display(TRANSMITTER *tx);
+extern int  tx_remote_update_display(gpointer data);
 
 #endif
 

@@ -45,36 +45,44 @@ static gulong zoom_signal_id;
 static GtkWidget *pan_label;
 static GtkWidget *pan_scale;
 static gulong pan_signal_id;
-static GMutex pan_zoom_mutex;
 
-int zoompan_active_receiver_changed(void *data) {
-  if (display_zoompan) {
-    g_mutex_lock(&pan_zoom_mutex);
-    g_signal_handler_block(G_OBJECT(zoom_scale), zoom_signal_id);
-    g_signal_handler_block(G_OBJECT(pan_scale), pan_signal_id);
-    gtk_range_set_value(GTK_RANGE(zoom_scale), active_receiver->zoom);
-    gtk_range_set_value (GTK_RANGE(pan_scale), (double) active_receiver->pan);
-    g_signal_handler_unblock(G_OBJECT(pan_scale), pan_signal_id);
-    g_signal_handler_unblock(G_OBJECT(zoom_scale), zoom_signal_id);
-    g_mutex_unlock(&pan_zoom_mutex);
+int sliders_zoom(gpointer data) {
+  int id = GPOINTER_TO_INT(data);
+  // This ONLY moves the zoom slider
+  if (id != active_receiver->id || !display_zoompan) {
+    return G_SOURCE_REMOVE;
   }
 
-  return FALSE;
+  g_signal_handler_block(G_OBJECT(zoom_scale), zoom_signal_id);
+  gtk_range_set_value(GTK_RANGE(zoom_scale), active_receiver->zoom);
+  g_signal_handler_unblock(G_OBJECT(zoom_scale), zoom_signal_id);
+  return G_SOURCE_REMOVE;
+}
+
+int sliders_pan(gpointer data) {
+  // This ONLY moves the pan sliders
+  int id = GPOINTER_TO_INT(data);
+  if (id != active_receiver->id || !display_zoompan) {
+    return G_SOURCE_REMOVE;
+  }
+
+  g_signal_handler_block(G_OBJECT(pan_scale), pan_signal_id);
+  gtk_range_set_value (GTK_RANGE(pan_scale), (double) active_receiver->pan);
+  g_signal_handler_unblock(G_OBJECT(pan_scale), pan_signal_id);
+  return G_SOURCE_REMOVE;
+}
+
+int zoompan_active_receiver_changed(void *data) {
+  gpointer id = GINT_TO_POINTER(active_receiver->id);
+  // no need to call these through the event queue
+  sliders_zoom(id);
+  sliders_pan(id);
+  return G_SOURCE_REMOVE;
 }
 
 static void zoom_value_changed_cb(GtkWidget *widget, gpointer data) {
-  g_mutex_lock(&pan_zoom_mutex);
-  g_mutex_lock(&active_receiver->display_mutex);
   active_receiver->zoom = (int)(gtk_range_get_value(GTK_RANGE(zoom_scale)) + 0.5);
-
   rx_update_zoom(active_receiver);
-  g_mutex_unlock(&pan_zoom_mutex);
-  g_mutex_unlock(&active_receiver->display_mutex);
-
-  if (active_receiver->zoom == 1) {
-    set_pan(active_receiver->id, 50);
-  }
-  g_idle_add(ext_vfo_update, NULL);
 }
 
 void set_zoom(int rx, double value) {
@@ -88,29 +96,11 @@ void set_zoom(int rx, double value) {
 
   receiver[rx]->zoom = ival;
   rx_update_zoom(receiver[rx]);
-
-  if (display_zoompan && active_receiver->id == rx) {
-    gtk_range_set_value (GTK_RANGE(zoom_scale), receiver[rx]->zoom);
-  }
-
-  g_idle_add(ext_vfo_update, NULL);
-}
-
-void remote_set_zoom(int rx, double value) {
-  g_mutex_lock(&pan_zoom_mutex);
-  g_signal_handler_block(G_OBJECT(zoom_scale), zoom_signal_id);
-  g_signal_handler_block(G_OBJECT(pan_scale), pan_signal_id);
-  set_zoom(rx, value);
-  g_signal_handler_unblock(G_OBJECT(pan_scale), pan_signal_id);
-  g_signal_handler_unblock(G_OBJECT(zoom_scale), zoom_signal_id);
-  g_mutex_unlock(&pan_zoom_mutex);
 }
 
 static void pan_value_changed_cb(GtkWidget *widget, gpointer data) {
-  g_mutex_lock(&pan_zoom_mutex);
   active_receiver->pan = (int)(gtk_range_get_value(GTK_RANGE(pan_scale)) + 0.5);
   rx_update_pan(active_receiver);
-  g_mutex_unlock(&pan_zoom_mutex);
 }
 
 void set_pan(int rx, double value) {
@@ -127,16 +117,6 @@ void set_pan(int rx, double value) {
     gtk_range_set_value (GTK_RANGE(pan_scale), (double) receiver[rx]->pan);
   }
   rx_update_pan(receiver[rx]);
-}
-
-void remote_set_pan(int rx, double value) {
-  if (rx >= receivers) { return; }
-
-  g_mutex_lock(&pan_zoom_mutex);
-  g_signal_handler_block(G_OBJECT(pan_scale), pan_signal_id);
-  set_pan(rx, value);
-  g_signal_handler_unblock(G_OBJECT(pan_scale), pan_signal_id);
-  g_mutex_unlock(&pan_zoom_mutex);
 }
 
 GtkWidget *zoompan_init(int my_width, int my_height) {
@@ -212,6 +192,5 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_grid_attach(GTK_GRID(zoompan), pan_scale, s2pos, 0, s2width, 1);
   pan_signal_id = g_signal_connect(G_OBJECT(pan_scale), "value_changed", G_CALLBACK(pan_value_changed_cb), NULL);
 
-  g_mutex_init(&pan_zoom_mutex);
   return zoompan;
 }

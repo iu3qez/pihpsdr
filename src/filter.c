@@ -499,9 +499,7 @@ void filter_cut_default(int id) {
 //
 //
 // Note that sliders_filter_* *only* puts a scale on the screen
-// but does not do anything. The call that actually creates the pop-up
-// slider WILL NOT RETURN until that slider is destroyed, so sliders_filter_*
-// must be the last statement in this and the following functions.
+// but does not do anything.
 //
 void filter_high_changed(int id, int increment) {
   int mode = vfo[id].mode;
@@ -586,8 +584,8 @@ void filter_high_changed(int id, int increment) {
     }
   }
 
+  g_idle_add(sliders_filter_high,GINT_TO_POINTER(100000 * id + 50000 +new));
   g_idle_add(ext_vfo_update, NULL);
-  sliders_filter_high(id, new);
 }
 
 void filter_low_changed(int id, int increment) {
@@ -673,8 +671,8 @@ void filter_low_changed(int id, int increment) {
     }
   }
 
+  g_idle_add(sliders_filter_low,GINT_TO_POINTER(100000*id + 50000 + new));
   g_idle_add(ext_vfo_update, NULL);
-  sliders_filter_low(id, new);
 }
 
 //
@@ -777,8 +775,8 @@ void filter_width_changed(int id, int increment) {
     }
   }
 
+  g_idle_add(sliders_filter_width,GINT_TO_POINTER(100000 * id + 50000 + high - low));
   g_idle_add(ext_vfo_update, NULL);
-  sliders_filter_width(id, high - low);
 }
 
 //
@@ -860,5 +858,6 @@ void filter_shift_changed(int id, int increment) {
     shft -= cw_keyer_sidetone_frequency;
   }
 
-  sliders_filter_shift(id, shft);
+  g_idle_add(sliders_filter_shift,GINT_TO_POINTER(100000 * id + 50000 + shft));
+  g_idle_add(ext_vfo_update, NULL);
 }

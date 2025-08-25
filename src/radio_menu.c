@@ -78,7 +78,7 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     }
 
     soapy_protocol_set_rx_gain_element(id, (char *)gtk_widget_get_name(widget), gain);
-    sliders_rf_gain(id, id);
+    g_idle_add(sliders_rf_gain,GINT_TO_POINTER(id));
 #endif
   }
 }
@@ -97,7 +97,7 @@ static void tx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     }
 
     soapy_protocol_set_tx_gain_element((char *)gtk_widget_get_name(widget), (int) gain);
-    sliders_drive();
+    g_idle_add(sliders_drive,NULL);
 #endif
   }
 }
@@ -697,6 +697,11 @@ void radio_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(vfo_divisor), (double)vfo_encoder_divisor);
   gtk_grid_attach(GTK_GRID(grid), vfo_divisor, 2, row, 1, 1);
   g_signal_connect(vfo_divisor, "value_changed", G_CALLBACK(vfo_divisor_value_changed_cb), NULL);
+  ChkBtn = gtk_check_button_new_with_label("VFO snap");
+  gtk_widget_set_name(ChkBtn, "boldlabel");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), vfo_snap);
+  gtk_grid_attach(GTK_GRID(grid), ChkBtn, 3, row, 1, 1);
+  g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &vfo_snap);
   row++;
 
   // cppcheck-suppress knownConditionTrueFalse

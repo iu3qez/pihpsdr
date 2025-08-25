@@ -138,7 +138,7 @@ gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpoin
 
         if (has_moved) {
           // drag
-          vfo_id_move(id, (long long)((x - last_x)*rx->cB), TRUE);
+          vfo_id_move(id, (long long)((x - last_x)*rx->cB), vfo_snap);
         } else {
           //
           // Calculate target frequency and move to that one
@@ -157,7 +157,7 @@ gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpoin
             f += vfo[id].frequency;
           }
 
-          vfo_id_move_to(id, f);
+          vfo_id_move_to(id, f, vfo_snap);
         }
 
         last_x = x;
@@ -654,7 +654,9 @@ RECEIVER *rx_create_pure_signal_receiver(int id, int sample_rate, int width, int
   return rx;
 }
 
-void rx_remote_update_display(RECEIVER *rx) {
+int rx_remote_update_display(gpointer data) {
+  RECEIVER *rx = (RECEIVER *) data;
+
   if (rx->displaying) {
     if (rx->pixels > 0) {
       g_mutex_lock(&rx->display_mutex);
@@ -674,6 +676,7 @@ void rx_remote_update_display(RECEIVER *rx) {
       g_mutex_unlock(&rx->display_mutex);
     }
   }
+  return G_SOURCE_REMOVE;
 }
 
 void rx_create_remote(RECEIVER *rx) {
@@ -1291,10 +1294,37 @@ void rx_update_pan(RECEIVER *rx) {
   }
 }
 
+void rx_adjust_pan(RECEIVER * rx) {
+  //
+  // This adjusts the pan value such that the
+  // current RX frequency (both with and without CTUN) is
+  // in the centre of the screen.
+  //
+  int id = rx->id;
+  if (vfo[id].ctun && rx->zoom != 1) {
+    int offset = (vfo[id].ctun_frequency - vfo[id].frequency) + rx->sample_rate / 2;
+    double z = ((double)(offset*rx->zoom) / (double)rx->sample_rate - 0.5) / (double)(rx->zoom -1);
+    rx->pan = (int) (100.0*z + 0.5);
+  } else {
+    rx->pan = 50;
+  }
+
+  g_idle_add(sliders_pan, GINT_TO_POINTER(rx->id));
+
+  if (radio_is_remote) {
+    send_pan(client_socket, rx);
+  } else {
+    rx_set_analyzer(rx);
+  }
+}
+
 void rx_update_zoom(RECEIVER *rx) {
   //
   // This is called whenever rx->zoom changes,
   //
+  g_idle_add(sliders_zoom, GINT_TO_POINTER(rx->id));
+  g_idle_add(ext_vfo_update, NULL);
+  rx_adjust_pan(rx);
 
   if (radio_is_remote) {
     send_zoom(client_socket, rx);
@@ -1588,8 +1618,10 @@ void rx_set_analyzer(RECEIVER *rx) {
   // A normalization to "1 pixel" is accomplished with the following two calls. Note the noise
   // floor then depends on the zoom factor (that is, the frequency width of one pixel)
   //
-  SetDisplayNormOneHz(rx->id, 0, 1);
-  SetDisplaySampleRate(rx->id, rx->width * rx->zoom);
+  if (rx->id != PS_RX_FEEDBACK) {
+    SetDisplayNormOneHz(rx->id, 0, 1);
+    SetDisplaySampleRate(rx->id, rx->width * rx->zoom);
+  }
   //
   // In effect, this "lifts" the spectrum (in dB) by 10*log10(afft_size/(width*zoom)).
   //

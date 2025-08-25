@@ -877,7 +877,6 @@ void send_radio_data(int sock) {
   data.soapy_tx_channels = radio->soapy.tx_channels;
   data.soapy_rx1_has_automatic_gain = radio->soapy.rx[0].has_automatic_gain;
   data.soapy_rx2_has_automatic_gain = radio->soapy.rx[1].has_automatic_gain;
-  data.display_size = display_size;
   //
   memcpy(data.soapy_hardware_key, radio->soapy.hardware_key, 64);
   memcpy(data.soapy_driver_key, radio->soapy.driver_key, 64);
@@ -913,7 +912,6 @@ void send_radio_data(int sock) {
   data.cw_keyer_sidetone_frequency = to_short(cw_keyer_sidetone_frequency);
   data.rx_gain_calibration = to_short(rx_gain_calibration);
   data.device = to_short(device);
-  data.display_width = to_short(display_width[1]);
   //
   data.drive_min = to_double(drive_min);
   data.drive_max = to_double(drive_max);
@@ -1638,11 +1636,12 @@ void send_vfo_frequency(int s, int v, long long hz) {
   send_bytes(s, (char *)&command, sizeof(command));
 }
 
-void send_vfo_move_to(int s, int id, long long hz) {
+void send_vfo_move_to(int s, int id, long long hz, int round) {
   U64_COMMAND command;
   SYNC(command.header.sync);
   command.header.data_type = to_short(CMD_MOVETO);
   command.header.b1 = id;
+  command.header.b2 = round;
   command.u64 = to_ll(hz);
   send_bytes(s, (char *)&command, sizeof(command));
 }
@@ -2615,6 +2614,14 @@ static void *listen_thread(void *arg) {
 
     if (*s == 0x7F) {
       //
+      // If the protocol is not running, start it!
+      // A non-running protocol results when a client disconnects.
+      //
+
+      if (!radio_protocol_running) {
+        radio_protocol_run();
+      }
+
       // Setting this has to be post-poned until HERE, since now
       // the RX thread starts to send audio data. If we were TXing
       // when the client successfully connects, go RX.
@@ -2669,6 +2676,9 @@ static void *listen_thread(void *arg) {
         g_source_remove(remoteclient.timer_id);
         remoteclient.timer_id = 0;
       }
+
+      sleep(1);
+      radio_protocol_stop();
     }
 
     if (remoteclient.socket != -1) {
@@ -3068,7 +3078,6 @@ static void *client_thread(void* arg) {
       radio->soapy.tx_channels = data.soapy_tx_channels;
       radio->soapy.rx[0].has_automatic_gain = data.soapy_rx1_has_automatic_gain;
       radio->soapy.rx[1].has_automatic_gain = data.soapy_rx2_has_automatic_gain;
-      display_size = data.display_size;
       //
       memcpy(radio->soapy.hardware_key, data.soapy_hardware_key, 64);
       memcpy(radio->soapy.driver_key, data.soapy_driver_key, 64);
@@ -3104,7 +3113,6 @@ static void *client_thread(void* arg) {
       cw_keyer_sidetone_frequency = from_short(data.cw_keyer_sidetone_frequency);
       rx_gain_calibration = from_short(data.rx_gain_calibration);
       device = radio->device = from_short(data.device);
-      display_width[1] = from_short(data.display_width);
       //
       drive_min = from_double(data.drive_min);
       drive_max = from_double(data.drive_max);
@@ -3413,7 +3421,7 @@ static void *client_thread(void* arg) {
           }
 
           g_mutex_unlock(&rx->display_mutex);
-          g_idle_add(ext_rx_remote_update_display, rx);
+          g_idle_add(rx_remote_update_display, rx);
         }
       }
 
@@ -3429,11 +3437,14 @@ static void *client_thread(void* arg) {
         }
 
         if (width == tx->width) {
+          g_mutex_lock(&tx->display_mutex);
+
           for (int i = 0; i < tx->width; i++) {
             tx->pixel_samples[i] = (float)((int)spectrum_data.sample[i] - 200);
           }
 
-          g_idle_add(ext_tx_remote_update_display, tx);
+          g_mutex_unlock(&tx->display_mutex);
+          g_idle_add(tx_remote_update_display, tx);
         }
       }
     }
@@ -3521,7 +3532,7 @@ static void *client_thread(void* arg) {
 
     case CMD_RECEIVERS: {
       int r = header.b1;
-      g_idle_add(ext_radio_remote_change_receivers, GINT_TO_POINTER(r));
+      g_idle_add(radio_remote_change_receivers, GINT_TO_POINTER(r));
     }
     break;
 
@@ -3580,21 +3591,15 @@ static void *client_thread(void* arg) {
 
     case CMD_ZOOM: {
       int id = header.b1;
-      int zoom = header.b2;
-
-      if (receiver[id]->zoom != zoom) {
-        g_idle_add(ext_remote_set_zoom, GINT_TO_POINTER(zoom));
-      } else {
-        receiver[id]->zoom = (int)(zoom + 0.5);
-        rx_update_zoom(receiver[id]);
-      }
+      receiver[id]->zoom = header.b2;
+      g_idle_add(sliders_zoom, GINT_TO_POINTER(id));
     }
     break;
 
     case CMD_PAN: {
       int id = header.b1;
-      int pan = header.b2;
-      g_idle_add(ext_remote_set_pan, GINT_TO_POINTER(1000*id + pan));
+      receiver[id]->pan = header.b2;
+      g_idle_add(sliders_pan, GINT_TO_POINTER(id));
     }
     break;
 
@@ -3653,23 +3658,23 @@ static void *client_thread(void* arg) {
     break;
 
     case CMD_MOX: {
-      g_idle_add(ext_radio_remote_set_mox, GINT_TO_POINTER(header.b1));
+      g_idle_add(radio_remote_set_mox, GINT_TO_POINTER(header.b1));
     }
     break;
 
     case CMD_VOX: {
-      g_idle_add(ext_radio_remote_set_vox, GINT_TO_POINTER(header.b1));
+      g_idle_add(radio_remote_set_vox, GINT_TO_POINTER(header.b1));
     }
     break;
 
     case CMD_TUNE: {
-      g_idle_add(ext_radio_remote_set_tune, GINT_TO_POINTER(header.b1));
+      g_idle_add(radio_remote_set_tune, GINT_TO_POINTER(header.b1));
     }
     break;
 
     case CMD_TWOTONE: {
-      radio_remote_set_twotone(header.b1);
-      g_idle_add(ext_radio_remote_set_mox, GINT_TO_POINTER(header.b1));
+      g_idle_add(radio_remote_set_twotone, GINT_TO_POINTER(header.b1));
+      g_idle_add(radio_remote_set_mox, GINT_TO_POINTER(header.b1));
     }
     break;
 
@@ -3923,7 +3928,7 @@ static int remote_command(void *data) {
     const  U64_COMMAND *command = (U64_COMMAND *)data;
     int pan = active_receiver->pan;
     long long hz = from_ll(command->u64);
-    vfo_id_move_to(command->header.b1, hz);
+    vfo_id_move_to(command->header.b1, hz, command->header.b2);
     send_vfo_data(remoteclient.socket, VFO_A);  // need both in case of SAT/RSAT
     send_vfo_data(remoteclient.socket, VFO_B);  // need both in case of SAT/RSAT
 

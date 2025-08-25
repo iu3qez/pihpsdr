@@ -35,18 +35,18 @@ extern int sliders_att_type_changed(void *data);
 //
 // These functions ONLY move the sliders
 //
-extern void sliders_filter_low(int id, int value);
-extern void sliders_filter_high(int id, int value);
-extern void sliders_filter_width(int id, int value);
-extern void sliders_filter_shift(int id, int value);
-extern void sliders_agc_gain(int id);
-extern void sliders_af_gain(int id);
-extern void sliders_rf_gain(int id, int rxadc);
-extern void sliders_attenuation(int id);
-extern void sliders_c25_att(int id);
-extern void sliders_squelch(int id);
-extern void sliders_mic_gain(void);
-extern void sliders_linein_gain(void);
-extern void sliders_drive(void);
-extern void sliders_diversity_gain(void);
-extern void sliders_diversity_phase(void);
+extern int sliders_filter_low(gpointer data);
+extern int sliders_filter_high(gpointer data);
+extern int sliders_filter_width(gpointer data);
+extern int sliders_filter_shift(gpointer data);
+extern int sliders_agc_gain(gpointer data);
+extern int sliders_af_gain(gpointer data);
+extern int sliders_rf_gain(gpointer data);
+extern int sliders_attenuation(gpointer data);
+extern int sliders_c25_att(gpointer data);
+extern int sliders_squelch(gpointer data);
+extern int sliders_mic_gain(gpointer data);
+extern int sliders_linein_gain(gpointer data);
+extern int sliders_drive(gpointer data);
+extern int sliders_diversity_gain(gpointer data);
+extern int sliders_diversity_phase(gpointer data);

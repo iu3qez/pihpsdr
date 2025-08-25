@@ -170,6 +170,8 @@ int anan10E = 0;
 int mute_spkr_amp = 0;      // Mute audio amplifier in radio                (ANAN-7000, G2)
 int mute_spkr_xmit = 0;     // Mute audio amplifier in radio upon transmit  (ANAN-7000, G2)
 
+int radio_protocol_running = 0;
+
 int tx_out_of_band_allowed = 0;
 
 int filter_board = ALEX;
@@ -217,6 +219,7 @@ int enable_tx_inhibit = 0;
 int TxInhibit = 0;
 
 int vfo_encoder_divisor = 1;
+int vfo_snap = 0;
 
 int protocol;
 int device;
@@ -1115,7 +1118,7 @@ static void radio_create_visual() {
     receivers = RECEIVERS;
 
     if (radio_is_remote) {
-      radio_remote_change_receivers(r);
+      radio_remote_change_receivers(GINT_TO_POINTER(r));
     } else {
       radio_change_receivers(r);
     }
@@ -1510,6 +1513,7 @@ void radio_start_radio() {
 
   for (unsigned int i = 0; i < strlen(property_path); i++) {
     if (property_path[i] == '/') { property_path[i] = '.'; }
+    if (property_path[i] == ' ') { property_path[i] = '-'; }
   }
 
   //
@@ -1834,12 +1838,17 @@ void radio_start_radio() {
   //
   g_signal_handler_disconnect(top_window, keypress_signal_id);
   keypress_signal_id = g_signal_connect(top_window, "key_press_event", G_CALLBACK(radio_keypress_cb), NULL);
+  //
+  // mark radio as "running"
+  //
+  radio_protocol_running = 1;
 }
 
-void radio_remote_change_receivers(int r) {
+int radio_remote_change_receivers(gpointer data) {
+  int r = GPOINTER_TO_INT(data);
   t_print("radio_remote_change_receivers: from %d to %d\n", receivers, r);
 
-  if (receivers == r) { return; }
+  if (receivers == r) { return G_SOURCE_REMOVE; }
 
   switch (r) {
   case 1:
@@ -1859,6 +1868,8 @@ void radio_remote_change_receivers(int r) {
 
   radio_reconfigure_screen();
   rx_set_active(receiver[0]);
+
+  return G_SOURCE_REMOVE;
 }
 
 void radio_change_receivers(int r) {
@@ -2167,7 +2178,9 @@ void radio_toggle_mox() {
   radio_set_mox(!mox);
 }
 
-void radio_remote_set_vox(int state) {
+int radio_remote_set_vox(gpointer data) {
+  int state = GPOINTER_TO_INT(data);
+
   if (can_transmit) {
     if (state != radio_is_transmitting()) {
       rxtx(state);
@@ -2178,9 +2191,13 @@ void radio_remote_set_vox(int state) {
     vox = state;
     g_idle_add(ext_vfo_update, NULL);
   }
+
+  return G_SOURCE_REMOVE;
 }
 
-void radio_remote_set_mox(int state) {
+int radio_remote_set_mox(gpointer data) {
+  int state = GPOINTER_TO_INT(data);
+
   if (can_transmit) {
     if (state != radio_is_transmitting()) {
       rxtx(state);
@@ -2192,17 +2209,21 @@ void radio_remote_set_mox(int state) {
     vox = 0;
     g_idle_add(ext_vfo_update, NULL);
   }
+  return G_SOURCE_REMOVE;
 }
 
-void radio_remote_set_twotone(int state) {
+int radio_remote_set_twotone(gpointer data) {
   if (can_transmit) {
-    transmitter->twotone = state;
+    transmitter->twotone = GPOINTER_TO_INT(data);
   }
 
   g_idle_add(ext_vfo_update, NULL);
+  return G_SOURCE_REMOVE;
 }
 
-void radio_remote_set_tune(int state) {
+int radio_remote_set_tune(gpointer data) {
+  int state = GPOINTER_TO_INT(data);
+
   if (can_transmit) {
     if (state != transmitter->tune) {
       vox_cancel();
@@ -2219,6 +2240,7 @@ void radio_remote_set_tune(int state) {
 
     g_idle_add(ext_vfo_update, NULL);
   }
+  return G_SOURCE_REMOVE;
 }
 
 void radio_set_mox(int state) {
@@ -2639,7 +2661,7 @@ void radio_set_rf_gain(int id, double value) {
   int rxadc = receiver[id]->adc;
   adc[rxadc].gain = value;
   adc[rxadc].attenuation = 0.0;
-  sliders_rf_gain(id, rxadc);
+  g_idle_add(sliders_rf_gain, GINT_TO_POINTER(id));
 
   if (radio_is_remote) {
     send_rfgain(client_socket, id, adc[rxadc].gain);
@@ -2682,7 +2704,7 @@ void radio_set_squelch(int id, double value) {
   rx->squelch = value;
   rx->squelch_enable = (rx->squelch > 0.5);
   rx_set_squelch(rx);
-  sliders_squelch(rx->id);
+  g_idle_add(sliders_squelch, GINT_TO_POINTER(rx->id));
 }
 
 void radio_set_linein_gain(double value) {
@@ -2694,7 +2716,7 @@ void radio_set_linein_gain(double value) {
     schedule_high_priority();
   }
 
-  sliders_linein_gain();
+  g_idle_add(sliders_linein_gain, NULL);
 }
 
 void radio_set_mic_gain(double value) {
@@ -2703,7 +2725,7 @@ void radio_set_mic_gain(double value) {
     tx_set_mic_gain(transmitter);
   }
 
-  sliders_mic_gain();
+  g_idle_add(sliders_mic_gain, NULL);
 }
 
 void radio_set_af_gain(int id, double value) {
@@ -2712,7 +2734,7 @@ void radio_set_af_gain(int id, double value) {
   RECEIVER *rx = receiver[id];
   rx->volume = value;
   rx_set_af_gain(rx);
-  sliders_af_gain(id);
+  g_idle_add(sliders_af_gain,GINT_TO_POINTER(id));
 }
 
 void radio_set_agc_gain(int id, double value) {
@@ -2720,7 +2742,7 @@ void radio_set_agc_gain(int id, double value) {
 
   receiver[id]->agc_gain = value;
   rx_set_agc(receiver[id]);
-  sliders_agc_gain(id);
+  g_idle_add(sliders_agc_gain,GINT_TO_POINTER(id));
 }
 
 void radio_set_c25_att(int id, int val) {
@@ -2777,7 +2799,7 @@ void radio_set_c25_att(int id, int val) {
     }
   }
 
-  sliders_c25_att(id);
+  g_idle_add(sliders_c25_att,GINT_TO_POINTER(id));
 }
 
 void radio_set_dither(int id, int value) {
@@ -2830,7 +2852,7 @@ void radio_set_attenuation(int id, int value) {
   int rxadc = receiver[id]->adc;
   adc[rxadc].attenuation = value;
   adc[rxadc].gain = 0.0;
-  sliders_attenuation(id);
+  g_idle_add(sliders_attenuation, GINT_TO_POINTER(id));
 
   if (radio_is_remote) {
     send_attenuation(client_socket, id, value);
@@ -2858,7 +2880,7 @@ void radio_set_drive(double value) {
   }
 
   transmitter->drive = value;
-  sliders_drive();
+  g_idle_add(sliders_drive, NULL);
 
   if (radio_is_remote) {
     send_drive(client_socket, value);
@@ -3029,7 +3051,10 @@ static void radio_restore_state() {
   GetPropI0("display_zoompan",                               display_zoompan);
   GetPropI0("display_sliders",                               display_sliders);
   GetPropI0("display_toolbar",                               display_toolbar);
+  GetPropI0("display_width",                                 display_width[1]);
   GetPropI0("display_height",                                display_height[1]);
+  GetPropI0("rx_stack_horizontal",                           rx_stack_horizontal);
+  GetPropI0("display_size",                                  display_size);
   GetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   GetPropI0("which_css_font",                                which_css_font);
   GetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
@@ -3050,9 +3075,6 @@ static void radio_restore_state() {
   }
 
   if (!radio_is_remote) {
-    GetPropI0("rx_stack_horizontal",                         rx_stack_horizontal);
-    GetPropI0("display_size",                                display_size);
-    GetPropI0("display_width",                               display_width[1]);
     GetPropI0("enable_auto_tune",                            enable_auto_tune);
     GetPropI0("enable_tx_inhibit",                           enable_tx_inhibit);
     GetPropI0("radio_sample_rate",                           soapy_radio_sample_rate);
@@ -3243,6 +3265,9 @@ void radio_save_state() {
   SetPropI0("display_sliders",                               hide_status ? old_slid : display_sliders);
   SetPropI0("display_toolbar",                               hide_status ? old_tool : display_toolbar);
   SetPropI0("display_height",                                display_height[1]);
+  SetPropI0("rx_stack_horizontal",                           rx_stack_horizontal);
+  SetPropI0("display_size",                                  display_size);
+  SetPropI0("display_width",                                 display_width[1]);
   SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   SetPropI0("which_css_font",                                which_css_font);
   SetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
@@ -3263,9 +3288,6 @@ void radio_save_state() {
   }
 
   if (!radio_is_remote) {
-    SetPropI0("rx_stack_horizontal",                         rx_stack_horizontal);
-    SetPropI0("display_size",                                display_size);
-    SetPropI0("display_width",                               display_width[1]);
     SetPropI0("enable_auto_tune",                            enable_auto_tune);
     SetPropI0("enable_tx_inhibit",                           enable_tx_inhibit);
     SetPropI0("radio_sample_rate",                           soapy_radio_sample_rate);
@@ -3368,6 +3390,7 @@ int radio_remote_start(void *data) {
 
   for (unsigned int i = 0; i < strlen(property_path); i++) {
     if (property_path[i] == '/') { property_path[i] = '.'; }
+    if (property_path[i] == ' ') { property_path[i] = '-'; }
   }
 
   radio_is_remote = TRUE;
@@ -3396,6 +3419,7 @@ int radio_remote_start(void *data) {
   // for MIDI this  is the complete data set
   //
   radio_restore_state();
+  send_screen(client_socket, rx_stack_horizontal, display_width[display_size]);
   radio_create_visual();
   radio_reconfigure_screen();
 
@@ -3579,6 +3603,8 @@ void radio_protocol_stop() {
 #endif
     break;
   }
+
+  radio_protocol_running = 0;
 }
 
 void radio_protocol_run() {
@@ -3609,6 +3635,8 @@ void radio_protocol_run() {
 #endif
     break;
   }
+
+  radio_protocol_running = 1;
 }
 
 void radio_protocol_restart() {

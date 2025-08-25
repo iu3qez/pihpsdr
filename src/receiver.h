@@ -334,6 +334,6 @@ extern void   rx_update_width(RECEIVER *rx);
 extern void   rx_update_pan(RECEIVER *rx);
 
 extern void rx_create_remote(RECEIVER *rx);
-extern void rx_remote_update_display(RECEIVER *rx);
+extern int  rx_remote_update_display(gpointer data);
 
 #endif

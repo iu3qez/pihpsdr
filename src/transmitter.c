@@ -1980,7 +1980,8 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
   }
 }
 
-void tx_remote_update_display(TRANSMITTER *tx) {
+int tx_remote_update_display(gpointer data) {
+  TRANSMITTER *tx = (TRANSMITTER *) data;
   if (tx->displaying) {
     if (tx->pixels > 0) {
       g_mutex_lock(&tx->display_mutex);
@@ -1996,6 +1997,7 @@ void tx_remote_update_display(TRANSMITTER *tx) {
       }
     }
   }
+  return G_SOURCE_REMOVE;
 }
 
 void tx_create_remote(TRANSMITTER *tx) {

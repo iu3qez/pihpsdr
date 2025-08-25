@@ -125,59 +125,8 @@ int ext_set_duplex(void *data) {
   return G_SOURCE_REMOVE;
 }
 
-int ext_tx_remote_update_display(void *data) {
-  TRANSMITTER *tx = (TRANSMITTER *)data;
-  tx_remote_update_display(tx);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_rx_remote_update_display(void *data) {
-  RECEIVER *rx = (RECEIVER *)data;
-  rx_remote_update_display(rx);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_radio_remote_set_tune(void *data) {
-  int val = GPOINTER_TO_INT(data);
-  radio_remote_set_tune(val);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_radio_remote_set_mox(void *data) {
-  int val = GPOINTER_TO_INT(data);
-  radio_remote_set_mox(val);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_radio_remote_set_vox(void *data) {
-  int val = GPOINTER_TO_INT(data);
-  radio_remote_set_vox(val);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_remote_set_zoom(void *data) {
-  int zoom = GPOINTER_TO_INT(data);
-  remote_set_zoom(active_receiver->id, (double)zoom);
-  return G_SOURCE_REMOVE;
-}
-
-int ext_remote_set_pan(void *data) {
-  int v = GPOINTER_TO_INT(data);
-  int id = v / 1000;
-  int pan = v % 1000;
-  remote_set_pan(id, (double)pan);
-  return G_SOURCE_REMOVE;
-}
-
 int ext_set_title(void *data) {
   gtk_window_set_title(GTK_WINDOW(top_window), (char *)data);
-  return G_SOURCE_REMOVE;
-}
-
-// cppcheck-suppress constParameterPointer
-int ext_radio_remote_change_receivers(void *data) {
-  int r = GPOINTER_TO_INT(data);
-  radio_remote_change_receivers(r);
   return G_SOURCE_REMOVE;
 }
 

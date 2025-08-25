@@ -139,7 +139,7 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01000015 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01000016 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
 #define AUDIO_DATA_SIZE 1024             // 1024 stereo samples
 
@@ -368,7 +368,6 @@ typedef struct __attribute__((__packed__)) _radio_data {
   uint8_t  soapy_tx_channels;
   uint8_t  soapy_rx1_has_automatic_gain;
   uint8_t  soapy_rx2_has_automatic_gain;
-  uint8_t  display_size;
   //
   char     soapy_hardware_key[64];
   char     soapy_driver_key[64];
@@ -385,7 +384,6 @@ typedef struct __attribute__((__packed__)) _radio_data {
   uint16_t cw_keyer_sidetone_frequency;
   uint16_t rx_gain_calibration;
   uint16_t device;
-  uint16_t display_width;
   //
   mydouble drive_min;
   mydouble drive_max;
@@ -915,7 +913,7 @@ extern void send_vfo_atob(int sock);
 extern void send_vfo_btoa(int sock);
 extern void send_vfo_data(int sock, int v);
 extern void send_vfo_frequency(int s, int v, long long hz);
-extern void send_vfo_move_to(int s, int v, long long hz);
+extern void send_vfo_move_to(int s, int v, long long hz, int round);
 extern void send_vfo_step(int s, int v, int steps);
 extern void send_vfo_stepsize(int s, int v, int stepsize);
 extern void send_vfo_swap(int sock);
