@@ -689,18 +689,18 @@ void radio_menu(GtkWidget *parent) {
   if (row > max_row) { max_row = row; }
 
   row = max_row;
-  label = gtk_label_new("VFO Encoder Divisor:");
+  label = gtk_label_new("VFO Enc Div:");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
   GtkWidget *vfo_divisor = gtk_spin_button_new_with_range(1.0, 60.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(vfo_divisor), (double)vfo_encoder_divisor);
-  gtk_grid_attach(GTK_GRID(grid), vfo_divisor, 2, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), vfo_divisor, 1, row, 1, 1);
   g_signal_connect(vfo_divisor, "value_changed", G_CALLBACK(vfo_divisor_value_changed_cb), NULL);
   ChkBtn = gtk_check_button_new_with_label("VFO snap");
   gtk_widget_set_name(ChkBtn, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ChkBtn), vfo_snap);
-  gtk_grid_attach(GTK_GRID(grid), ChkBtn, 3, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), ChkBtn, 2, row, 1, 1);
   g_signal_connect(ChkBtn, "toggled", G_CALLBACK(toggle_cb), &vfo_snap);
   row++;
 

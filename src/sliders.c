@@ -47,9 +47,6 @@
 #endif
 #include "vfo.h"
 
-static int width;
-static int height;
-
 static GtkWidget *sliders;
 
 static guint scale_timer;
@@ -638,10 +635,8 @@ int sliders_diversity_phase(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-GtkWidget *sliders_init(int my_width, int my_height) {
+GtkWidget *sliders_init(int width, int height) {
   GtkWidget *label;
-  width = my_width;
-  height = my_height;
   //
   // The larger the width, the smaller the fraction used for the label can be
   // font size.
