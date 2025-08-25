@@ -152,9 +152,9 @@ convention as laid out here.
 Here we list the main new featured introduced in each version.
 
 \medskip
-\textbf{\pH Version 2.5, under development}
+\textbf{\pH Version 2.5, release planned for Sep. 2025}
 \begin{itemize}
-\item{First complete version of the Client/Server model (including the transmitter).
+\item{First complete version of the Client/Server model (including TX and CW).
 Server access is password protected.}
 \item{Better HermesLite-II and RadioBerry support.}
 \item{When both a scope and a waterfall is running for a receiver, the (relative) height of
@@ -163,6 +163,7 @@ the waterfall is user-adjustable.}
 capability if compiled on MacOS.}
 \item{Better support for LIME-SDR (2RX) and LIME-mini (1RX) radios.}
 \item{Option to have an SWR-dependent side tone while TUNE-ing.}
+\item{ZOOM now up to 32x.}
 \end{itemize}
 
 \medskip
@@ -504,10 +505,47 @@ by VFO-A. VFO-B then actually only controls controls the transmitter
 if using split mode, but the data stored in VFO-B can
 be quickly used, for example by copying VFO-B to VFO-A (the
 \bltt{A<B} command), or by swapping the two VFOs (the \bltt{A<>B} command).
+This Figure has been recorded (just to demonstrate this)
+on an Apple Macintosh, therefore, among other details, the
+top bar of the window looks a little different from what one sees
+on LINUX (see e.g. Fig. \ref{fig:zoom}).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{What is a spectrum?}
+Some people get confused if the spectrum shows a noise floor at $-122$ dBm, while their S-meter
+reading ,,without signal'' is $-109$ dBm. These people then often ask which of the two figures tells
+them how much noise there is.
 
+It is important to note that a spectrum plots an energy \textit{density}, that is an energy (in dBm) 
+per frequency interval. The RX panadapters in \pH normalise the spectrum to a frequency interval
+that is the frequency width of one pixel on the screen. An immediate consequence of this is, that the
+noise floor moves down when increasing the ZOOM value, since the frequency width of one pixel gets
+smaller. Another option would be to normalise the spectrum to one Hz, that is, to display the
+energy within an interval one Hz wide. While it would be easy to do so, the noise floor is then
+much lower of what one is used from other SDR programs and I wanted to avoid a new source of
+confusion.
+
+The S-meter reading, on the other hand, integrates the spectral energy density over the filter
+passband. For example, if your spectrum is 96 kHz wide but displayed in a window 800 pixels wide,
+then the width of one pixel is 120 Hz. If the spectrum shows a noise floor at -122 dBm, this means
+the energy density of the noise is $-122$ dBm per 120 Hz. The S-meter reading for a filter
+2400 Hz wide is then $-109$ dBm which is twenty times more energy than $-122$ dBm. Switching to
+a filter 5000 Hz wide increases the S-meter reading  to $-106$ dBm (a factor of two
+ is 3 dB).
+
+If you want to measure the noise floor and report or compare the result,
+the best you can do is to get an S-meter reading (in dBm) with
+a filter that is 1000 Hz wide, and then subtract 30 from the S-meter value to
+produce a noise floor figure in dBm/Hz.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Spectrum scope options}
 \label{sec:FillingGradient}
+
+\begin{figure}[ht]
+\center
+\includegraphics[scale=0.40]{ScopeFilling.png}
+\caption{Display options for the spectrum scope.}
+\label{fig:scopeoptions}
+\end{figure}
 
 You have already seen two different spectrum scopes: in the first
 picture, the  spectrum was a filled green area, while in the last
@@ -517,15 +555,9 @@ personal preference in the \bltt{Display} menu (see below). There
 are two options which you can enable or disable, such that there
 are four different outcomes. The first option is the ,,Filled'' option
 which discriminates between a line spectrum and a spectrum which is
-filled below the line. In the picture below, the first and third
+filled below the line. In Fig. \ref{fig:scopeoptions}, the first and third
 example have no filling, while the second and fourth spectrum
-are filled:
-
-\begin{figure}[ht]
-\center
-\includegraphics[scale=0.40]{ScopeFilling.png}
-\caption{Display options for the spectrum scope.}
-\end{figure}
+are filled.
 
 Then there is the ,,Gradient'' option. Without this option, the
 spectrum is displayed in white colour. With the gradient option,
@@ -542,11 +574,12 @@ is no gradient option.
 \section{Zoom and Pan}
 \label{sec:ZoomPanArea}
 
-\begin{figure}[ht]
+\begin{figure}[ht!]
 \center
 \includegraphics[scale=0.45]{ZoomPan.png}
 \caption{The spectrum scope of Fig. \ref{fig:SingleReceiver} with a
 large Zoom value.}
+\label{fig:zoom}
 \end{figure}
 
 The width of the RX spectrum equals the sample rate
@@ -557,27 +590,26 @@ of the spectrum than you are interested in. As a drawback,
 the part which is relevant to you may look a little bit
 compressed. This is where the \bltt{Zoom} command
 comes in. The zoom value can adopt integral values between
-1 (no zoom) and 8. In the latter case, only 1/8 of the
+1 (no zoom) and 32. In the latter case, only 1/32 of the
 overall spectrum is displayed on the screen. In the
 picture below, you see that the RX scope is only 12 kHz
-wide (which is 1/8 of the RX sample rate, 96 kHz in our
+wide (which is 1/8 of the RX sample rate, 1/8 of 96 kHz in our
 example). Note that what is displayed is in full resolution.
 Internally, a spectrum with 8 times the number of pixels
 of the screen width is created and only a part of it is
 displayed. The zoom value can be changed using the \rett{Zoom}
 slider (at the left edge below the RX panel).
 
-
-When using a zoom value larger than one, this means that
-a spectrum with more pixels than the actual screen width
-is produced. One can select which part of that area
-is displayed on the screen with the \rett{Pan} slider
-(below the RX panel at the right side). Normally (Zoom=1),
-the VFO dial frequency is exactly in the middle of the
-RX scope, and marked with a thin red line. On the picture
-above, the dial frequency (14.100 MHz) is found in the RX
-panel close to the left edge, and this has been done
-by moving the \rett{Pan} slider.
+When changing the zoom value, then the pan value is
+automatically adjusted such that the RX frequency
+(the CTUN frequency if CTUN is active) is at the 
+centre of the display. In the example shown, the PAN
+sliders has been manually adjusted such that the signal
+at the RX frequency (14100 kHz) appears close to the left
+edge of the display. In my view, PAN makes little sense
+if not using CTUN. While it is possible to move the PAN
+slider when the zoom factor is unity, this simply has
+no effect.
 
 Note that the TX spectrum scope always has a fixed spectral
 width, namely 24 kHz in non-duplex mode when the TX spectrum
@@ -1276,12 +1308,18 @@ It is possible to change the OC settings in the \bltt{OC} menu, and these settin
 preferences. Upon next program start, however, these preferences will again be overwritten as long
 as the \texttt{N2ADR} filter board is chosen.
 
-\rett{VFO Encoder Divisor:} This option applies to VFO knobs in front panels, GPIO
+\rett{VFO Enc Div:} This option applies to VFO knobs in front panels, GPIO
 or MIDI controllers. In some cases, these encoders generate too many ticks per revolution,
 such that it is difficult to fine tune on a signal.
 If the VFO Encoder Divisor, as shown in the example, has a value of
 15, only every 15$^\textrm{th}$ tick will we processed. For the default value of 1,
 the divisor has no effect.
+
+\rett{VFO snap} If this box is checked, VFO frequency changes by clicking or dragging in the
+RX panadapter are finally rounded to the nearest multiple of the current VFO step size. This
+option is mostly meant for touch-screens which are usually not very accurate. Note that if
+this option is checked, you may not be able to exactly tune on a signal by clicking on
+it with a mouse.
 
 \rett{Split} Use this checkbox to enable/disable Split mode. In Split mode, the frequency of
 the non-active receiver (when using two receivers) or the frequency of VFO-B (when using one
@@ -4186,6 +4224,13 @@ might have guessed that clicking the \rett{Hide} button then conceals the passwo
 label reads \rett{Show} again.
 
 \clearpage
+Note that when the client exits and the connection is closed, the server stops the protocol. The protocol
+is then restarted when a (new) client connects, or when the \rett{Restart} button is pressed on the 
+server side in the main menu. The idea here is that the remote radio is released while it is not used,
+even if the \pH server instance remains running. It should be possible to use the radio from another
+SDR application after the client disconnects, and the remote instance of \pH (server side) can then
+reconnect later if desired.
+
 \textbf{A note on network security:}
 
 The password you enter is \textbf{never ever} transmitted ``as is'' over the line. Instead, the server sends a random
@@ -5188,14 +5233,12 @@ is rarely used but offers Hz-resolution for the direct frequency entry.}
 
 \phcommand{PanZoom}{PAN}{E}{
 {\color{red} This command is connected to the \texttt{Pan} slider in the Zoom/Pan area.}
-Change the Pan value. This control is only effective when the Zoom value is larger
-than 1.}
+Change the Pan value. Note the PAN value has no effect if Zoom equals unity. The PAN value
+goes from 0 (show leftmost part) and 100 (show rightmost part of the spectrum).}
 
-\phcommand{Pan-}{PAN-}{B}{Decrease the PAN value by 100. This control is only effective when the Zoom value is
-larger than 1.}
+\phcommand{Pan-}{PAN-}{B}{Decrease the PAN value.}
 
-\phcommand{Pan+}{PAN+}{B}{Increase the PAN value by 100. This control is only effective when the Zoom value is
-larger than 1.}
+\phcommand{Pan+}{PAN+}{B}{Increase the PAN value.}
 
 \phcommand{Panadapter High}{PANH}{PE}{Change the dBm value (from -60 to +20) at the top of the spectrum scope
 of the active receiver. Values outside
@@ -5479,13 +5522,13 @@ the XIT+ button is released.}
 
 \phcommand{Zoom}{ZOOM}{PE}{
 {\color{red} This command is connected to the \texttt{Zoom} slider in the Zoom/Pan area.}
-Change the ZOOM value (1...8) of the active receiver.}
+Change the ZOOM value (1...32) of the active receiver.}
 
 \phcommand{Zoom -}{ZOOM-}{B}{Decrease the ZOOM value of the active receiver by one. If the ZOOM value was
 already 1, this is a no-op.}
 
 \phcommand{Zoom +}{ZOOM+}{B}{Increase the ZOOM value of the active receiver by one. If the ZOOM value was
-already 8, this is a no-op.}
+already 32, this is a no-op.}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
