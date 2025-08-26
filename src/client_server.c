@@ -533,8 +533,7 @@ void remote_send_rxspectrum(int id) {
   spectrum_data.vfo_b_offset = to_ll(vfo[VFO_B].offset);
   //
   spectrum_data.id = id;
-  RECEIVER *rx = receiver[id];
-  g_mutex_lock(&rx->display_mutex);
+  const RECEIVER *rx = receiver[id];
   spectrum_data.cA = to_double(rx->cA);
   spectrum_data.cB = to_double(rx->cB);
   spectrum_data.cAp = to_double(rx->cAp);
@@ -555,7 +554,6 @@ void remote_send_rxspectrum(int id) {
 
     spectrum_data.sample[i] = (uint8_t) s;
   }
-  g_mutex_unlock(&rx->display_mutex);
 
   if (numsamples > 0) {
     //
@@ -592,8 +590,7 @@ void remote_send_txspectrum() {
   spectrum_data.vfo_a_offset = to_ll(vfo[VFO_A].offset);
   spectrum_data.vfo_b_offset = to_ll(vfo[VFO_B].offset);
   //
-  TRANSMITTER *tx = transmitter;
-  g_mutex_lock(&tx->display_mutex);
+  const TRANSMITTER *tx = transmitter;
   spectrum_data.alc   = to_double(tx->alc);
   spectrum_data.fwd   = to_double(tx->fwd);
   spectrum_data.swr   = to_double(tx->swr);
@@ -617,7 +614,6 @@ void remote_send_txspectrum() {
 
     spectrum_data.sample[i] = (uint8_t) s;
   }
-  g_mutex_unlock(&tx->display_mutex);
 
   if (numsamples > 0) {
     //
