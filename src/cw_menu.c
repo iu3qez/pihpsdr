@@ -44,9 +44,9 @@ void cw_set_sidetone_freq(int val) {
   if (radio_is_remote) {
     send_sidetone_freq(client_socket, cw_keyer_sidetone_frequency);
   } else {
-    rx_filter_changed(active_receiver);
     // changing the side tone frequency affects BFO frequency offsets
-    schedule_high_priority();
+    rx_filter_changed(active_receiver);
+    rx_set_offset(active_receiver);
     schedule_transmit_specific();
   }
 
@@ -136,8 +136,8 @@ static void cw_keyer_sidetone_frequency_value_changed_cb(GtkWidget *widget, gpoi
     send_sidetone_freq(client_socket, cw_keyer_sidetone_frequency);
   } else {
     rx_filter_changed(active_receiver);
-    // changing the side tone frequency affects BFO frequency offsets
-    schedule_high_priority();
+    rx_set_offset(active_receiver);
+    schedule_transmit_specific();
   }
 }
 

@@ -2014,7 +2014,7 @@ void rx_set_offset(const RECEIVER *rx) {
   long long offset = vfo[id].offset;
 
   //
-  // CW BFO offset, this is why the CW filter edges have to be moved
+  // CW BFO offset is done HERE.
   //
   if (mode == modeCWU) {
     offset -= cw_keyer_sidetone_frequency;
@@ -2022,6 +2022,9 @@ void rx_set_offset(const RECEIVER *rx) {
     offset += cw_keyer_sidetone_frequency;
   }
 
+  //
+  // CW mode, RIT, and CTUN all lead to non-zero offset
+  //
   if (offset == 0) {
     SetRXAShiftFreq(rx->id, (double)offset);
     RXANBPSetShiftFrequency(rx->id, (double)offset);
