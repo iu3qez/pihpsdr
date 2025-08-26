@@ -4188,6 +4188,17 @@ stored in the local preferences file without encryption. The idea here is that y
 in a private environment, and against those who manage to hack your computer running the \pH server instance
 there is nothing one can do from within \pH.
 
+If the checkbox \rett{Server Start Stops Radio} is checked, then the radio protocol is stopped when
+the server starts. In this case, the screen ,,freezes'' on the server side. This option is for automatic
+remote stations where the same radio can be accessed from several computers or SDR programs, and where
+it has to be avoided that \pH takes over the radio although no client is connected. The \pH
+server automatically (re-) starts the protocol if a client is connected, and stops it when a
+client disconnect. The protocol is also always (re-) started when the server terminates (e.g. by
+un-checking the \rett{Server Enable} box).
+
+\textbf{Client/Server operation}
+
+Having explained the \bltt{Server} menu, we now discuss how to use the client/server feature.
 Let us assume you have a server instance of \pH running, so how to connect  to it from a  remote location?
 Here it is useful to show again the discovery menu on the \pH start screen (Fig. \ref{fig:clientmenu}):
 
@@ -4206,7 +4217,8 @@ host name. The port number must, of course, match the port number specified in t
 the \pH server instance (see above).
 
 In the \texttt{host:addr} pop-down menu, you can choose the entry matching your server. On a virgin system, this menu
-will  only show a default entry which is 127.0.0.1:50000, and an empty entry. By clicking into the text field, you
+will  only show a default entry which is 127.0.0.1:50000, as well as an additional empty entry.
+ By clicking into the text field, you
 can change an entry such that it matches for \pH server instance. You can also select the empty entry from
 the pop-down menu and enter a new \texttt{host:addr} pair, which will then be added to the list.
  The last element of
@@ -4223,7 +4235,6 @@ If clicking the \rett{Show} button, its label changes to \rett{Hide} and the pas
 might have guessed that clicking the \rett{Hide} button then conceals the password again and the button
 label reads \rett{Show} again.
 
-\clearpage
 Note that when the client exits and the connection is closed, the server stops the protocol. The protocol
 is then restarted when a (new) client connects, or when the \rett{Restart} button is pressed on the 
 server side in the main menu. The idea here is that the remote radio is released while it is not used,
@@ -4235,12 +4246,12 @@ reconnect later if desired.
 
 The password you enter is \textbf{never ever} transmitted ``as is'' over the line. Instead, the server sends a random
 512 bit (64 byte) \textit{challenge} which is different for each connection.
-On the client side, a four-byte version number and the password is added
+On the client side,  the password is added
 to the challenge and a SHA512 key is built from the result.  Using the last result as the new challenge,
 this process is repeated 99999 times to make brute-force attacks compute intensive,
 and the last hash generated is then sent back to the server. The server
-does the same with its version number and the password entered in the \bltt{Server} menu and then asserts
-that the two SHA512 keys are identical.
+does the same with the password entered in the \bltt{Server} menu and then asserts
+that the SHA512 key thus generated matches the one received from the client.
 On a RaspberryPi5, generation of the hash takes about 120 msec, and about 3 times less on powerful desktop
 computers. Once a hacker has ``sniffed'' a valid challenge/hash pair, trying to guess the password
 from generating all possible hashes
@@ -4250,8 +4261,7 @@ passwords which also include upper-case letters are even better.
 Although this still  not  top-notch cyber security, it should be good enough
 to fulfil your  (legal) obligations as a radio amateur to prevent your gear from unlawful use.
 If you feel you must go beyond, one option is to set up a VPN \textit{virtual private network} in which
-you can have expert-level cyber security provided by your network infrastructure rather than by an application such
-as \pH.
+you can have expert-level cyber security provided by your network infrastructure.
 
 \textbf{Auto disconnect feature:}
 
