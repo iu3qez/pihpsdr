@@ -431,19 +431,19 @@ void rx_reconfigure(RECEIVER *rx, int height) {
   // Calculate the height of the panadapter (pheight) and the waterfall (wheight)
   // depending on whether only one or both are shown, and depending on the relative
   // waterfall height
+  // CALL THIS ONLY with rx->display_mutex locked.
   //
   int pheight = height;
   int wheight = height;
+
+  rx->height = height; // total height
+  gtk_widget_set_size_request(rx->panel, rx->width, rx->height);
+  t_print("%s: rx=%d width=%d height=%d\n", __FUNCTION__, rx->id, rx->width, rx->height);
 
   if (rx->display_panadapter && rx->display_waterfall) {
     wheight = (rx->waterfall_percent * height) / 100;
     pheight = height - wheight;
   }
-
-  t_print("%s: rx=%d width=%d height=%d\n", __FUNCTION__, rx->id, rx->width, rx->height);
-  g_mutex_lock(&rx->display_mutex);
-  rx->height = height; // total height
-  gtk_widget_set_size_request(rx->panel, rx->width, rx->height);
 
   if (rx->display_panadapter) {
     if (rx->panadapter == NULL) {
@@ -485,7 +485,6 @@ void rx_reconfigure(RECEIVER *rx, int height) {
   }
 
   gtk_widget_show_all(rx->panel);
-  g_mutex_unlock(&rx->display_mutex);
 }
 
 static int rx_update_display(gpointer data) {
@@ -1264,6 +1263,7 @@ void rx_add_div_iq_samples(RECEIVER *rx, double i0, double q0, double i1, double
 void rx_update_width(RECEIVER *rx) {
   //
   // This is called when the display width changes
+  // CALL THIS ONLY with rx->display_mutex locked.
   //
   rx->pixels = rx->width;
 

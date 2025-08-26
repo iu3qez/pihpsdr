@@ -602,6 +602,7 @@ static void choose_vfo_layout() {
     METER_WIDTH += 50;
   }
 
+  VFO_HEIGHT = vfo_layout_list[layout].height;
   display_vfobar[display_size] = layout;
 }
 
@@ -668,11 +669,6 @@ void radio_reconfigure_screen() {
   }
 
   choose_vfo_layout();
-  VFO_HEIGHT = vfo_layout_list[display_vfobar[display_size]].height;
-
-  //
-  // If there is enough space, increase the meter width
-  //
 
   //
   // Change sizes of main window, Hide and Menu buttons, meter, and vfo
@@ -784,6 +780,7 @@ void radio_reconfigure() {
 
     for (i = 0; i < receivers; i++) {
       RECEIVER *rx = receiver[i];
+      g_mutex_lock(&rx->display_mutex);
       rx->width = my_width / receivers;
       rx_update_width(rx);
       rx_reconfigure(rx, rx_height);
@@ -792,6 +789,7 @@ void radio_reconfigure() {
         gtk_fixed_move(GTK_FIXED(fixed), rx->panel, x, y);
       }
 
+      g_mutex_unlock(&rx->display_mutex);
       rx->x = x;
       rx->y = y;
       x = x + my_width / receivers;
@@ -801,6 +799,7 @@ void radio_reconfigure() {
   } else {
     for (i = 0; i < receivers; i++) {
       RECEIVER *rx = receiver[i];
+      g_mutex_lock(&rx->display_mutex);
       rx->width = my_width;
       rx_update_width(rx);
       rx_reconfigure(rx, rx_height / receivers);
@@ -809,6 +808,7 @@ void radio_reconfigure() {
         gtk_fixed_move(GTK_FIXED(fixed), rx->panel, 0, y);
       }
 
+      g_mutex_unlock(&rx->display_mutex);
       rx->x = 0;
       rx->y = y;
       y += rx_height / receivers;
