@@ -282,6 +282,7 @@ static void  process_mic_data(const unsigned char *buffer);
 // operating system, but marked free upon a protocol restart.
 //
 static mybuffer *get_my_buffer() {
+  ASSERT_SERVER(NULL);
   int i;
   mybuffer *bp = buflist;
 
@@ -351,6 +352,7 @@ void schedule_transmit_specific() {
 }
 
 static void update_action_table() {
+  ASSERT_SERVER();
   //
   // Depending on the values of mox, puresignal, and diversity,
   // determine the actions to be taken when a DDC packet arrives
@@ -449,6 +451,7 @@ static void update_action_table() {
 }
 
 void new_protocol_init() {
+  ASSERT_SERVER();
   int i;
 
   //
@@ -643,6 +646,7 @@ void new_protocol_init() {
 }
 
 static void new_protocol_general() {
+  ASSERT_SERVER();
   const BAND *band;
   int rc;
   pthread_mutex_lock(&general_mutex);
@@ -701,6 +705,7 @@ static void new_protocol_general() {
 }
 
 static void new_protocol_high_priority() {
+  ASSERT_SERVER();
   int rxant, txant;
   long long DDCfrequency[2];  // DDC frequencies of the radio
   long long DUCfrequency;     // DUC frequency of the radio
@@ -1401,6 +1406,7 @@ static void new_protocol_high_priority() {
 }
 
 static void new_protocol_transmit_specific() {
+  ASSERT_SERVER();
   pthread_mutex_lock(&tx_spec_mutex);
   int txmode = vfo_get_tx_mode();
   memset(transmit_specific_buffer, 0, sizeof(transmit_specific_buffer));
@@ -1534,6 +1540,7 @@ static void new_protocol_transmit_specific() {
 }
 
 static void new_protocol_receive_specific() {
+  ASSERT_SERVER();
   int i;
   int xmit;
   pthread_mutex_lock(&rx_spec_mutex);
@@ -1641,6 +1648,7 @@ static void new_protocol_receive_specific() {
 // Function available to e.g. rigctl to stop the protocol
 //
 void new_protocol_menu_stop() {
+  ASSERT_SERVER();
   fd_set fds;
   struct timeval tv;
   char *buffer;
@@ -1700,6 +1708,7 @@ void new_protocol_menu_stop() {
 // Function available e.g. to rigctl to (re-) start the new protocol
 //
 void new_protocol_menu_start() {
+  ASSERT_SERVER();
   //
   // reset sequence numbers, action table, etc.
   //
@@ -1756,6 +1765,7 @@ void new_protocol_menu_start() {
 }
 
 static gpointer new_protocol_rxaudio_thread(gpointer data) {
+  ASSERT_SERVER(NULL);
   int nptr;
   unsigned char audiobuffer[260];
 
@@ -1867,6 +1877,7 @@ static gpointer new_protocol_rxaudio_thread(gpointer data) {
 }
 
 static gpointer new_protocol_txiq_thread(gpointer data) {
+  ASSERT_SERVER(NULL);
   int nptr;
   unsigned char iqbuffer[1444];
 
@@ -1956,6 +1967,7 @@ static gpointer new_protocol_txiq_thread(gpointer data) {
 }
 
 static gpointer new_protocol_thread(gpointer data) {
+  ASSERT_SERVER(NULL);
   t_print("new_protocol_thread\n");
 
   //
@@ -2037,6 +2049,7 @@ static gpointer new_protocol_thread(gpointer data) {
 }
 
 static gpointer high_priority_thread(gpointer data) {
+  ASSERT_SERVER(NULL);
   t_print("high_priority_thread\n");
 
   while (1) {
@@ -2055,6 +2068,7 @@ static gpointer high_priority_thread(gpointer data) {
 }
 
 static gpointer mic_line_thread(gpointer data) {
+  ASSERT_SERVER(NULL);
   t_print("mic_line_thread\n");
   mybuffer *mybuf;
   int nptr;
@@ -2095,6 +2109,7 @@ static gpointer mic_line_thread(gpointer data) {
 // interface.
 //
 void saturn_post_high_priority(mybuffer *buffer) {
+  ASSERT_SERVER();
 #ifdef __APPLE__
   sem_wait(high_priority_sem_ready);
 #else
@@ -2109,6 +2124,7 @@ void saturn_post_high_priority(mybuffer *buffer) {
 }
 
 void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
+  ASSERT_SERVER();
   if (!P2running) {
     mybuf->free = 1;
     return;
@@ -2142,6 +2158,7 @@ void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
 }
 
 void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
+  ASSERT_SERVER();
   if (ddc < 0 || ddc >= MAX_DDC) {
     t_print("%s: invalid DDC(%d) seen!\n", __FUNCTION__, ddc);
     mybuf->free = 1;
@@ -2197,6 +2214,7 @@ void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
 }
 
 static gpointer iq_thread(gpointer data) {
+  ASSERT_SERVER(NULL);
   int ddc = GPOINTER_TO_INT(data);
   //
   // TEMPORARY: additional sequence check here
@@ -2277,6 +2295,7 @@ static gpointer iq_thread(gpointer data) {
 }
 
 static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
+  ASSERT_SERVER();
   int b;
   int leftsample;
   int rightsample;
@@ -2318,6 +2337,7 @@ static void process_iq_data(const unsigned char *buffer, RECEIVER *rx) {
 // at the end
 //
 static void process_div_iq_data(const unsigned char*buffer) {
+  ASSERT_SERVER();
   int b;
   int leftsample0;
   int rightsample0;
@@ -2373,6 +2393,7 @@ static void process_div_iq_data(const unsigned char*buffer) {
 }
 
 static void process_ps_iq_data(const unsigned char *buffer) {
+  ASSERT_SERVER();
   int samplesperframe;
   int b;
   int leftsample0;
@@ -2438,6 +2459,7 @@ static void process_ps_iq_data(const unsigned char *buffer) {
 }
 
 static void process_high_priority() {
+  ASSERT_SERVER();
   unsigned long sequence;
   int previous_ptt;
   int previous_dot;
@@ -2576,6 +2598,7 @@ static void process_high_priority() {
 }
 
 static void process_mic_data(const unsigned char *buffer) {
+  ASSERT_SERVER();
   unsigned long sequence;
   int b;
   int i;
@@ -2597,6 +2620,7 @@ static void process_mic_data(const unsigned char *buffer) {
 }
 
 void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sample) {
+  ASSERT_SERVER();
   int txmode = vfo_get_tx_mode();
 
   if (radio_is_transmitting() &&
@@ -2660,6 +2684,7 @@ void new_protocol_cw_audio_samples(short left_audio_sample, short right_audio_sa
 }
 
 void new_protocol_audio_samples(short left_audio_sample, short right_audio_sample) {
+  ASSERT_SERVER();
   int txmode = vfo_get_tx_mode();
 
   //
@@ -2717,6 +2742,7 @@ void new_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
 }
 
 void new_protocol_iq_samples(int isample, int qsample) {
+  ASSERT_SERVER();
   if (txiq_count < 0) {
     txiq_count++;
     return;
@@ -2762,7 +2788,8 @@ void new_protocol_iq_samples(int isample, int qsample) {
 }
 
 // cppcheck-suppress constParameterCallback
-void* new_protocol_timer_thread(void* arg) {
+void *new_protocol_timer_thread(void* arg) {
+  ASSERT_SERVER(NULL);
   //
   // Periodically send HighPriority as well as General packets.
   // A general packet is, for example,

@@ -696,6 +696,13 @@ void send_store(int s, int index) {
   send_bytes(s, (char *)&header, sizeof(HEADER));
 }
 
+void send_restart(int s) {
+  HEADER header;
+  SYNC(header.sync);
+  header.data_type = to_short(CMD_RESTART);
+  send_bytes(s, (char *)&header, sizeof(HEADER));
+}
+
 void send_recall(int s, int index) {
   HEADER header;
   SYNC(header.sync);

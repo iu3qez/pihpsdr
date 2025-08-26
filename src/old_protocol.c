@@ -248,6 +248,7 @@ static volatile int rxring_outptr = 0;  // pointer updated when reading from the
 static volatile int rxring_count  = 0;  // a sample counter
 
 static gpointer old_protocol_txiq_thread(gpointer data) {
+  ASSERT_SERVER(NULL);
   int nptr;
 
   //
@@ -358,6 +359,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
 }
 
 void old_protocol_stop() {
+  ASSERT_SERVER();
   //
   // Mutex is needed since in the TCP case, sending TX IQ packets
   // must not occur while the "stop" packet is sent.
@@ -372,6 +374,7 @@ void old_protocol_stop() {
 }
 
 void old_protocol_run() {
+  ASSERT_SERVER();
   t_print("%s\n", __FUNCTION__);
   pthread_mutex_lock(&send_ozy_mutex);
   metis_restart();
@@ -388,6 +391,7 @@ void old_protocol_set_mic_sample_rate(int rate) {
 // but do not shut down the communication
 //
 void old_protocol_init(int rate) {
+  ASSERT_SERVER();
   int i;
   t_print("old_protocol_init: num_hpsdr_receivers=%d\n", how_many_receivers());
 
@@ -458,6 +462,7 @@ void old_protocol_init(int rate) {
 // EP6 is the "normal" USB frame endpoint
 //
 static void start_usb_receive_threads() {
+  ASSERT_SERVER();
   t_print("old_protocol starting USB receive thread\n");
   g_thread_new( "OZYEP6", ozy_ep6_rx_thread, NULL);
   g_thread_new( "OZYI2C", ozy_i2c_thread, NULL);
@@ -475,6 +480,7 @@ static void start_usb_receive_threads() {
 //    the microphone (LineIn, MicIn, MicIn+Bias) changes.
 //
 static gpointer ozy_i2c_thread(gpointer arg) {
+  ASSERT_SERVER(NULL);
   int cycle;
   //
   // Possible values for "penny":
@@ -547,6 +553,7 @@ static gpointer ozy_i2c_thread(gpointer arg) {
 // then processes them one at a time.
 //
 static gpointer ozy_ep6_rx_thread(gpointer arg) {
+  ASSERT_SERVER(NULL);
   t_print( "old_protocol: USB EP6 receive_thread\n");
   static unsigned char ep6_inbuffer[EP6_BUFFER_SIZE];
 
@@ -579,6 +586,7 @@ static gpointer ozy_ep6_rx_thread(gpointer arg) {
 #endif
 
 static void open_udp_socket() {
+  ASSERT_SERVER();
   int tmp;
 
   if (data_socket >= 0) {
@@ -702,6 +710,7 @@ static void open_udp_socket() {
 }
 
 static void open_tcp_socket() {
+  ASSERT_SERVER();
   int tmp;
 
   if (tcp_socket >= 0) {
@@ -807,6 +816,7 @@ static void open_tcp_socket() {
 }
 
 static gpointer receive_thread(gpointer arg) {
+  ASSERT_SERVER(NULL);
   struct sockaddr_in addr;
   socklen_t length;
   unsigned char buffer[1032];
@@ -934,6 +944,7 @@ static gpointer receive_thread(gpointer arg) {
 //
 
 static int rx_feedback_channel() {
+  ASSERT_SERVER(0);
   //
   // For radios with small FPGAS only supporting 2 RX, use RX1.
   // Else, use the last RX before the TX feedback channel.
@@ -973,6 +984,7 @@ static int rx_feedback_channel() {
 }
 
 static int tx_feedback_channel() {
+  ASSERT_SERVER(0);
   //
   // Radios with small FPGAs use RX2
   // HERMES uses RX4,
@@ -1015,6 +1027,7 @@ static int tx_feedback_channel() {
 }
 
 static long long channel_freq(int chan) {
+  ASSERT_SERVER(0);
   //
   // Return the DDC frequency associated with the current HPSDR
   // RX channel
@@ -1075,6 +1088,7 @@ static long long channel_freq(int chan) {
 }
 
 static int how_many_receivers() {
+  ASSERT_SERVER(0);
   //
   // For DIVERSITY, we need at least two RX channels
   // When PureSignal is active, we need to include the TX DAC channel.
@@ -1152,6 +1166,7 @@ static int nsamples;
 static int iq_samples;
 
 static void process_control_bytes() {
+  ASSERT_SERVER();
   int previous_ptt;
   int previous_dot;
   int previous_dash;
@@ -1358,6 +1373,7 @@ static int st_rxfdbk;
 static int st_txfdbk;
 
 static void process_ozy_byte(int b) {
+  ASSERT_SERVER();
   switch (state) {
   case SYNC_0:
     if (b == SYNC) {
@@ -1530,6 +1546,7 @@ static void process_ozy_byte(int b) {
 
 static void queue_two_ozy_input_buffers(unsigned const char *buf1,
                                         unsigned const char *buf2) {
+  ASSERT_SERVER();
   //
   // To achieve minimum overhead in the RX thread, the data is
   // simply put into a large ring buffer. We queue two buffers
@@ -1564,6 +1581,7 @@ static void queue_two_ozy_input_buffers(unsigned const char *buf1,
 }
 
 static gpointer process_ozy_input_buffer_thread(gpointer arg) {
+  ASSERT_SERVER(NULL);
   //
   // This thread constantly monitors the input ring buffer and
   // processes the data whenever a bunch is available. Note this
@@ -1602,6 +1620,7 @@ static gpointer process_ozy_input_buffer_thread(gpointer arg) {
 }
 
 void old_protocol_audio_samples(short left_audio_sample, short right_audio_sample) {
+  ASSERT_SERVER();
   if (!radio_is_transmitting()) {
     pthread_mutex_lock(&send_audio_mutex);
 
@@ -1673,6 +1692,7 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
 }
 
 void old_protocol_iq_samples(int isample, int qsample, int side) {
+  ASSERT_SERVER();
   if (radio_is_transmitting()) {
     pthread_mutex_lock(&send_audio_mutex);
 
@@ -1761,6 +1781,7 @@ void old_protocol_iq_samples(int isample, int qsample, int side) {
 }
 
 static void ozy_send_buffer() {
+  ASSERT_SERVER();
   int txmode = vfo_get_tx_mode();
   int txvfo = vfo_get_tx_vfo();
   int rxvfo = active_receiver->id;
@@ -2728,6 +2749,7 @@ static void ozy_send_buffer() {
 
 #ifdef USBOZY
 static void ozyusb_write(unsigned char* buffer, int length) {
+  ASSERT_SERVER();
   int i;
   //static unsigned char usb_output_buffer[EP6_BUFFER_SIZE];
   //static unsigned char usb_buffer_block = 0;
@@ -2799,6 +2821,7 @@ static void ozyusb_write(unsigned char* buffer, int length) {
 #endif
 
 static int metis_write(unsigned char ep, unsigned const char* buffer, int length) {
+  ASSERT_SERVER(0);
   int i;
 
   // copy the buffer over
@@ -2826,6 +2849,7 @@ static int metis_write(unsigned char ep, unsigned const char* buffer, int length
 }
 
 static void metis_restart() {
+  ASSERT_SERVER();
   int i;
   t_print("%s\n", __FUNCTION__);
 
@@ -2874,6 +2898,7 @@ static void metis_restart() {
 }
 
 static void metis_start_stop(int command) {
+  ASSERT_SERVER();
   int i;
   unsigned char buffer[1032];
   t_print("%s: %d\n", __FUNCTION__, command);
@@ -2925,6 +2950,7 @@ static void metis_start_stop(int command) {
 }
 
 static void metis_send_buffer(unsigned char* buffer, int length) {
+  ASSERT_SERVER();
   //
   // Send using either the UDP or TCP socket. Do not use TCP for
   // packets that are not 1032 bytes long

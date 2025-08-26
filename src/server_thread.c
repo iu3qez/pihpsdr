@@ -752,6 +752,7 @@ static void server_loop() {
     case CMD_RCL:
     case CMD_RECEIVERS:
     case CMD_REGION:
+    case CMD_RESTART:
     case CMD_RIT:
     case CMD_RIT_STEP:
     case CMD_RX_FPS:
@@ -1192,6 +1193,11 @@ static int remote_command(void *data) {
     int index = header->b1;
     store_memory_slot(index);
     send_memory_data(remoteclient.socket, index);
+  }
+  break;
+
+  case CMD_RESTART: {
+    radio_protocol_restart();
   }
   break;
 

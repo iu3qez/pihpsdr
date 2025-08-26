@@ -78,6 +78,7 @@ enum _header_type_enum {
   CMD_RCL,
   CMD_RECEIVERS,
   CMD_REGION,
+  CMD_RESTART,
   CMD_RFGAIN,
   CMD_RIT,
   CMD_RIT_STEP,
@@ -139,7 +140,7 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01000016 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01000017 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
 #define AUDIO_DATA_SIZE 1024             // 1024 stereo samples
 
@@ -882,6 +883,7 @@ extern void send_recall(int s, int index);
 extern void send_receiver_data(int sock, int rx);
 extern void send_receivers(int s, int receivers);
 extern void send_region(int s, int region);
+extern void send_restart(int s);
 extern void send_rfgain(int s, int rx, double gain);
 extern void send_rit(int s, int id);
 extern void send_rit_step(int s, int v, int step);
