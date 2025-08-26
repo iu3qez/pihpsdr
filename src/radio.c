@@ -3058,6 +3058,7 @@ static void radio_restore_state() {
   GetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   GetPropI0("which_css_font",                                which_css_font);
   GetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
+  GetPropI0("vfo_snap",                                      vfo_snap);
   GetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   GetPropI0("analog_meter",                                  analog_meter);
   GetPropI0("vox_enabled",                                   vox_enabled);
@@ -3271,6 +3272,7 @@ void radio_save_state() {
   SetPropI0("optimize_touchscreen",                          optimize_for_touchscreen);
   SetPropI0("which_css_font",                                which_css_font);
   SetPropI0("vfo_encoder_divisor",                           vfo_encoder_divisor);
+  SetPropI0("vfo_snap",                                      vfo_snap);
   SetPropI0("mute_rx_while_transmitting",                    mute_rx_while_transmitting);
   SetPropI0("analog_meter",                                  analog_meter);
   SetPropI0("vox_enabled",                                   vox_enabled);
