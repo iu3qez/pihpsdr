@@ -29,6 +29,7 @@
 #include "audio.h"
 #include "band_menu.h"
 #include "bandstack_menu.h"
+#include "client_server.h"
 #include "cw_menu.h"
 #include "display_menu.h"
 #include "diversity_menu.h"
@@ -111,7 +112,13 @@ static gboolean close_cb () {
 // cppcheck-suppress constParameterCallback
 static gboolean restart_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   cleanup();
-  radio_protocol_restart();
+
+  if (radio_is_remote) {
+    send_restart(client_socket);
+  } else {
+    radio_protocol_restart();
+  }
+
   return TRUE;
 }
 
