@@ -985,6 +985,7 @@ int create_hpsdr_server() {
 
 int destroy_hpsdr_server() {
   server_running = FALSE;
+  remoteclient.running = FALSE;
 
   if (listen_socket >= 0) {
     close(listen_socket);
