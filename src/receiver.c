@@ -149,14 +149,7 @@ gboolean rx_button_release_event(GtkWidget *widget, GdkEventButton *event, gpoin
           //
           // Add center frequency
           //
-          if (vfo[id].mode == modeCWL) {
-            f += vfo[id].frequency + cw_keyer_sidetone_frequency;
-          } else if (vfo[id].mode == modeCWU) {
-            f += vfo[id].frequency - cw_keyer_sidetone_frequency;
-          } else {
-            f += vfo[id].frequency;
-          }
-
+          f += vfo[id].frequency;
           vfo_id_move_to(id, f, vfo_snap);
         }
 
@@ -930,7 +923,7 @@ RECEIVER *rx_create_receiver(int id, int width, int height) {
   rx_set_noise(rx);
   rx_set_fft_size(rx);
   rx_set_fft_latency(rx);
-  rx_set_offset(rx, vfo[rx->id].offset);
+  rx_set_offset(rx);
   rx_set_af_gain(rx);
   rx_set_af_binaural(rx);
   rx_set_equalizer(rx);
@@ -1047,7 +1040,7 @@ void rx_frequency_changed(RECEIVER *rx) {
   // To make this bullet-proof, report the (possibly new) offset to WDSP
   // and send the (possibly changed) frequency to the radio in any case.
   //
-  rx_set_offset(rx, vfo[id].offset);
+  rx_set_offset(rx);
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
@@ -1085,6 +1078,7 @@ void rx_mode_changed(RECEIVER *rx) {
   ASSERT_SERVER();
   rx_set_mode(rx);
   rx_filter_changed(rx);
+  rx_set_offset(rx);         // CW BFO offset
 }
 
 void rx_vfo_changed(RECEIVER *rx) {
@@ -2012,8 +2006,21 @@ void rx_set_noise(const RECEIVER *rx) {
 #endif
 }
 
-void rx_set_offset(const RECEIVER *rx, long long offset) {
+void rx_set_offset(const RECEIVER *rx) {
   ASSERT_SERVER();
+
+  int id = rx->id;
+  int mode = vfo[id].mode;
+  long long offset = vfo[id].offset;
+
+  //
+  // CW BFO offset, this is why the CW filter edges have to be moved
+  //
+  if (mode == modeCWU) {
+    offset -= cw_keyer_sidetone_frequency;
+  } else if (mode == modeCWL) {
+    offset += cw_keyer_sidetone_frequency;
+  }
 
   if (offset == 0) {
     SetRXAShiftFreq(rx->id, (double)offset);

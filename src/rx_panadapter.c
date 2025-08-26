@@ -120,7 +120,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   int mode = vfo[rx->id].mode;
   long long frequency = vfo[rx->id].frequency;
   int vfoband = vfo[rx->id].band;
-  long long offset;
+  double xoffset;
   //
   // soffset contains all corrections for attenuation and preamps
   // Perhaps some adjustment is necessary for those old radios which have
@@ -142,12 +142,6 @@ void rx_panadapter_update(RECEIVER *rx) {
     soffset -= (double)(20 * adc[rx->adc].preamp);
   }
 
-  if (vfo[rx->id].ctun) {
-    offset = vfo[rx->id].offset;
-  } else {
-    offset = vfo[rx->id].rit_enabled ? vfo[rx->id].rit : 0;
-  }
-
   // In diversity mode, the RX2 frequency tracks the RX1 frequency
   if (diversity_enabled && rx->id == 1) {
     frequency = vfo[0].frequency;
@@ -155,21 +149,17 @@ void rx_panadapter_update(RECEIVER *rx) {
     mode = vfo[0].mode;
   }
 
-  double rxpos = rx->cBp + offset * rx->cAp;
+  xoffset = rx->cAp * vfo[rx->id].offset;
+  double rxpos = rx->cBp + xoffset;
+  double filter_left  = rx->cAp * rx->filter_low  + xoffset + rx->cBp;
+  double filter_right = rx->cAp * rx->filter_high + xoffset + rx->cBp;
 
-  //
-  //
-  // The CW frequency is the VFO frequency and the center of the spectrum
-  // then is at the VFO frequency plus or minus the sidetone frequency. However we
-  // will keep the center of the PANADAPTER at the VFO frequency and shift the
-  // pixels of the spectrum.
-  //
   if (mode == modeCWU) {
-    frequency -= cw_keyer_sidetone_frequency;
-    rxpos += cw_keyer_sidetone_frequency * rx->cAp;
+    filter_left  -= cw_keyer_sidetone_frequency * rx->cAp;
+    filter_right -= cw_keyer_sidetone_frequency * rx->cAp;
   } else if (mode == modeCWL) {
-    frequency += cw_keyer_sidetone_frequency;
-    rxpos -= cw_keyer_sidetone_frequency * rx->cAp;
+    filter_left  += cw_keyer_sidetone_frequency * rx->cAp;
+    filter_right += cw_keyer_sidetone_frequency * rx->cAp;
   }
 
   if (vfoband == band60) {
@@ -192,8 +182,6 @@ void rx_panadapter_update(RECEIVER *rx) {
   // Filter edges.
   //
   cairo_set_source_rgba (cr, COLOUR_PAN_FILTER);
-  double filter_left = rx->cAp * (rx->filter_low + offset) + rx->cBp;
-  double filter_right = rx->cAp * (rx->filter_high + offset) + rx->cBp;
   cairo_rectangle(cr, filter_left, 0.0, filter_right - filter_left, myheight);
   cairo_fill(cr);
 

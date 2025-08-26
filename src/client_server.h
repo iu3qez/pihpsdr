@@ -804,6 +804,7 @@ typedef struct __attribute__((__packed__)) _noise_command {
 
 #define HPSDR_PWD_LEN 64
 extern int hpsdr_server;
+extern int server_starts_stopped;
 extern char hpsdr_pwd[HPSDR_PWD_LEN];
 
 extern int client_socket;

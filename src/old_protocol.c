@@ -1068,15 +1068,7 @@ static long long channel_freq(int chan) {
     // determine RX frequency associated with VFO #vfonum
     // This is the center freq in CTUN mode.
     //
-    freq = vfo[vfonum].frequency;
-
-    if (vfo[vfonum].mode == modeCWU) {
-      freq -= (long long)cw_keyer_sidetone_frequency;
-    } else if (vfo[vfonum].mode == modeCWL) {
-      freq += (long long)cw_keyer_sidetone_frequency;
-    }
-
-    freq += frequency_calibration - vfo[vfonum].lo;
+    freq = vfo[vfonum].frequency + frequency_calibration - vfo[vfonum].lo;
   }
 
   return freq;

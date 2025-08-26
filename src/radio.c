@@ -170,7 +170,7 @@ int anan10E = 0;
 int mute_spkr_amp = 0;      // Mute audio amplifier in radio                (ANAN-7000, G2)
 int mute_spkr_xmit = 0;     // Mute audio amplifier in radio upon transmit  (ANAN-7000, G2)
 
-int radio_protocol_running = 0;
+static int radio_protocol_running = 0;
 
 int tx_out_of_band_allowed = 0;
 
@@ -981,7 +981,7 @@ static void radio_create_visual() {
 
     if (!radio_is_remote) {
       rx_set_displaying(receiver[i]);
-      rx_set_offset(receiver[i], vfo[i].offset);
+      rx_set_offset(receiver[i]);
     }
 
     gtk_fixed_put(GTK_FIXED(fixed), receiver[i]->panel, 0, y);
@@ -3065,6 +3065,7 @@ static void radio_restore_state() {
   GetPropF0("vox_threshold",                                 vox_threshold);
   GetPropF0("vox_hang",                                      vox_hang);
   GetPropI0("radio.hpsdr_server",                            hpsdr_server);
+  GetPropI0("radio.server_starts_stopped",                   server_starts_stopped);
   GetPropS0("radio.hpsdr_pwd",                               hpsdr_pwd);
   GetPropI0("radio.hpsdr_server.listen_port",                listen_port);
   GetPropI0("tci_enable",                                    tci_enable);
@@ -3279,6 +3280,7 @@ void radio_save_state() {
   SetPropF0("vox_threshold",                                 vox_threshold);
   SetPropF0("vox_hang",                                      vox_hang);
   SetPropI0("radio.hpsdr_server",                            hpsdr_server);
+  SetPropI0("radio.server_starts_stopped",                   server_starts_stopped);
   SetPropS0("radio.hpsdr_pwd",                               hpsdr_pwd);
   SetPropI0("radio.hpsdr_server.listen_port",                listen_port);
   SetPropI0("tci_enable",                                    tci_enable);
@@ -3583,12 +3585,22 @@ int radio_max_band() {
   return max;
 }
 
+int radio_remote_protocol_stop(gpointer data) {
+  //
+  // stop protocol via GTK queue
+  //
+  radio_protocol_stop();
+  return G_SOURCE_REMOVE;
+}
+
 void radio_protocol_stop() {
   //
   // paranoia ...
   //
   radio_set_mox(0);
   usleep(100000);
+
+  if (!radio_protocol_running) { return; }
 
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
@@ -3609,7 +3621,18 @@ void radio_protocol_stop() {
   radio_protocol_running = 0;
 }
 
+int radio_remote_protocol_run(gpointer data) {
+  //
+  // start protocol via GTK queue
+  //
+  radio_protocol_run();
+  return G_SOURCE_REMOVE;
+}
+
 void radio_protocol_run() {
+
+  if (radio_protocol_running) { return; }
+
   switch (protocol) {
   case ORIGINAL_PROTOCOL:
     old_protocol_run();

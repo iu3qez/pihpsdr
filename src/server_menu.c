@@ -59,6 +59,10 @@ static void server_enable_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
+static void server_stop_cb(GtkWidget *widget, gpointer data) {
+  server_starts_stopped = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+}
+
 static void port_value_changed_cb(GtkWidget *widget, gpointer data) {
   listen_port = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 }
@@ -92,6 +96,11 @@ void server_menu(GtkWidget *parent) {
   gtk_widget_set_halign(btn, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), btn, 0, 1, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(server_enable_cb), NULL);
+  btn = gtk_check_button_new_with_label("Server Start Stops Radio");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), server_starts_stopped);
+  gtk_widget_set_halign(btn, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), btn, 1, 1, 2, 1);
+  g_signal_connect(btn, "toggled", G_CALLBACK(server_stop_cb), NULL);
   //
   lbl = gtk_label_new("Server Port");
   gtk_widget_set_name(lbl, "boldlabel");

@@ -96,7 +96,6 @@ static gboolean waterfall_scroll_event_cb (GtkWidget *widget, GdkEventScroll *ev
 void waterfall_update(RECEIVER *rx) {
   if (rx->pixbuf) {
     const float *samples;
-    int mode = vfo[rx->id].mode;
     long long frequency = vfo[rx->id].frequency; // access only once to be thread-safe
     int  freq_changed = 0;                    // flag whether we have just "rotated"
 
@@ -104,12 +103,6 @@ void waterfall_update(RECEIVER *rx) {
     int width = gdk_pixbuf_get_width(rx->pixbuf);
     int height = gdk_pixbuf_get_height(rx->pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(rx->pixbuf);
-
-    if (mode == modeCWU) {
-      frequency -= cw_keyer_sidetone_frequency;
-    } else if (mode == modeCWL) {
-      frequency += cw_keyer_sidetone_frequency;
-    }
 
     //
     // The existing waterfall corresponds to a center frequency rx->waterfall_frequency, a zoom value rx->waterfall_zoom and

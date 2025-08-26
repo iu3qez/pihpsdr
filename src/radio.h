@@ -139,8 +139,6 @@ extern int atlas_clock_source_128mhz;
 extern int atlas_mic_source;
 extern int atlas_janus;
 
-extern int radio_protocol_running;
-
 extern int tx_out_of_band_allowed;
 
 extern int filter_board;
@@ -347,6 +345,8 @@ extern int  radio_remote_set_mox(gpointer data);
 extern int  radio_remote_set_vox(gpointer data);
 extern int  radio_remote_set_tune(gpointer data);
 extern int  radio_remote_set_twotone(gpointer data);
+extern int  radio_remote_protocol_run(gpointer data);
+extern int  radio_remote_protocol_stop(gpointer data);
 
 extern int optimize_for_touchscreen;
 extern void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int spanrow, int spancol);

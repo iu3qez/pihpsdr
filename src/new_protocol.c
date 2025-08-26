@@ -762,15 +762,7 @@ static void new_protocol_high_priority() {
   //  Set DDC frequencies for RX1 and RX2
   //
   for (int id = 0; id < 2; id++) {
-    DDCfrequency[id] = vfo[id].frequency;
-
-    if (vfo[id].mode == modeCWU) {
-      DDCfrequency[id] -= (long long)cw_keyer_sidetone_frequency;
-    } else if (vfo[id].mode == modeCWL) {
-      DDCfrequency[id] += (long long)cw_keyer_sidetone_frequency;
-    }
-
-    DDCfrequency[id] += frequency_calibration -  vfo[id].lo;
+    DDCfrequency[id] = vfo[id].frequency + frequency_calibration -  vfo[id].lo;
   }
 
   // CW mode from the Host; disabled since pihpsdr does not use this CW option.

@@ -114,11 +114,11 @@ int listen_port = LISTEN_PORT;
 
 REMOTE_CLIENT remoteclient = { 0 };
 
-GMutex client_mutex;
-
 static char title[256];
 
 int hpsdr_server = FALSE;
+int server_starts_stopped =FALSE;
+
 char hpsdr_pwd[HPSDR_PWD_LEN] = { 0 };
 
 int client_socket = -1;
@@ -2526,6 +2526,10 @@ static void *listen_thread(void *arg) {
   int on = 1;
   t_print("%s: listening on port %d\n", __FUNCTION__, listen_port);
 
+  if (server_starts_stopped) {
+    g_idle_add(radio_remote_protocol_stop, NULL);
+  }
+
   while (server_running) {
     if (listen_socket >= 0) { close(listen_socket); }
 
@@ -2534,7 +2538,7 @@ static void *listen_thread(void *arg) {
 
     if (listen_socket < 0) {
       t_print("%s: socket() failed\n", __FUNCTION__);
-      return NULL;
+      break;
     }
 
     setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
@@ -2547,7 +2551,7 @@ static void *listen_thread(void *arg) {
 
     if (bind(listen_socket, (struct sockaddr * )&address, sizeof(address)) < 0) {
       t_print("%s: bind() failed\n", __FUNCTION__);
-      return NULL;
+      break;
     }
 
     // listen for connections
@@ -2561,6 +2565,10 @@ static void *listen_thread(void *arg) {
 
     if ((remoteclient.socket = accept(listen_socket, (struct sockaddr * )&remoteclient.address,
                                       &remoteclient.address_length)) < 0) {
+      //
+      // We arrive here if either the internet connection failed, or destroy_hpsdr_server()
+      // has been invoked which closes the listen socket
+      //
       t_print("%s: accept() failed\n", __FUNCTION__);
       break;
     }
@@ -2618,9 +2626,7 @@ static void *listen_thread(void *arg) {
       // A non-running protocol results when a client disconnects.
       //
 
-      if (!radio_protocol_running) {
-        radio_protocol_run();
-      }
+      g_idle_add(radio_remote_protocol_run, NULL);
 
       // Setting this has to be post-poned until HERE, since now
       // the RX thread starts to send audio data. If we were TXing
@@ -2677,8 +2683,7 @@ static void *listen_thread(void *arg) {
         remoteclient.timer_id = 0;
       }
 
-      sleep(1);
-      radio_protocol_stop();
+      g_idle_add(radio_remote_protocol_stop, NULL);
     }
 
     if (remoteclient.socket != -1) {
@@ -2687,11 +2692,16 @@ static void *listen_thread(void *arg) {
     }
   }
 
+  //
+  // If the server stops and the protocol is halted,
+  // restart it.
+  //
+  t_print("Terminating %s.\n", __FUNCTION__);
+  g_idle_add(radio_remote_protocol_run, NULL);
   return NULL;
 }
 
 int create_hpsdr_server() {
-  g_mutex_init(&client_mutex);
   server_running = TRUE;
   listen_thread_id = g_thread_new( "HPSDR_listen", listen_thread, NULL);
   return 0;
@@ -2699,6 +2709,10 @@ int create_hpsdr_server() {
 
 int destroy_hpsdr_server() {
   server_running = FALSE;
+  if (listen_socket >= 0) {
+    close(listen_socket);
+    listen_socket = -1;
+  }
   return 0;
 }
 
@@ -4399,7 +4413,7 @@ static int remote_command(void *data) {
     }
 
     vfo[v].ctun_frequency = vfo[v].frequency;
-    rx_set_offset(active_receiver, vfo[v].offset);
+    rx_set_offset(active_receiver);
     g_idle_add(ext_vfo_update, NULL);
     send_vfo_data(remoteclient.socket, v);
   }
