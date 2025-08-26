@@ -17,6 +17,10 @@
 *
 */
 
+/*
+ * This file contains stuff exectued only on the client side
+ */
+
 #include <gtk/gtk.h>
 #include <stdint.h>
 #include <netinet/in.h>
@@ -49,25 +53,26 @@ static int accumulated_round[2] = {FALSE, FALSE};
 guint check_vfo_timer_id = 0;
 
 static void *client_thread(void* arg);
-// 
+
+//
 // version of connect() which takes a time-out.
 // take from monoxid.net
-// 
- 
+//
+
 static int connect_wait (int sockno, struct sockaddr * addr, size_t addrlen, struct timeval * timeout) {
   int res, opt;
- 
+
   // get socket flags
   if ((opt = fcntl (sockno, F_GETFL, NULL)) < 0) {
     return -1;
   }
- 
+
   // set socket non-blocking
   if (fcntl (sockno, F_SETFL, opt | O_NONBLOCK) < 0) {
     return -1;
   }
- 
-  // try to connect 
+
+  // try to connect
   if ((res = connect (sockno, addr, addrlen)) < 0) {
     if (errno == EINPROGRESS) {
       fd_set wait_set;
@@ -208,23 +213,24 @@ void server_tx_audio(short sample) {
   //
   // This is called in the client and collects data to be
   // sent to the server
-  // 
+  //
   static int txaudio_buffer_index = 0;
   static TXAUDIO_DATA txaudio_data;
+
   if (!can_transmit) {
     return;
   }
- 
+
   static short speak = 0;
- 
+
   if (client_socket < 0) { return; }
- 
+
   if (sample > speak) { speak = sample; }
- 
+
   if (-sample > speak) { speak = -sample; }
- 
+
   txaudio_data.samples[txaudio_buffer_index++] = to_short(sample);
- 
+
   if (txaudio_buffer_index >= AUDIO_DATA_SIZE) {
     int txmode = vfo_get_tx_mode();
 
@@ -232,7 +238,7 @@ void server_tx_audio(short sample) {
       //
       // The actual transmission of the mic audio samples only takes  place
       // if we *need* them (note VOX is handled locally)
-      // 
+      //
       SYNC(txaudio_data.header.sync);
       txaudio_data.header.data_type = to_short(INFO_TXAUDIO);
       txaudio_data.numsamples = from_short(txaudio_buffer_index);
@@ -244,7 +250,7 @@ void server_tx_audio(short sample) {
 
       txaudio_buffer_index = 0;
     } else {
-      // 
+      //
       // Since we are NOT transmitting, delete first half of the buffer
       // so that if a RX/TX transition occurs, there  is "some" data available
       //
@@ -316,6 +322,9 @@ static int check_vfo(void *arg) {
   return TRUE;
 }
 
+//
+// Called from remote_start_radio() when it is done
+//
 void start_vfo_timer() {
   g_mutex_init(&accumulated_mutex);
   check_vfo_timer_id = gdk_threads_add_timeout_full(G_PRIORITY_HIGH_IDLE, 100, check_vfo, NULL, NULL);

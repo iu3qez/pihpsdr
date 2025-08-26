@@ -308,6 +308,7 @@ int sliders_active_receiver_changed(void *data) {
 
 int sliders_c25_att(gpointer data) {
   int id = GPOINTER_TO_INT(data);
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   if (filter_board != CHARLY25) { return G_SOURCE_REMOVE; }
@@ -333,6 +334,7 @@ int sliders_c25_att(gpointer data) {
 
 int sliders_attenuation(gpointer data) {
   int id = GPOINTER_TO_INT(data);
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
@@ -356,6 +358,7 @@ int sliders_attenuation(gpointer data) {
 
 int sliders_agc_gain(gpointer data) {
   int id = GPOINTER_TO_INT(data);
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
@@ -378,6 +381,7 @@ int sliders_agc_gain(gpointer data) {
 
 int sliders_af_gain(gpointer data) {
   int id = GPOINTER_TO_INT(data);
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
@@ -402,6 +406,7 @@ int sliders_af_gain(gpointer data) {
 
 int sliders_rf_gain(gpointer data) {
   int id = GPOINTER_TO_INT(data);
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   if (rf_gain_scale == NULL) { return G_SOURCE_REMOVE; }
@@ -410,6 +415,7 @@ int sliders_rf_gain(gpointer data) {
   // This ONLY moves the slider
   //
   int rxadc = receiver[id]->adc;
+
   if (display_sliders && active_receiver->id == id) {
     if (rf_signal_id) { g_signal_handler_block(G_OBJECT(rf_gain_scale), rf_signal_id); }
 
@@ -429,6 +435,7 @@ int sliders_filter_width(gpointer data) {
   int v = GPOINTER_TO_INT(data);
   int id = v / 100000;
   int width = v % 100000 - 50000;
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
@@ -453,7 +460,6 @@ int sliders_filter_width(gpointer data) {
   }
 
   show_popup_slider(IF_WIDTH, id, (double)(min), (double)(max), 1.0, (double) width, title);
-
   return G_SOURCE_REMOVE;
 }
 
@@ -461,6 +467,7 @@ int sliders_filter_shift(gpointer data) {
   int v = GPOINTER_TO_INT(data);
   int id = v / 100000;
   int shift = v % 100000 - 50000;
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
@@ -498,6 +505,7 @@ int sliders_mic_gain(gpointer data) {
       show_popup_slider(MIC_GAIN, 0, -12.0, 50.0, 1.0, transmitter->mic_gain, "Mic Gain");
     }
   }
+
   return G_SOURCE_REMOVE;
 }
 
@@ -516,6 +524,7 @@ int sliders_drive(gpointer data) {
       show_popup_slider(DRIVE, 0, drive_min, drive_max, 1.0, (double) transmitter->drive, "TX Drive");
     }
   }
+
   return G_SOURCE_REMOVE;
 }
 
@@ -523,6 +532,7 @@ int sliders_filter_high(gpointer data) {
   int v = GPOINTER_TO_INT(data);
   int id = v / 100000;
   int var = v % 100000 - 50000;
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
@@ -552,6 +562,7 @@ int sliders_filter_low(gpointer data) {
   int v = GPOINTER_TO_INT(data);
   int id = v / 100000;
   int var = v % 100000 - 50000;
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //
@@ -592,6 +603,7 @@ int sliders_filter_low(gpointer data) {
 
 int sliders_squelch(gpointer data) {
   int id = GPOINTER_TO_INT(data);
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
   //

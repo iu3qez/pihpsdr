@@ -454,6 +454,7 @@ src/band.c \
 src/band_menu.c \
 src/bandstack_menu.c \
 src/client_server.c \
+src/client_thread.c \
 src/css.c \
 src/configure.c \
 src/cw_menu.c \
@@ -501,6 +502,7 @@ src/rx_menu.c \
 src/rx_panadapter.c \
 src/screen_menu.c \
 src/server_menu.c \
+src/server_thread.c \
 src/sintab.c \
 src/sliders.c \
 src/startup.c \
@@ -635,6 +637,7 @@ src/band.o \
 src/band_menu.o \
 src/bandstack_menu.o \
 src/client_server.o \
+src/client_thread.o \
 src/configure.o \
 src/css.o \
 src/cw_menu.o \
@@ -682,6 +685,7 @@ src/rx_menu.o \
 src/rx_panadapter.o \
 src/screen_menu.o \
 src/server_menu.o \
+src/server_thread.o \
 src/sintab.o \
 src/sliders.o \
 src/startup.o \
@@ -904,9 +908,9 @@ src/appearance.o: src/appearance.h src/css.h
 src/audio.o: src/audio.h src/receiver.h src/client_server.h src/mode.h
 src/audio.o: src/transmitter.h src/message.h src/radio.h src/adc.h
 src/audio.o: src/discovered.h src/vfo.h
-src/band.o: src/band.h src/bandstack.h src/filter.h src/mode.h src/property.h
-src/band.o: src/radio.h src/adc.h src/discovered.h src/receiver.h
-src/band.o: src/transmitter.h src/vfo.h
+src/band.o: src/band.h src/bandstack.h src/filter.h src/mode.h src/message.h
+src/band.o: src/property.h src/radio.h src/adc.h src/discovered.h
+src/band.o: src/receiver.h src/transmitter.h src/vfo.h
 src/band_menu.o: src/band.h src/bandstack.h src/band_menu.h
 src/band_menu.o: src/client_server.h src/mode.h src/receiver.h
 src/band_menu.o: src/transmitter.h src/filter.h src/new_menu.h src/radio.h
@@ -915,15 +919,15 @@ src/bandstack_menu.o: src/band.h src/bandstack.h src/bandstack_menu.h
 src/bandstack_menu.o: src/filter.h src/mode.h src/new_menu.h src/radio.h
 src/bandstack_menu.o: src/adc.h src/discovered.h src/receiver.h
 src/bandstack_menu.o: src/transmitter.h src/vfo.h
-src/client_server.o: src/adc.h src/audio.h src/receiver.h src/client_server.h
-src/client_server.o: src/mode.h src/transmitter.h src/band.h src/bandstack.h
-src/client_server.o: src/diversity_menu.h src/discovered.h
-src/client_server.o: src/equalizer_menu.h src/ext.h src/filter.h src/iambic.h
-src/client_server.o: src/main.h src/message.h src/new_protocol.h src/MacOS.h
-src/client_server.o: src/noise_menu.h src/radio.h src/radio_menu.h
-src/client_server.o: src/sliders.h src/actions.h src/soapy_protocol.h
-src/client_server.o: src/store.h src/store_menu.h src/vfo.h src/vox.h
-src/client_server.o: src/zoompan.h
+src/client_server.o: src/band.h src/bandstack.h src/client_server.h
+src/client_server.o: src/mode.h src/receiver.h src/transmitter.h src/filter.h
+src/client_server.o: src/message.h src/radio.h src/adc.h src/discovered.h
+src/client_server.o: src/store.h src/vfo.h
+src/client_thread.o: src/audio.h src/receiver.h src/band.h src/bandstack.h
+src/client_thread.o: src/client_server.h src/mode.h src/transmitter.h
+src/client_thread.o: src/ext.h src/filter.h src/message.h src/radio.h
+src/client_thread.o: src/adc.h src/discovered.h src/sliders.h src/actions.h
+src/client_thread.o: src/store.h src/vfo.h src/vox.h src/zoompan.h
 src/configure.o: src/actions.h src/channel.h src/discovered.h src/gpio.h
 src/configure.o: src/i2c.h src/main.h src/message.h src/radio.h src/adc.h
 src/configure.o: src/receiver.h src/transmitter.h
@@ -1149,6 +1153,13 @@ src/screen_menu.o: src/discovered.h
 src/server_menu.o: src/client_server.h src/mode.h src/receiver.h
 src/server_menu.o: src/transmitter.h src/message.h src/new_menu.h src/radio.h
 src/server_menu.o: src/adc.h src/discovered.h src/server_menu.h
+src/server_thread.o: src/actions.h src/band.h src/bandstack.h
+src/server_thread.o: src/client_server.h src/mode.h src/receiver.h
+src/server_thread.o: src/transmitter.h src/diversity_menu.h src/ext.h
+src/server_thread.o: src/filter.h src/iambic.h src/main.h src/message.h
+src/server_thread.o: src/new_protocol.h src/MacOS.h src/radio.h src/adc.h
+src/server_thread.o: src/discovered.h src/radio_menu.h src/soapy_protocol.h
+src/server_thread.o: src/store.h src/store_menu.h src/vfo.h src/zoompan.h
 src/sliders.o: src/actions.h src/agc.h src/appearance.h src/css.h src/band.h
 src/sliders.o: src/bandstack.h src/channel.h src/client_server.h src/mode.h
 src/sliders.o: src/receiver.h src/transmitter.h src/discovered.h src/ext.h

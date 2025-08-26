@@ -168,8 +168,11 @@ void rx_panadapter_update(RECEIVER *rx) {
       long long hi_freq = band_channels_60m[i].frequency + (band_channels_60m[i].width / (long long)2);
       double x1 = rx->cBp + (low_freq - frequency) * rx->cAp;
       double x2 = rx->cBp + (hi_freq - frequency) * rx->cAp;
+
       if (x1 < 0.0) { x1 = 0.0; }
+
       if (x2 > rx->width) { x2 = rx->width; }
+
       if (x2 - x1 > 1.0) {
         cairo_set_source_rgba(cr, COLOUR_PAN_60M);
         cairo_rectangle(cr, x1, 0.0, x2 - x1, myheight);
@@ -237,7 +240,7 @@ void rx_panadapter_update(RECEIVER *rx) {
   // (in pixels)
   //
   int marker_distance = (rx->pixels * divisor) / rx->sample_rate;
-  f = (((frequency + (int)(rx->cA+0.5)) / divisor) * divisor);
+  f = (((frequency + (int)(rx->cA + 0.5)) / divisor) * divisor);
   cairo_select_font_face(cr, DISPLAY_FONT_FACE, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   //
   // If space is available, increase font size of freq. labels a bit
@@ -287,8 +290,8 @@ void rx_panadapter_update(RECEIVER *rx) {
       double x;
       cairo_set_source_rgba(cr, COLOUR_ALARM);
       cairo_set_line_width(cr, PAN_LINE_THICK);
-
       x = rx->cBp + (band->frequencyMin - frequency) * rx->cAp;
+
       if (x >= 0 && x <= rx->width) {
         cairo_move_to(cr, x, 0);
         cairo_line_to(cr, x, myheight);
@@ -297,6 +300,7 @@ void rx_panadapter_update(RECEIVER *rx) {
       }
 
       x = rx->cBp + (band->frequencyMax - frequency) * rx->cAp;
+
       if (x >= 0 && x <= rx->width) {
         cairo_move_to(cr, x, 0);
         cairo_line_to(cr, x, myheight);
@@ -377,7 +381,6 @@ void rx_panadapter_update(RECEIVER *rx) {
   cairo_stroke(cr);
   // signal
   double s1;
-
   samples[0] = -200.0;
   samples[mywidth - 1] = -200.0;
   //

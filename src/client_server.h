@@ -823,8 +823,8 @@ extern int radio_connect_remote(char *host, int port, const char *pwd);
 extern void remote_rxaudio(const RECEIVER *rx, short left_sample, short right_sample);
 extern void server_tx_audio(short sample);
 extern short remote_get_mic_sample();
-extern void  remote_send_rxspectrum(int id);
-extern void  remote_send_txspectrum(void);
+extern void  send_rxspectrum(int id);
+extern void  send_txspectrum(void);
 
 extern void send_adc(int s, int id, int adc);
 extern void send_adc_data(int sock, int i);
@@ -885,6 +885,7 @@ extern void send_region(int s, int region);
 extern void send_rfgain(int s, int rx, double gain);
 extern void send_rit(int s, int id);
 extern void send_rit_step(int s, int v, int step);
+extern void send_rx_data(int s, int id);
 extern void send_rx_fft(int s, const RECEIVER *rx);
 extern void send_rx_select(int s, int rx);
 extern void send_rxmenu(int s, int id);
@@ -897,6 +898,7 @@ extern void send_soapy_txant(int s);
 extern void send_soapy_agc(int s, int id);
 extern void send_split(int s, int state);
 extern void send_squelch(int s, int rx, int enable, double squelch);
+extern void send_start_radio(int s);
 extern void send_startstop_rxspectrum(int s, int id, int state);
 extern void send_startstop_txspectrum(int s, int state);
 extern void send_store(int s, int index);
@@ -906,6 +908,7 @@ extern void send_toggle_tune(int s);
 extern void send_tune(int s, int state);
 extern void send_twotone(int s, int state);
 extern void send_tx_compressor(int s);
+extern void send_tx_data(int s);
 extern void send_tx_fft(int s, const TRANSMITTER *tx);
 extern void send_txfilter(int s);
 extern void send_txmenu(int s);
@@ -926,4 +929,81 @@ extern void send_zoom(int s, const RECEIVER *rx);
 extern void update_vfo_move(int v, long long hz, int round);
 extern void update_vfo_step(int v, int steps);
 
+extern int recv_bytes(int s, char *buffer, int bytes);
+extern int send_bytes(int s, char *buffer, int bytes);
+extern void generate_pwd_hash(unsigned char *s, unsigned char *hash, const char *pwd);
+//
+// htonll and friends are macros, and this may have
+// side effects. Better use functions that operate
+// on simple variables (not expressions).
+// Futhermore, explicit casting is done here once for all
+//
+
+static inline uint64_t to_double(double x) {
+  uint64_t u64 = (x + 9.0E8) * 1.0E10;
+#ifdef __APPLE__
+  uint64_t ret = htonll(u64);
+#else
+  uint64_t ret = htobe64(u64);
+#endif
+  return ret;
+}
+
+static inline uint64_t to_ll(long long x) {
+#ifdef __APPLE__
+  uint64_t ret = htonll(x);
+#else
+  uint64_t ret = htobe64(x);
+#endif
+  return ret;
+}
+
+static inline uint32_t to_int(int x) {
+  int32_t s32 = x;
+  uint32_t ret = htonl(s32);
+  return ret;
+}
+
+static inline uint16_t to_short(int x) {
+  int16_t s16 = x;
+  uint16_t ret = htons(s16);
+  return ret;
+}
+
+static inline double from_double(uint64_t y) {
+#ifdef __APPLE__
+  uint64_t u64 = ntohll(y);
+#else
+  uint64_t u64 = be64toh(y);
+#endif
+  return (1.0E-10 * u64 - 9.0E8);
+}
+
+static inline long long from_ll(uint64_t y) {
+#ifdef __APPLE__
+  uint64_t u64 = ntohll(y);
+#else
+  uint64_t u64 = be64toh(y);
+#endif
+  return (long long) u64;
+}
+
+static inline int from_int(uint32_t y) {
+  int32_t s32 = ntohl(y);
+  return (int) s32;
+}
+
+static inline int from_short(uint16_t y) {
+  int16_t s16 = ntohs(y);
+  return (int) s16;
+}
+
+static const uint8_t syncbytes[4] = { 0xFA, 0xFA, 0xAF, 0xAF };
+
+static inline void SYNC(uint8_t *sync) {
+  *sync++ = 0xFA;
+  *sync++ = 0xFA;
+  *sync++ = 0xAF;
+  *sync++ = 0xAF;
+}
 #endif

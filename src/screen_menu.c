@@ -74,7 +74,6 @@ static int apply(gpointer data) {
   g_signal_handler_block(G_OBJECT(vfo_b), vfo_signal_id);
   gtk_combo_box_set_active(GTK_COMBO_BOX(vfo_b), my_vfo_layout);
   g_signal_handler_unblock(G_OBJECT(vfo_b), vfo_signal_id);
-
   return G_SOURCE_REMOVE;
 }
 
@@ -276,7 +275,6 @@ void screen_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(height_b), (double) my_display_height);
   gtk_grid_attach(GTK_GRID(grid), height_b, col, row, 1, 1);
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
-
   row++;
   col = 0;
   label = gtk_label_new("Select VFO bar layout:");
@@ -298,14 +296,12 @@ void screen_menu(GtkWidget *parent) {
   // This combo-box spans three columns so the text may be really long
   my_combo_attach(GTK_GRID(grid), vfo_b, col, row, 2, 1);
   vfo_signal_id = g_signal_connect(vfo_b, "changed", G_CALLBACK(vfo_cb), NULL);
-
   row++;
   button = gtk_check_button_new_with_label("Stack receivers horizontally");
   gtk_widget_set_name(button, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), my_rx_stack_horizontal);
   gtk_grid_attach(GTK_GRID(grid), button, 1, row, 2, 1);
   g_signal_connect(button, "toggled", G_CALLBACK(horizontal_cb), NULL);
-
   row++;
   GtkWidget *b_display_zoompan = gtk_check_button_new_with_label("Display Zoom/Pan");
   gtk_widget_set_name (b_display_zoompan, "boldlabel");

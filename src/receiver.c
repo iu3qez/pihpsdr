@@ -435,7 +435,6 @@ void rx_reconfigure(RECEIVER *rx, int height) {
   //
   int pheight = height;
   int wheight = height;
-
   rx->height = height; // total height
   gtk_widget_set_size_request(rx->panel, rx->width, rx->height);
   t_print("%s: rx=%d width=%d height=%d\n", __FUNCTION__, rx->id, rx->width, rx->height);
@@ -528,7 +527,7 @@ static int rx_update_display(gpointer data) {
 
     if (rc) {
       if (remoteclient.running) {
-        remote_send_rxspectrum(rx->id);
+        send_rxspectrum(rx->id);
       }
 
       if (rx->display_panadapter) {
@@ -668,6 +667,7 @@ int rx_remote_update_display(gpointer data) {
       g_mutex_unlock(&rx->display_mutex);
     }
   }
+
   return G_SOURCE_REMOVE;
 }
 
@@ -860,6 +860,7 @@ RECEIVER *rx_create_receiver(int id, int width, int height) {
   // Guard against "old" entries
   //
   if (rx->pan > 100) { rx->pan = 50; }
+
   //
   // If this is the second receiver in P1, over-write sample rate
   // with that of the first  receiver. Different sample rates in
@@ -967,7 +968,7 @@ void rx_set_frequency(RECEIVER *rx, long long f) {
   rx_frequency_changed(rx);
 }
 
-void rx_frequency_changed(RECEIVER *rx) {
+void rx_frequency_changed(const RECEIVER *rx) {
   ASSERT_SERVER();
   int id = rx->id;
 
@@ -1015,7 +1016,6 @@ void rx_frequency_changed(RECEIVER *rx) {
     //    set_pan(id, rx->pan);
     //  }
     //}
-
     //
     // Compute new offset
     //
@@ -1295,10 +1295,11 @@ void rx_adjust_pan(RECEIVER * rx) {
   // in the centre of the screen.
   //
   int id = rx->id;
+
   if (vfo[id].ctun && rx->zoom != 1) {
     int offset = (vfo[id].ctun_frequency - vfo[id].frequency) + rx->sample_rate / 2;
-    double z = ((double)(offset*rx->zoom) / (double)rx->sample_rate - 0.5) / (double)(rx->zoom -1);
-    rx->pan = (int) (100.0*z + 0.5);
+    double z = ((double)(offset * rx->zoom) / (double)rx->sample_rate - 0.5) / (double)(rx->zoom - 1);
+    rx->pan = (int) (100.0 * z + 0.5);
   } else {
     rx->pan = 50;
   }
@@ -1546,7 +1547,7 @@ void rx_set_analyzer(RECEIVER *rx) {
     // Here we use a hard-wired zoom factor. We display exactly 24 kHz of the
     // spectrum thus have to clip off
     //
-    afft_size= 16384;
+    afft_size = 16384;
     fscLin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
     fscHin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
   } else {
@@ -1554,6 +1555,7 @@ void rx_set_analyzer(RECEIVER *rx) {
     // determine clippings accordint to the Zoom/Pan values
     //
     afft_size = rx->width * rx->zoom;
+
     //
     // For a screen width of 4k pixels, and zoom factor of 32,
     // this can go up to 128k. The program limits this to 256k
@@ -1569,22 +1571,21 @@ void rx_set_analyzer(RECEIVER *rx) {
     } else {
       afft_size = 262144;
     }
-    double zz = afft_size * (1.0 - 1.0/rx->zoom);
+
+    double zz = afft_size * (1.0 - 1.0 / rx->zoom);
     double pl = 0.01 * rx->pan;
     double pr = 1.0 - pl;
     fscLin = pl * zz;
     fscHin = pr * zz;
-
-    rx->cA  = rx->sample_rate * ((0.01 - 0.01/rx->zoom)*rx->pan - 0.5);
-	rx->cB  = (double)rx->sample_rate / (double)(rx->width * rx->zoom); // Hz per pixel
-    rx->cAp = 1.0/rx->cB;
-    rx->cBp = -rx->cA/rx->cB;
+    rx->cA  = rx->sample_rate * ((0.01 - 0.01 / rx->zoom) * rx->pan - 0.5);
+    rx->cB  = (double)rx->sample_rate / (double)(rx->width * rx->zoom); // Hz per pixel
+    rx->cAp = 1.0 / rx->cB;
+    rx->cBp = -rx->cA / rx->cB;
   }
 
   max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
-                                    keep_time * (double) afft_size * (double) rx->fps);
+                                keep_time * (double) afft_size * (double) rx->fps);
   overlap = (int)fmax(0.0, ceil(afft_size - (double)rx->sample_rate / (double)rx->fps));
-
   SetAnalyzer(rx->id,
               n_pixout,
               spur_elimination_ffts,                // number of LO frequencies = number of ffts used in elimination
@@ -1605,6 +1606,7 @@ void rx_set_analyzer(RECEIVER *rx) {
               span_max_freq,                        // frequency at last pixel value
               max_w                                 // max samples to hold in input ring buffers
              );
+
   //
   // The spectrum is normalized to a "bin width" of sample_rate / afft_size,
   // which is smaller than the frequency width of one pixel which is sample_rate / (width * zoom).
@@ -1616,6 +1618,7 @@ void rx_set_analyzer(RECEIVER *rx) {
     SetDisplayNormOneHz(rx->id, 0, 1);
     SetDisplaySampleRate(rx->id, rx->width * rx->zoom);
   }
+
   //
   // In effect, this "lifts" the spectrum (in dB) by 10*log10(afft_size/(width*zoom)).
   //
@@ -2008,7 +2011,6 @@ void rx_set_noise(const RECEIVER *rx) {
 
 void rx_set_offset(const RECEIVER *rx) {
   ASSERT_SERVER();
-
   int id = rx->id;
   int mode = vfo[id].mode;
   long long offset = vfo[id].offset;

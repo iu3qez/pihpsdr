@@ -391,6 +391,8 @@ void tx_save_state(const TRANSMITTER *tx) {
     SetPropF1("transmitter.%d.dexp_release",                        tx->id,    tx->dexp_release);
     SetPropF1("transmitter.%d.dexp_hold",                           tx->id,    tx->dexp_hold);
     SetPropI1("transmitter.%d.eq_enable",                           tx->id,    tx->eq_enable);
+    SetPropF1("transmitter.%d.tt1_freq",                            tx->id,    tx->tt1_freq);
+    SetPropF1("transmitter.%d.tt2_freq",                            tx->id,    tx->tt2_freq);
 
     for (int i = 0; i < 11; i++) {
       SetPropF2("transmitter.%d.eq_freq[%d]",                       tx->id, i, tx->eq_freq[i]);
@@ -478,6 +480,8 @@ void tx_restore_state(TRANSMITTER *tx) {
     GetPropF1("transmitter.%d.dexp_release",                        tx->id,    tx->dexp_release);
     GetPropF1("transmitter.%d.dexp_hold",                           tx->id,    tx->dexp_hold);
     GetPropI1("transmitter.%d.eq_enable",                           tx->id,    tx->eq_enable);
+    GetPropF1("transmitter.%d.tt1_freq",                            tx->id,    tx->tt1_freq);
+    GetPropF1("transmitter.%d.tt2_freq",                            tx->id,    tx->tt2_freq);
 
     for (int i = 0; i < 11; i++) {
       GetPropF2("transmitter.%d.eq_freq[%d]",                       tx->id, i, tx->eq_freq[i]);
@@ -784,7 +788,7 @@ static gboolean tx_update_display(gpointer data) {
 
     if (rc) {
       if (remoteclient.running) {
-        remote_send_txspectrum();
+        send_txspectrum();
       }
 
       tx_panadapter_update(tx);
@@ -977,6 +981,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->swrtune = 0;
   tx->swrtune_volume = 0.1;
   tx->twotone = 0;
+  tx->tt1_freq = 700.0;
+  tx->tt2_freq = 1900.0;
   tx->puresignal = 0;
   //
   // PS 2.0 default parameters
@@ -1982,6 +1988,7 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
 
 int tx_remote_update_display(gpointer data) {
   TRANSMITTER *tx = (TRANSMITTER *) data;
+
   if (tx->displaying) {
     if (tx->pixels > 0) {
       g_mutex_lock(&tx->display_mutex);
@@ -1997,6 +2004,7 @@ int tx_remote_update_display(gpointer data) {
       }
     }
   }
+
   return G_SOURCE_REMOVE;
 }
 
@@ -2821,11 +2829,11 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
     case modeCWL:
     case modeLSB:
     case modeDIGL:
-      SetTXAPostGenTTFreq(tx->id, -700.0, -1900.0);
+      SetTXAPostGenTTFreq(tx->id, -tx->tt1_freq, -tx->tt2_freq);
       break;
 
     default:
-      SetTXAPostGenTTFreq(tx->id, 700.0, 1900.0);
+      SetTXAPostGenTTFreq(tx->id, tx->tt1_freq, tx->tt2_freq);
       break;
     }
 

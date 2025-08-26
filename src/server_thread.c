@@ -83,12 +83,12 @@ int  server_starts_stopped = 0;
 REMOTE_CLIENT remoteclient = { 0 };
 
 //
-// Audio 
-//  
+// Audio
+//
 #define MIC_RING_BUFFER_SIZE 9600
 #define MIC_RING_LOW         3000
 
-static short *mic_ring_buffer; 
+static short *mic_ring_buffer;
 static volatile short  mic_ring_outpt = 0;
 static volatile short  mic_ring_inpt = 0;
 
@@ -163,7 +163,7 @@ static int send_periodic_data(gpointer arg) {
 // - display mutex is locked
 // - displaying is set and a pixel_samples contain valid data
 //
-void remote_send_rxspectrum(int id) {
+void send_rxspectrum(int id) {
   const float *samples;
   SPECTRUM_DATA spectrum_data;
   int numsamples = 0;
@@ -221,7 +221,7 @@ void remote_send_rxspectrum(int id) {
   }
 }
 
-void remote_send_txspectrum() {
+void send_txspectrum() {
   const float *samples;
   SPECTRUM_DATA spectrum_data;
   int numsamples = 0;
@@ -284,7 +284,6 @@ void remote_send_txspectrum() {
 void remote_rxaudio(const RECEIVER *rx, short left_sample, short right_sample) {
   static int rxaudio_buffer_index[2] = { 0, 0};
   static RXAUDIO_DATA rxaudio_data[2];  // for up to 2 receivers
-
   int id = rx->id;
   int i = rxaudio_buffer_index[id] * 2;
 
@@ -313,21 +312,21 @@ short remote_get_mic_sample() {
   // zero until it is at least filled with  MIC_RING_LOW samples
   //
   short sample;
-  static int is_empty = 1; 
+  static int is_empty = 1;
   int numsamples = mic_ring_outpt - mic_ring_inpt;
 
   if (numsamples < 0) { numsamples += MIC_RING_BUFFER_SIZE; }
 
-  if (numsamples <= 0) { is_empty = 1; } 
+  if (numsamples <= 0) { is_empty = 1; }
 
   if (is_empty && numsamples < MIC_RING_LOW) {
     return 0;
   }
 
-  is_empty = 0; 
-  int newpt = mic_ring_outpt + 1; 
+  is_empty = 0;
+  int newpt = mic_ring_outpt + 1;
 
-  if (newpt == MIC_RING_BUFFER_SIZE) { newpt = 0; } 
+  if (newpt == MIC_RING_BUFFER_SIZE) { newpt = 0; }
 
   MEMORY_BARRIER;
   sample = mic_ring_buffer[mic_ring_outpt];
@@ -495,6 +494,7 @@ static void server_loop() {
       // (not through the GTK queue) put  to the ring buffer
       //
       static TXAUDIO_DATA txaudio_data;
+
       if (recv_bytes(remoteclient.socket, (char *)&txaudio_data + sizeof(HEADER),
                      sizeof(TXAUDIO_DATA) - sizeof(HEADER)) > 0) {
         unsigned int numsamples = from_short(txaudio_data.numsamples);
@@ -903,16 +903,13 @@ static void *listen_thread(void *arg) {
       // If the protocol is not running, start it!
       // A non-running protocol results when a client disconnects.
       //
-
       g_idle_add(radio_remote_protocol_run, NULL);
-
       // Setting this has to be post-poned until HERE, since now
       // the RX thread starts to send audio data. If we were TXing
       // when the client successfully connects, go RX.
       //
       g_idle_add(ext_set_mox, GINT_TO_POINTER(0));
       remoteclient.running = TRUE;
-
       //
       // In order to be prepeared for varying screen dimensions,
       // we switch the display to "custom" geometry.
@@ -924,7 +921,7 @@ static void *listen_thread(void *arg) {
       radio_reconfigure_screen_done = 0;
       g_idle_add(ext_radio_reconfigure_screen, NULL);
 
-      while (!radio_reconfigure_screen_done) usleep(100000);
+      while (!radio_reconfigure_screen_done) { usleep(100000); }
 
       for (int id = 0; id < RECEIVERS; id++) {
         remoteclient.send_rx_spectrum[id] = FALSE;
@@ -987,10 +984,12 @@ int create_hpsdr_server() {
 
 int destroy_hpsdr_server() {
   server_running = FALSE;
+
   if (listen_socket >= 0) {
     close(listen_socket);
     listen_socket = -1;
   }
+
   return 0;
 }
 

@@ -1306,7 +1306,6 @@ void vfo_id_move(int id, long long hz, int round) {
 }
 
 void vfo_id_move_to(int id, long long f, int round) {
-
   if (radio_is_remote) {
     send_vfo_move_to(client_socket, id, f, round);
     return;

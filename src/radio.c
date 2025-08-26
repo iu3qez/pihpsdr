@@ -548,7 +548,7 @@ static void choose_vfo_layout() {
   // b) secure that the VFO layout width fits
   //
   int rc;
-  int layout=display_vfobar[display_size];
+  int layout = display_vfobar[display_size];
   const VFO_BAR_LAYOUT *vfl;
   rc = 1;
   vfl = vfo_layout_list;
@@ -1513,6 +1513,7 @@ void radio_start_radio() {
 
   for (unsigned int i = 0; i < strlen(property_path); i++) {
     if (property_path[i] == '/') { property_path[i] = '.'; }
+
     if (property_path[i] == ' ') { property_path[i] = '-'; }
   }
 
@@ -1868,7 +1869,6 @@ int radio_remote_change_receivers(gpointer data) {
 
   radio_reconfigure_screen();
   rx_set_active(receiver[0]);
-
   return G_SOURCE_REMOVE;
 }
 
@@ -2209,6 +2209,7 @@ int radio_remote_set_mox(gpointer data) {
     vox = 0;
     g_idle_add(ext_vfo_update, NULL);
   }
+
   return G_SOURCE_REMOVE;
 }
 
@@ -2240,6 +2241,7 @@ int radio_remote_set_tune(gpointer data) {
 
     g_idle_add(ext_vfo_update, NULL);
   }
+
   return G_SOURCE_REMOVE;
 }
 
@@ -2734,7 +2736,7 @@ void radio_set_af_gain(int id, double value) {
   RECEIVER *rx = receiver[id];
   rx->volume = value;
   rx_set_af_gain(rx);
-  g_idle_add(sliders_af_gain,GINT_TO_POINTER(id));
+  g_idle_add(sliders_af_gain, GINT_TO_POINTER(id));
 }
 
 void radio_set_agc_gain(int id, double value) {
@@ -2742,7 +2744,7 @@ void radio_set_agc_gain(int id, double value) {
 
   receiver[id]->agc_gain = value;
   rx_set_agc(receiver[id]);
-  g_idle_add(sliders_agc_gain,GINT_TO_POINTER(id));
+  g_idle_add(sliders_agc_gain, GINT_TO_POINTER(id));
 }
 
 void radio_set_c25_att(int id, int val) {
@@ -2799,7 +2801,7 @@ void radio_set_c25_att(int id, int val) {
     }
   }
 
-  g_idle_add(sliders_c25_att,GINT_TO_POINTER(id));
+  g_idle_add(sliders_c25_att, GINT_TO_POINTER(id));
 }
 
 void radio_set_dither(int id, int value) {
@@ -3196,6 +3198,7 @@ static void radio_restore_state() {
       display_width[1] = 640;
       display_height[1] = 400;
     }
+
     //
     // Assert that a standard size from the props file does not exceed the screen size
     //
@@ -3394,6 +3397,7 @@ int radio_remote_start(void *data) {
 
   for (unsigned int i = 0; i < strlen(property_path); i++) {
     if (property_path[i] == '/') { property_path[i] = '.'; }
+
     if (property_path[i] == ' ') { property_path[i] = '-'; }
   }
 
@@ -3630,7 +3634,6 @@ int radio_remote_protocol_run(gpointer data) {
 }
 
 void radio_protocol_run() {
-
   if (radio_protocol_running) { return; }
 
   switch (protocol) {

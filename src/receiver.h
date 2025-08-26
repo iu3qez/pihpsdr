@@ -296,7 +296,7 @@ extern void   rx_create_analyzer(RECEIVER *rx);
 extern void   rx_filter_changed(RECEIVER *rx);
 extern int    rx_get_pixels(RECEIVER *rx);
 extern double rx_get_smeter(const RECEIVER *rx);
-extern void   rx_frequency_changed(RECEIVER *rx);
+extern void   rx_frequency_changed(const RECEIVER *rx);
 extern void   rx_mode_changed(RECEIVER *rx);
 extern void   rx_off(const RECEIVER *rx);
 extern void   rx_on(const RECEIVER *rx);

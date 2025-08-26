@@ -87,6 +87,8 @@ typedef struct _transmitter {
   int tune;
   int swrtune;            // produce SWR-dependent side tone while TUNE-ing
   double swrtune_volume;  // Volume of SWR-dependent side tone (1-127)
+  double tt1_freq;        // Two-Tone frequencies
+  double tt2_freq;        // Two-Tone frequencies
   int twotone;
   int puresignal;
   int feedback;

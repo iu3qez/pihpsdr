@@ -132,6 +132,7 @@ int ext_set_title(void *data) {
 
 int radio_reconfigure_screen_done = 0;
 
+// cppcheck-suppress constParameterPointer
 int ext_radio_reconfigure_screen(void *data) {
   radio_reconfigure_screen();
   radio_reconfigure_screen_done = 1;

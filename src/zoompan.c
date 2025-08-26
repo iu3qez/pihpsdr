@@ -48,6 +48,7 @@ static gulong pan_signal_id;
 
 int sliders_zoom(gpointer data) {
   int id = GPOINTER_TO_INT(data);
+
   // This ONLY moves the zoom slider
   if (id != active_receiver->id || !display_zoompan) {
     return G_SOURCE_REMOVE;
@@ -62,6 +63,7 @@ int sliders_zoom(gpointer data) {
 int sliders_pan(gpointer data) {
   // This ONLY moves the pan sliders
   int id = GPOINTER_TO_INT(data);
+
   if (id != active_receiver->id || !display_zoompan) {
     return G_SOURCE_REMOVE;
   }
@@ -109,6 +111,7 @@ void set_pan(int rx, double value) {
   int ival = (int) value;
 
   if (ival < 0) { ival = 0; }
+
   if (ival > 100) { ival = 100; }
 
   receiver[rx]->pan = ival;
@@ -116,6 +119,7 @@ void set_pan(int rx, double value) {
   if (display_zoompan && rx == active_receiver->id) {
     gtk_range_set_value (GTK_RANGE(pan_scale), (double) receiver[rx]->pan);
   }
+
   rx_update_pan(receiver[rx]);
 }
 
@@ -191,6 +195,5 @@ GtkWidget *zoompan_init(int my_width, int my_height) {
   gtk_widget_show(pan_scale);
   gtk_grid_attach(GTK_GRID(zoompan), pan_scale, s2pos, 0, s2width, 1);
   pan_signal_id = g_signal_connect(G_OBJECT(pan_scale), "value_changed", G_CALLBACK(pan_value_changed_cb), NULL);
-
   return zoompan;
 }

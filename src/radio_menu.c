@@ -78,7 +78,7 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     }
 
     soapy_protocol_set_rx_gain_element(id, (char *)gtk_widget_get_name(widget), gain);
-    g_idle_add(sliders_rf_gain,GINT_TO_POINTER(id));
+    g_idle_add(sliders_rf_gain, GINT_TO_POINTER(id));
 #endif
   }
 }
@@ -97,7 +97,7 @@ static void tx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     }
 
     soapy_protocol_set_tx_gain_element((char *)gtk_widget_get_name(widget), (int) gain);
-    g_idle_add(sliders_drive,NULL);
+    g_idle_add(sliders_drive, NULL);
 #endif
   }
 }
