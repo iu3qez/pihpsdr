@@ -515,7 +515,7 @@ Some people get confused if the spectrum shows a noise floor at $-122$ dBm, whil
 reading ,,without signal'' is $-109$ dBm. These people then often ask which of the two figures tells
 them how much noise there is.
 
-It is important to note that a spectrum plots an energy \textit{density}, that is an energy (in dBm) 
+It is important to note that a spectrum plots an energy \textit{density}, that is an energy (in dBm)
 per frequency interval. The RX panadapters in \pH normalise the spectrum to a frequency interval
 that is the frequency width of one pixel on the screen. An immediate consequence of this is, that the
 noise floor moves down when increasing the ZOOM value, since the frequency width of one pixel gets
@@ -602,7 +602,7 @@ slider (at the left edge below the RX panel).
 
 When changing the zoom value, then the pan value is
 automatically adjusted such that the RX frequency
-(the CTUN frequency if CTUN is active) is at the 
+(the CTUN frequency if CTUN is active) is at the
 centre of the display. In the example shown, the PAN
 sliders has been manually adjusted such that the signal
 at the RX frequency (14100 kHz) appears close to the left
@@ -4188,13 +4188,21 @@ stored in the local preferences file without encryption. The idea here is that y
 in a private environment, and against those who manage to hack your computer running the \pH server instance
 there is nothing one can do from within \pH.
 
-If the checkbox \rett{Server Start Stops Radio} is checked, then the radio protocol is stopped when
-the server starts. In this case, the screen ,,freezes'' on the server side. This option is for automatic
-remote stations where the same radio can be accessed from several computers or SDR programs, and where
-it has to be avoided that \pH takes over the radio although no client is connected. The \pH
-server automatically (re-) starts the protocol if a client is connected, and stops it when a
-client disconnect. The protocol is also always (re-) started when the server terminates (e.g. by
-un-checking the \rett{Server Enable} box).
+\rett{Server runs protocol only if client is connected}.
+ If this option is checked, the server halts
+the communication with the radio when it starts. It restarts the communication once a client is connected,
+and stop it when the client disconnects. This option has been implemented for a group of amateurs which
+run a remote radio hooked up with several computers running several SDR programs offering remote operation.
+
+Without this option, \pH would connect to and take over the radio when it starts, and then ,,occupies''
+the radio even if no client is connected. With this option checked, the radio can be operated by
+several SDR programs (not at the same time, of course). If the radio is available, \pH resumes
+data exchange with the radio once a client connects, and stops the protocol once the client disconnects,
+and then other amateurs using other SDR programs can use the radio.
+
+If the server is already running, and you want this option to become effective immediately,
+un-check and re-check the \rett{Server Enable} box. Choosing \rett{Restart} in the main menu
+will also resume radio operation.
 
 \textbf{Client/Server operation}
 
@@ -4235,13 +4243,6 @@ If clicking the \rett{Show} button, its label changes to \rett{Hide} and the pas
 might have guessed that clicking the \rett{Hide} button then conceals the password again and the button
 label reads \rett{Show} again.
 
-Note that when the client exits and the connection is closed, the server stops the protocol. The protocol
-is then restarted when a (new) client connects, or when the \rett{Restart} button is pressed on the 
-server side in the main menu. The idea here is that the remote radio is released while it is not used,
-even if the \pH server instance remains running. It should be possible to use the radio from another
-SDR application after the client disconnects, and the remote instance of \pH (server side) can then
-reconnect later if desired.
-
 \textbf{A note on network security:}
 
 The password you enter is \textbf{never ever} transmitted ``as is'' over the line. Instead, the server sends a random
@@ -4280,13 +4281,14 @@ at a sample rate of 48 kHz, in stereo for the RX audio (Server $\to$ Client) and
 microphone data (Client $\to$ server). During RX, and also during TX when doing CW, no TX microphone data
 is transferred. If not using duplex, no RX audio data is transferred when TXing because the receivers are shut down.
 
-This means that during RX, about 96 kByte/sec (768 kbit/sec) are transferred from the Server to the Client
-(twice as much if running two receivers), while only half of this is transferred from the Client to the Server during
+This means that during RX, about 192 kByte/s (1536 kbit/s) are transferred from the Server to the Client
+(twice as much if running two receivers), while 96 kByte/s (768 kbit/s)  are transferred
+from the Client to the Server during
 TX if doing SSB. When TXing in CW, very little data (the CW key-down/up time stamps) is actually sent from the client
 to the server.
 My first tests indicate that client/server operation works very well even
-if parts of the connection between Client and Server
-is using a WiFi. I mention this because my attempts using WiFi for connection to the \textit{radio}
+if  the connection between Client and Server
+involves WiFi. I mention this because my attempts using WiFi for connection to the \textit{radio}
 (that is, for the base band IQ data) were not entirely satisfactory.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

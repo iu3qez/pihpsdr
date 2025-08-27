@@ -140,7 +140,7 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01000017 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01000018 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
 #define AUDIO_DATA_SIZE 1024             // 1024 stereo samples
 
@@ -805,7 +805,7 @@ typedef struct __attribute__((__packed__)) _noise_command {
 
 #define HPSDR_PWD_LEN 64
 extern int hpsdr_server;
-extern int server_starts_stopped;
+extern int server_stops_protocol;
 extern char hpsdr_pwd[HPSDR_PWD_LEN];
 
 extern int client_socket;

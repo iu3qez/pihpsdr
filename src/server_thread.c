@@ -79,7 +79,7 @@
 char hpsdr_pwd[HPSDR_PWD_LEN];
 int  hpsdr_server = 0;
 int  listen_port = 50000;
-int  server_starts_stopped = 0;
+int  server_stops_protocol = 0;
 REMOTE_CLIENT remoteclient = { 0 };
 
 //
@@ -299,7 +299,7 @@ void remote_rxaudio(const RECEIVER *rx, short left_sample, short right_sample) {
     SYNC(rxaudio_data[id].header.sync);
     rxaudio_data[id].header.data_type = to_short(INFO_RXAUDIO);
     rxaudio_data[id].rx = id;
-    rxaudio_data[id].numsamples = from_short(rxaudio_buffer_index[id]);
+    rxaudio_data[id].numsamples = to_short(rxaudio_buffer_index[id]);
     send_bytes(remoteclient.socket, (char *)&rxaudio_data[id], sizeof(RXAUDIO_DATA));
     rxaudio_buffer_index[id] = 0;
   }
@@ -493,7 +493,7 @@ static void server_loop() {
       // The txaudio  command is statically allocated and the data will be IMMEDIATELY
       // (not through the GTK queue) put  to the ring buffer
       //
-      static TXAUDIO_DATA txaudio_data;
+      TXAUDIO_DATA txaudio_data;
 
       if (recv_bytes(remoteclient.socket, (char *)&txaudio_data + sizeof(HEADER),
                      sizeof(TXAUDIO_DATA) - sizeof(HEADER)) > 0) {
@@ -805,7 +805,7 @@ static void *listen_thread(void *arg) {
   int on = 1;
   t_print("%s: listening on port %d\n", __FUNCTION__, listen_port);
 
-  if (server_starts_stopped) {
+  if (server_stops_protocol) {
     g_idle_add(radio_remote_protocol_stop, NULL);
   }
 
@@ -959,7 +959,9 @@ static void *listen_thread(void *arg) {
         remoteclient.timer_id = 0;
       }
 
-      g_idle_add(radio_remote_protocol_stop, NULL);
+      if (server_stops_protocol) {
+        g_idle_add(radio_remote_protocol_stop, NULL);
+      }
     }
 
     if (remoteclient.socket != -1) {

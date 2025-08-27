@@ -60,7 +60,7 @@ static void server_enable_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void server_stop_cb(GtkWidget *widget, gpointer data) {
-  server_starts_stopped = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  server_stops_protocol = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
 static void port_value_changed_cb(GtkWidget *widget, gpointer data) {
@@ -93,33 +93,34 @@ void server_menu(GtkWidget *parent) {
   //
   btn = gtk_check_button_new_with_label("Server Enable");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), hpsdr_server);
-  gtk_widget_set_halign(btn, GTK_ALIGN_END);
+  gtk_widget_set_halign(btn, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), btn, 0, 1, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(server_enable_cb), NULL);
-  btn = gtk_check_button_new_with_label("Server Start Stops Radio");
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), server_starts_stopped);
+  //
+  btn = gtk_check_button_new_with_label("Server runs protocol only if client is connected");
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), server_stops_protocol);
   gtk_widget_set_halign(btn, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), btn, 1, 1, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), btn, 0, 2, 3, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(server_stop_cb), NULL);
   //
   lbl = gtk_label_new("Server Port");
   gtk_widget_set_name(lbl, "boldlabel");
   gtk_widget_set_halign(lbl, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(grid), lbl, 0, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), lbl, 0, 3, 1, 1);
   //
   btn = gtk_spin_button_new_with_range(45000, 55000, 1);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), (double)listen_port);
-  gtk_grid_attach(GTK_GRID(grid), btn, 1, 2, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), btn, 1, 3, 1, 1);
   g_signal_connect(btn, "value_changed", G_CALLBACK(port_value_changed_cb), NULL);
   //
   lbl = gtk_label_new("Server Password");
   gtk_widget_set_name(lbl, "boldlabel");
   gtk_widget_set_halign(lbl, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(grid), lbl, 0, 3, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), lbl, 0, 4, 1, 1);
   //
   btn = gtk_entry_new();
   gtk_entry_set_text(GTK_ENTRY(btn), hpsdr_pwd);
-  gtk_grid_attach(GTK_GRID(grid), btn, 1, 3, 2, 1);
+  gtk_grid_attach(GTK_GRID(grid), btn, 1, 4, 2, 1);
   g_signal_connect(btn, "changed", G_CALLBACK(pwd_cb), NULL);
   //
   gtk_container_add(GTK_CONTAINER(content), grid);

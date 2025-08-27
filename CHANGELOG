@@ -442,7 +442,6 @@ March 2023:
 Jan 2023:
 ---------
 
-
 - TX menu: specify the tune drive level as an absolute number, not
   relative to the current drive slider position
 
@@ -454,8 +453,8 @@ August 2022
   with my ANAN-7000 (with the new value, no "chopping" of the first
   dot is observed any longer). 
 
-- Disable T/R relay if PA is disabled, this works around a but in the
-  FPGA firmware
+- Disable T/R relay if PA is disabled, this works around a bug in the
+  Orion-II FPGA firmware
 
 July 2022
 ---------

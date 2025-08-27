@@ -241,7 +241,7 @@ void server_tx_audio(short sample) {
       //
       SYNC(txaudio_data.header.sync);
       txaudio_data.header.data_type = to_short(INFO_TXAUDIO);
-      txaudio_data.numsamples = from_short(txaudio_buffer_index);
+      txaudio_data.numsamples = to_short(txaudio_buffer_index);
 
       if (send_bytes(client_socket, (char *)&txaudio_data, sizeof(TXAUDIO_DATA)) < 0) {
         t_perror("server_txaudio");
@@ -1036,19 +1036,19 @@ static void *client_thread(void* arg) {
     break;
 
     case INFO_RXAUDIO: {
-      RXAUDIO_DATA adata;
+      RXAUDIO_DATA rxaudio_data;
 
-      if (recv_bytes(client_socket, (char *)&adata + sizeof(HEADER), sizeof(RXAUDIO_DATA) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_bytes(client_socket, (char *)&rxaudio_data + sizeof(HEADER), sizeof(RXAUDIO_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
-      RECEIVER *rx = receiver[adata.rx];
-      int numsamples = from_short(adata.numsamples);
+      RECEIVER *rx = receiver[rxaudio_data.rx];
+      int numsamples = from_short(rxaudio_data.numsamples);
 
       //
       // Note CAPTURing is only done on the server side
       //
       for (int i = 0; i < numsamples; i++) {
-        short left_sample = from_short(adata.samples[(i * 2)]);
-        short right_sample = from_short(adata.samples[(i * 2) + 1]);
+        short left_sample = from_short(rxaudio_data.samples[(i * 2)]);
+        short right_sample = from_short(rxaudio_data.samples[(i * 2) + 1]);
 
         if (radio_is_transmitting() && (!duplex || mute_rx_while_transmitting)) {
           left_sample = 0.0;
