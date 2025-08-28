@@ -3283,7 +3283,7 @@ void radio_save_state() {
   SetPropF0("vox_threshold",                                 vox_threshold);
   SetPropF0("vox_hang",                                      vox_hang);
   SetPropI0("radio.hpsdr_server",                            hpsdr_server);
-  GetPropI0("radio.server_stops_protocol",                   server_stops_protocol);
+  SetPropI0("radio.server_stops_protocol",                   server_stops_protocol);
   SetPropS0("radio.hpsdr_pwd",                               hpsdr_pwd);
   SetPropI0("radio.hpsdr_server.listen_port",                listen_port);
   SetPropI0("tci_enable",                                    tci_enable);
