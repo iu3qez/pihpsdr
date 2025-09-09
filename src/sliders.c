@@ -337,19 +337,22 @@ int sliders_attenuation(gpointer data) {
 
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
+  if (!have_rx_att) { return G_SOURCE_REMOVE; }
+
   //
   // This ONLY moves the slider
   //
-  if (display_sliders && active_receiver->id == id && attenuation_scale != 0) {
+  int rxadc = receiver[id]->adc;
+  if (display_sliders && active_receiver->adc == rxadc && attenuation_scale != 0) {
     if (att_signal_id) { g_signal_handler_block(G_OBJECT(attenuation_scale), att_signal_id); }
 
-    gtk_range_set_value (GTK_RANGE(attenuation_scale), (double)adc[id].attenuation);
+    gtk_range_set_value (GTK_RANGE(attenuation_scale), (double)adc[rxadc].attenuation);
 
     if (att_signal_id) { g_signal_handler_unblock(G_OBJECT(attenuation_scale), att_signal_id); }
   } else {
     char title[64];
-    snprintf(title, sizeof(title), "Attenuation - ADC-%d (dB)", id);
-    show_popup_slider(ATTENUATION, id, 0.0, 31.0, 1.0, (double)adc[id].attenuation,
+    snprintf(title, sizeof(title), "Attenuation - ADC-%d (dB)", rxadc);
+    show_popup_slider(ATTENUATION, id, 0.0, 31.0, 1.0, (double)adc[rxadc].attenuation,
                       title);
   }
 
@@ -409,14 +412,14 @@ int sliders_rf_gain(gpointer data) {
 
   if (id > receivers) { return G_SOURCE_REMOVE; }
 
-  if (rf_gain_scale == NULL) { return G_SOURCE_REMOVE; }
+  if (!have_rx_gain) { return G_SOURCE_REMOVE; }
 
   //
   // This ONLY moves the slider
   //
   int rxadc = receiver[id]->adc;
 
-  if (display_sliders && active_receiver->id == id) {
+  if (display_sliders && active_receiver->adc == rxadc && rf_gain_scale) {
     if (rf_signal_id) { g_signal_handler_block(G_OBJECT(rf_gain_scale), rf_signal_id); }
 
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[rxadc].gain);
