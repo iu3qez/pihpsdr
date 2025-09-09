@@ -518,16 +518,19 @@ static inline void vfo_id_adjust_band(int v, long long f) {
   // since one cycles through ALL bands.
   // bandAir is changed to bandGen if we move away from
   // one of the six WWV frequencies,
-  // bandGen is changed to another band if we enter
-  // the frequency range of the latter.
+  // If the current band is bandGen, we may enter a
+  // "new" bandr.
   //
   // NOTE: you loose the LO offset when moving > 25kHz
   //       out of a transverter band!
   //
-  vfo[v].band = get_band_from_frequency(f);
-  bandstack = bandstack_get_bandstack(vfo[v].band);
-  vfo[v].bandstack = bandstack->current_entry;
-  radio_apply_band_settings(1);
+  int new_band = get_band_from_frequency(f);
+  if (b != new_band) {
+    vfo[v].band = get_band_from_frequency(f);
+    bandstack = bandstack_get_bandstack(vfo[v].band);
+    vfo[v].bandstack = bandstack->current_entry;
+    radio_apply_band_settings(1);
+  }
 }
 
 void vfo_xvtr_changed() {
