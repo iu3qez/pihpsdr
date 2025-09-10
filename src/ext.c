@@ -18,24 +18,11 @@
 */
 
 #include <gtk/gtk.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
 
-#include "discovery.h"
-#include "equalizer_menu.h"
-#include "ext.h"
 #include "main.h"
 #include "new_menu.h"
-#include "noise_menu.h"
 #include "radio.h"
-#include "radio_menu.h"
-#include "receiver.h"
-#include "sliders.h"
-#include "toolbar.h"
 #include "vfo.h"
-#include "zoompan.h"
 
 //
 // The following calls functions can be called usig g_idle_add
@@ -80,17 +67,17 @@ int ext_vfo_update(void *data) {
   return G_SOURCE_REMOVE;
 }
 
-int ext_set_tune(void *data) {
+int ext_radio_set_tune(void *data) {
   radio_set_tune(GPOINTER_TO_INT(data));
   return G_SOURCE_REMOVE;
 }
 
-int ext_set_mox(void *data) {
+int ext_radio_set_mox(void *data) {
   radio_set_mox(GPOINTER_TO_INT(data));
   return G_SOURCE_REMOVE;
 }
 
-int ext_set_vox(void *data) {
+int ext_radio_set_vox(void *data) {
   radio_set_vox(GPOINTER_TO_INT(data));
   return G_SOURCE_REMOVE;
 }
@@ -120,8 +107,9 @@ int ext_start_tx(void *data) {
 }
 
 // cppcheck-suppress constParameterPointer
-int ext_set_duplex(void *data) {
-  setDuplex();
+int ext_radio_set_duplex(void *data) {
+  int state = GPOINTER_TO_INT(data);
+  radio_set_duplex(state);
   return G_SOURCE_REMOVE;
 }
 

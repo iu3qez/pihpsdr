@@ -17,5 +17,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void screen_menu(GtkWidget *parent);

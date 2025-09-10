@@ -18,10 +18,6 @@
 */
 
 #include <gtk/gtk.h>
-#include <gdk/gdk.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 
 #include "appearance.h"

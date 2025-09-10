@@ -18,20 +18,11 @@
 */
 
 #include <gtk/gtk.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
 #include <math.h>
 
-#include "diversity_menu.h"
-#include "ext.h"
+#include "client_server.h"
 #include "new_menu.h"
-#include "new_protocol.h"
-#include "old_protocol.h"
 #include "radio.h"
-#include "sliders.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *gain_coarse_scale = NULL;
@@ -64,154 +55,51 @@ static gboolean close_cb () {
 
 static void diversity_cb(GtkWidget *widget, gpointer data) {
   int state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  set_diversity(state);
-}
-
-//
-// the magic constant 0.017... is Pi/180
-// The DIVERSITY rotation parameters must be re-calculated
-// each time the gain or the phase changes.
-//
-static void set_gain_phase() {
-  double amplitude, arg;
-  amplitude = pow(10.0, 0.05 * div_gain);
-  arg = div_phase * 0.017453292519943295769236907684886;
-  div_cos = amplitude * cos(arg);
-  div_sin = amplitude * sin(arg);
+  radio_set_diversity(state);
 }
 
 static void gain_coarse_changed_cb(GtkWidget *widget, gpointer data) {
-  gain_coarse = gtk_range_get_value(GTK_RANGE(widget));
-  div_gain = gain_coarse + gain_fine;
+  div_gain = gtk_range_get_value(GTK_RANGE(widget)) + gain_fine;
 
   if (radio_is_remote) {
     send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
-  } else {
-    set_gain_phase();
+    return;
   }
+
+  radio_calc_div_params();
 }
 
 static void gain_fine_changed_cb(GtkWidget *widget, gpointer data) {
-  gain_fine = gtk_range_get_value(GTK_RANGE(widget));
-  div_gain = gain_coarse + gain_fine;
+  div_gain = gain_coarse + gtk_range_get_value(GTK_RANGE(widget));
 
   if (radio_is_remote) {
     send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
-  } else {
-    set_gain_phase();
+    return;
   }
+
+  radio_calc_div_params();
 }
 
 static void phase_coarse_changed_cb(GtkWidget *widget, gpointer data) {
-  phase_coarse = gtk_range_get_value(GTK_RANGE(widget));
-  div_phase = phase_coarse + phase_fine;
+  div_phase = gtk_range_get_value(GTK_RANGE(widget))+ phase_fine;
 
   if (radio_is_remote) {
     send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
-  } else {
-    set_gain_phase();
+    return;
   }
+
+  radio_calc_div_params();
 }
 
 static void phase_fine_changed_cb(GtkWidget *widget, gpointer data) {
-  phase_fine = gtk_range_get_value(GTK_RANGE(widget));
-  div_phase = phase_coarse + phase_fine;
-
-  if (radio_is_remote) {
-    send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
-  } else {
-    set_gain_phase();
-  }
-}
-
-void set_diversity_gain(double val) {
-  if (val < -27.0) { val = -27.0; }
-
-  if (val >  27.0) { val =  27.0; }
-
-  div_gain = val;
+  div_phase = phase_coarse + gtk_range_get_value(GTK_RANGE(widget));
 
   if (radio_is_remote) {
     send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
     return;
   }
 
-  //
-  // calculate coarse and fine value.
-  // if gain is 27, we can only use coarse=25 and fine=2,
-  // but normally we want to keep "fine" small
-  //
-  gain_coarse = 2.0 * round(0.5 * div_gain);
-
-  if (div_gain >  25.0) { gain_coarse = 25.0; }
-
-  if (div_gain < -25.0) { gain_coarse = -25.0; }
-
-  gain_fine = div_gain - gain_coarse;
-
-  if (gain_coarse_scale != NULL && gain_fine_scale != NULL) {
-    gtk_range_set_value(GTK_RANGE(gain_coarse_scale), gain_coarse);
-    gtk_range_set_value(GTK_RANGE(gain_fine_scale), gain_fine);
-  } else {
-    g_idle_add(sliders_diversity_gain, NULL);
-  }
-
-  set_gain_phase();
-}
-
-void set_diversity_phase(double value) {
-  while (value >  180.0) { value -= 360.0; }
-
-  while (value < -180.0) { value += 360.0; }
-
-  div_phase = value;
-
-  if (radio_is_remote) {
-    send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
-    return;
-  }
-
-  //
-  // calculate coarse and fine
-  //
-  phase_coarse = 4.0 * round(div_phase * 0.25);
-  phase_fine = div_phase - phase_coarse;
-
-  if (phase_coarse_scale != NULL && phase_fine_scale != NULL) {
-    gtk_range_set_value(GTK_RANGE(phase_coarse_scale), phase_coarse);
-    gtk_range_set_value(GTK_RANGE(phase_fine_scale), phase_fine);
-  } else {
-    g_idle_add(sliders_diversity_phase, NULL);
-  }
-
-  set_gain_phase();
-}
-
-void set_diversity(int state) {
-  if (radio_is_remote) {
-    send_diversity(client_socket, state, div_gain, div_phase);
-    diversity_enabled = state;
-  } else {
-    //
-    // If we have only one receiver, then changing diversity
-    // changes the number of HPSR receivers so we restart the
-    // original protocol
-    //
-    if (protocol == ORIGINAL_PROTOCOL && receivers == 1) {
-      old_protocol_stop();
-    }
-
-    diversity_enabled = state;
-
-    if (protocol == ORIGINAL_PROTOCOL && receivers == 1) {
-      old_protocol_run();
-    }
-
-    schedule_high_priority();
-    schedule_receive_specific();
-  }
-
-  g_idle_add(ext_vfo_update, NULL);
+  radio_calc_div_params();
 }
 
 void diversity_menu(GtkWidget *parent) {

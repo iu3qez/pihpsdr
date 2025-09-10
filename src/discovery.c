@@ -65,6 +65,7 @@ static GtkWidget *apps_combobox[MAX_DEVICES];
 static GtkWidget *host_combo = NULL;
 static GtkWidget *host_entry = NULL;
 static GtkWidget *host_pwd = NULL;
+static int        pwd_from_props = 0;
 static int        host_entry_changed = 0;
 static int        host_pos = 0;
 static int        host_empty = 0;
@@ -269,6 +270,12 @@ static void save_hostlist() {
 
   SetPropI0("num_hosts", count);
   SetPropS0("current_host", host_addr);
+  if (pwd_from_props) {
+    const char *mypwd = gtk_entry_get_text(GTK_ENTRY(host_pwd));
+    if (strlen(mypwd) > 4) {
+      SetPropS0("host_pwd", mypwd);
+    }
+  }
   SetPropS0("property_version", "3.00");
   saveProperties("remote.props");
   gtk_combo_box_set_active(GTK_COMBO_BOX(host_combo), host_pos);
@@ -886,6 +893,20 @@ static void discovery() {
   // Create the password entry box
   host_pwd = gtk_entry_new();
   gtk_entry_set_visibility(GTK_ENTRY(host_pwd), FALSE);
+  //
+  // If there *is* a host pwd in the props file, it will be used
+  // and also written back to the props file. But a password
+  // will only occur in remote.props if it has been put there
+  // by manual editing.
+  //
+  *str = 0;
+  GetPropS0("host_pwd", str);
+  if (strlen(str) > 4) {
+    gtk_entry_set_text(GTK_ENTRY(host_pwd), str);
+    pwd_from_props = 1;
+  } else {
+    gtk_entry_set_placeholder_text(GTK_ENTRY(host_pwd), "Server Password");
+  }
   gtk_entry_set_placeholder_text(GTK_ENTRY(host_pwd), "Server Password");
   gtk_grid_attach(GTK_GRID(grid), host_pwd, 2, row, 1, 1);
   // Create the password visibility toggle button

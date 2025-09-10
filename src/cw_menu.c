@@ -18,40 +18,15 @@
 */
 
 #include <gtk/gtk.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include "band.h"
-#include "bandstack.h"
+#include "client_server.h"
 #include "ext.h"
-#include "filter.h"
 #include "iambic.h"
 #include "new_menu.h"
 #include "new_protocol.h"
-#include "pa_menu.h"
-#include "old_protocol.h"
 #include "radio.h"
-#include "receiver.h"
 
 static GtkWidget *dialog = NULL;
-
-void cw_set_sidetone_freq(int val) {
-  cw_keyer_sidetone_frequency = val;
-
-  if (radio_is_remote) {
-    send_sidetone_freq(client_socket, cw_keyer_sidetone_frequency);
-  } else {
-    // changing the side tone frequency affects BFO frequency offsets
-    rx_filter_changed(active_receiver);
-    rx_set_offset(active_receiver);
-    schedule_transmit_specific();
-  }
-
-  g_idle_add(ext_vfo_update, NULL);
-}
 
 static void cw_changed() {
   // inform the local keyer about CW parameter changes
@@ -93,8 +68,8 @@ static void cw_keyer_spacing_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void cw_keyer_speed_value_changed_cb(GtkWidget *widget, gpointer data) {
-  cw_keyer_speed = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
-  cw_changed();
+  int val = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+  radio_set_cw_speed(val);
 }
 
 static void cw_breakin_cb(GtkWidget *widget, gpointer data) {

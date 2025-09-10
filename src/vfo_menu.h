@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void vfo_menu(GtkWidget *parent, int vfo);

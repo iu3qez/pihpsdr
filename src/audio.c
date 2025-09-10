@@ -46,10 +46,8 @@
 // we can use a larger latency there.
 //
 //
-// while it is kept above out_low_water
-//
-static const int inp_latency = 125000;
-static const int out_latency = 200000;
+#define inp_latency  125000
+#define out_latency  200000
 
 static const int mic_buffer_size = 256;
 static const int out_buffer_size = 256;

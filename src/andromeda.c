@@ -51,7 +51,7 @@ int andromeda_execute_button(int v, int p) {
     case 26:
     case 27:
     case 28:
-      schedule_action(toolbar_switches[p - 21].switch_function, (v == 0) ? PRESSED : RELEASED, 0);
+      schedule_action(tb_actions[tb_function[0]][p - 21], (v == 0) ? PRESSED : RELEASED, 0);
       break;
 
     case 46: // SDR On

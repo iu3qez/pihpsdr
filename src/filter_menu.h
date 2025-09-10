@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void filter_menu(GtkWidget *parent);

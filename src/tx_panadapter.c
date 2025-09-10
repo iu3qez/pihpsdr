@@ -34,7 +34,6 @@
 #include "gpio.h"
 #include "message.h"
 #include "mode.h"
-#include "new_menu.h"
 #include "radio.h"
 #include "receiver.h"
 #include "rx_panadapter.h"

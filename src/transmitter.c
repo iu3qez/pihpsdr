@@ -19,8 +19,6 @@
 
 #include <gtk/gtk.h>
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <wdsp.h>
 
@@ -734,9 +732,15 @@ static gboolean tx_update_display(gpointer data) {
     if (tx->puresignal && tx->feedback) {
       RECEIVER *rx_feedback = receiver[PS_RX_FEEDBACK];
       g_mutex_lock(&rx_feedback->display_mutex);
-      rc = rx_get_pixels(rx_feedback);
+      rx_get_pixels(rx_feedback);
+      rc = rx_feedback->pixels_available;
 
       if (rc) {
+        //
+        // The number of pixels that we need to copy depends on the "duplex" state.
+        // If duplex, then there is a separate TX window that is narrower than
+        // the window size.
+        //
         int full  = rx_feedback->pixels;  // number of pixels in the feedback spectrum
         int width = tx->pixels;           // number of pixels to copy from the feedback spectrum
         int start = (full - width) / 2;   // Copy from start ... (end-1)
@@ -2562,6 +2566,9 @@ void tx_set_bandpass(const TRANSMITTER *tx) {
 }
 
 void tx_set_compressor(TRANSMITTER *tx) {
+
+  g_idle_add(sliders_cmpr, GINT_TO_POINTER(100 * suppress_popup_sliders));
+
   if (radio_is_remote) {
     send_tx_compressor(client_socket);
     return;
@@ -2862,6 +2869,6 @@ void tx_set_twotone(TRANSMITTER *tx, int state) {
     }
   }
 
-  g_idle_add(ext_set_mox, GINT_TO_POINTER(state));
+  g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(state));
 }
 

@@ -33,8 +33,10 @@
   #include "MacOS.h"  // emulate clock_gettime on old MacOS systems
 #endif
 
+#include "main.h"
 #include "message.h"
 #include "midi.h"
+#include "property.h"
 
 struct desc *MidiCommandsTable[129];
 
@@ -180,312 +182,241 @@ void MidiAddCommand(int note, struct desc *desc) {
   }
 }
 
-#if 0
 //
-// maintained so old midi configurations can be loaded
-// the sole purpose of this table is to map names in
-// "legacy" midi.props file to actions
+// Utility functions to convert between enums and human-readable strings
 //
-// THIS TABLE IS ONLY USED IN keyword2action()
-//
-typedef struct _old_mapping {
-  enum ACTION action;
-  const char *str;
-} OLD_MAPPING;
+char *MidiEvent2String(enum MIDIevent event) {
+  switch (event) {
+  case EVENT_NONE:
+  default:
+    return "NONE";
+    break;
 
-static OLD_MAPPING OLD_Mapping[] = {
-  { NO_ACTION,            "NONE"                  },
-  { A_TO_B,               "A2B"                   },
-  { AF_GAIN,              "AFGAIN"                },
-  { AGC,                  "AGCATTACK"             },
-  { AGC_GAIN,             "AGCVAL"                },
-  { ANF,                  "ANF"                   },
-  { ATTENUATION,          "ATT"                   },
-  { B_TO_A,               "B2A"                   },
-  { BAND_10,              "BAND10"                },
-  { BAND_12,              "BAND12"                },
-  { BAND_1240,            "BAND1240"              },
-  { BAND_144,             "BAND144"               },
-  { BAND_15,              "BAND15"                },
-  { BAND_160,             "BAND160"               },
-  { BAND_17,              "BAND17"                },
-  { BAND_20,              "BAND20"                },
-  { BAND_220,             "BAND220"               },
-  { BAND_2300,            "BAND2300"              },
-  { BAND_30,              "BAND30"                },
-  { BAND_3400,            "BAND3400"              },
-  { BAND_40,              "BAND40"                },
-  { BAND_430,             "BAND430"               },
-  { BAND_6,               "BAND6"                 },
-  { BAND_60,              "BAND60"                },
-  { BAND_70,              "BAND70"                },
-  { BAND_80,              "BAND80"                },
-  { BAND_902,             "BAND902"               },
-  { BAND_AIR,             "BANDAIR"               },
-  { BAND_MINUS,           "BANDDOWN"              },
-  { BAND_GEN,             "BANDGEN"               },
-  { BAND_PLUS,            "BANDUP"                },
-  { BAND_WWV,             "BANDWWV"               },
-  { COMPRESSION,          "COMPRESS"              },
-  { CTUN,                 "CTUN"                  },
-  { VFO,                  "CURRVFO"               },
-  { CW_LEFT,              "CWL"                   },
-  { CW_RIGHT,             "CWR"                   },
-  { CW_SPEED,             "CWSPEED"               },
-  { DIV_GAIN_COARSE,      "DIVCOARSEGAIN"         },
-  { DIV_PHASE_COARSE,     "DIVCOARSEPHASE"        },
-  { DIV_GAIN_FINE,        "DIVFINEGAIN"           },
-  { DIV_PHASE_FINE,       "DIVFINEPHASE"          },
-  { DIV_GAIN,             "DIVGAIN"               },
-  { DIV_PHASE,            "DIVPHASE"              },
-  { DIV,                  "DIVTOGGLE"             },
-  { DUPLEX,               "DUP"                   },
-  { FILTER_MINUS,         "FILTERDOWN"            },
-  { FILTER_PLUS,          "FILTERUP"              },
-  { MENU_FILTER,          "MENU_FILTER"           },
-  { MENU_MODE,            "MENU_MODE"             },
-  { LOCK,                 "LOCK"                  },
-  { MIC_GAIN,             "MICGAIN"               },
-  { MODE_MINUS,           "MODEDOWN"              },
-  { MODE_PLUS,            "MODEUP"                },
-  { MOX,                  "MOX"                   },
-  { MUTE,                 "MUTE"                  },
-  { NB,                   "NOISEBLANKER"          },
-  { NR,                   "NOISEREDUCTION"        },
-  { NUMPAD_0,             "NUMPAD0"               },
-  { NUMPAD_1,             "NUMPAD1"               },
-  { NUMPAD_2,             "NUMPAD2"               },
-  { NUMPAD_3,             "NUMPAD3"               },
-  { NUMPAD_4,             "NUMPAD4"               },
-  { NUMPAD_5,             "NUMPAD5"               },
-  { NUMPAD_6,             "NUMPAD6"               },
-  { NUMPAD_7,             "NUMPAD7"               },
-  { NUMPAD_8,             "NUMPAD8"               },
-  { NUMPAD_9,             "NUMPAD9"               },
-  { NUMPAD_CL,            "NUMPADCL"              },
-  { NUMPAD_ENTER,         "NUMPADENTER"           },
-  { PAN,                  "PAN"                   },
-  { PANADAPTER_HIGH,      "PANHIGH"               },
-  { PANADAPTER_LOW,       "PANLOW"                },
-  { PREAMP,               "PREAMP"                },
-  { PTT,                  "PTT"                   },
-  { PS,                   "PURESIGNAL"            },
-  { RF_GAIN,              "RFGAIN"                },
-  { DRIVE,                "RFPOWER"               },
-  { RIT_CLEAR,            "RITCLEAR"              },
-  { RIT_STEP,             "RITSTEP"               },
-  { RIT_ENABLE,           "RITTOGGLE"             },
-  { RIT,                  "RITVAL"                },
-  { SAT,                  "SAT"                   },
-  { SNB,                  "SNB"                   },
-  { SPLIT,                "SPLIT"                 },
-  { SWAP_RX,              "SWAPRX"                },
-  { A_SWAP_B,             "SWAPVFO"               },
-  { TUNE,                 "TUNE"                  },
-  { VFOA,                 "VFOA"                  },
-  { VFOB,                 "VFOB"                  },
-  { VFO_STEP_MINUS,       "VFOSTEPDOWN"           },
-  { VFO_STEP_PLUS,        "VFOSTEPUP"             },
-  { VOX,                  "VOX"                   },
-  { VOXLEVEL,             "VOXLEVEL"              },
-  { XIT_CLEAR,            "XITCLEAR"              },
-  { XIT,                  "XITVAL"                },
-  { ZOOM,                 "ZOOM"                  },
-  { ZOOM_MINUS,           "ZOOMDOWN"              },
-  { ZOOM_PLUS,            "ZOOMUP"                },
-  { CW_KEYER_KEYDOWN,     "KEYER-CW"              },
-  { CW_KEYER_SPEED,       "KEYER-SPEED"           },
-  { CW_KEYER_SIDETONE,    "KEYER-SIDETONE"        },
-  { NO_ACTION,            "NONE"                  }
-};
+  case MIDI_NOTE:
+    return "NOTE";
+    break;
 
-/*
- * Translation from keyword in midi.props file to MIDIaction
- */
+  case MIDI_CTRL:
+    return "CTRL";
+    break;
 
-static int keyword2action(char *s) {
-  int i = 0;
-
-  for (i = 0; i < (sizeof(OLD_Mapping) / sizeof(OLD_Mapping[0])); i++) {
-    if (!strcmp(s, OLD_Mapping[i].str)) { return OLD_Mapping[i].action; }
+  case MIDI_PITCH:
+    return "PITCH"; 
+    break;
   }
-
-  t_print("MIDI: action keyword %s NOT FOUND.\n", s);
-  return NO_ACTION;
 }
 
-int ReadLegacyMidiFile(char *filename) {
-  FILE *fpin;
-  char zeile[255];
-  char *cp,*cq;
-  int key;
-  int action;
-  int chan;
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12;
-  struct desc *desc;
-  enum ACTIONtype type;
-  enum MIDIevent event;
-  char c;
-  MidiReleaseCommands();
-  t_print("%s: %s\n", __FUNCTION__, filename);
-  fpin = fopen(filename, "r");
+enum ACTIONtype String2MidiType(const char *str) {
+  if (!strcmp(str, "KEY"        )) { return MIDI_KEY;   }
 
-  //t_print("%s: fpin=%p\n",__FUNCTION__,fpin);
-  if (!fpin) {
-    t_print("%s: failed to open MIDI device\n", __FUNCTION__);
-    return -1;
+  if (!strcmp(str, "KNOB/SLIDER")) { return MIDI_KNOB;  }
+
+  if (!strcmp(str, "WHEEL"      )) { return MIDI_WHEEL; }
+
+  return TYPE_NONE;
+}
+
+char *MidiType2String(enum ACTIONtype type) {
+  switch (type) {
+  case TYPE_NONE:
+  default:
+    return "NONE";
+    break;
+
+  case MIDI_KEY:
+    return "KEY";
+    break;
+
+  case MIDI_KNOB:
+    return "KNOB/SLIDER";
+    break;
+
+  case MIDI_WHEEL:
+    return "WHEEL"; 
+    break;
+  }
+}
+
+enum MIDIevent String2MidiEvent(const char *str) {
+  if (!strcmp(str, "NOTE"))  { return MIDI_NOTE;  }
+
+  if (!strcmp(str, "CTRL"))  { return MIDI_CTRL;  }
+
+  if (!strcmp(str, "PITCH")) { return MIDI_PITCH; }
+
+  return EVENT_NONE;
+}   
+
+void midiSaveState() {
+  struct desc *cmd;
+  int entry;
+  int i;
+  entry = 0;
+  SetPropI0("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
+
+  for (i = 0; i < n_midi_devices; i++) {
+    if (midi_devices[i].active) {
+      SetPropS1("mididevice[%d].name", entry, midi_devices[i].name);
+      entry++;
+    }
   }
 
-  for (;;) {
-    if (fgets(zeile, 255, fpin) == NULL) { break; }
+  // the value i=128 is for the PitchBend
+  for (i = 0; i < 129; i++) {
+    cmd = MidiCommandsTable[i];
+    entry = -1;
 
-    // ignore comments
-    cp = index(zeile, '#');
+    while (cmd != NULL) {
+      entry++;
+      int channel = cmd->channel;
+      //t_print("%s:  channel=%d key=%d entry=%d event=%s type=%s action=%s\n",__FUNCTION__,channel,i,entry, Event2String(cmd->event),Type2String(cmd->type),ActionTable[cmd->action].str);
+      SetPropI2("midi[%d].entry[%d].channel", i, entry,                      channel);
+      SetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel,   MidiEvent2String(cmd->event));
+      SetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel,    MidiType2String(cmd->type));
+      SetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel,  cmd->action);
 
-    if (cp == zeile) { continue; }   // comment line
-
-    if (cp) { *cp = 0; }             // ignore trailing comment
-
-    // change newline, comma, slash etc. to blanks
-    cp = zeile;
-
-    while ((c = *cp)) {
-      switch (c) {
-      case '\n':
-      case '\r':
-      case '\t':
-      case ',':
-      case '/':
-        *cp = ' ';
-        break;
+      //
+      // For wheels, also store the additional parameters,
+      //
+      if (cmd->type == MIDI_WHEEL) {
+        SetPropI3("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,       cmd->vfl1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,       cmd->vfl2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,        cmd->fl1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,        cmd->fl2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,       cmd->lft1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,       cmd->lft2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,       cmd->rgt1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,       cmd->rgt2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,        cmd->fr1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,        cmd->fr2);
+        SetPropI3("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,       cmd->vfr1);
+        SetPropI3("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,       cmd->vfr2);
       }
 
-      cp++;
+      cmd = cmd->next;
     }
 
-    //t_print("\n%s:INP:%s\n",__FUNCTION__,zeile);
-    chan = -1;                // default: any channel
-    t1 = t2 = t3 = t4 = -1;   // default threshold values
-    t5 = 0;
-    t6 = 63;
-    t7 = 65;
-    t8 = 127;
-    t9 = t10 = t11 = t12 = -1;
-    event = EVENT_NONE;
-    type = TYPE_NONE;
-    key = 0;
-    action = NO_ACTION;
-
-    //
-    // The KEY=, CTRL=, and PITCH= cases are mutually exclusive
-    // If more than one keyword is in the line, PITCH wins over CTRL
-    // wins over KEY.
-    //
-    if ((cp = strstr(zeile, "KEY="))) {
-      sscanf(cp + 4, "%d", &key);
-      event = MIDI_NOTE;
-      type = MIDI_KEY;
-      //t_print("%s: MIDI:KEY:%d\n",__FUNCTION__, key);
+    if (entry != -1) {
+      SetPropI1("midi[%d].entries", i, entry + 1);
     }
+  }
+}
 
-    if ((cp = strstr(zeile, "CTRL="))) {
-      sscanf(cp + 5, "%d", &key);
-      event = MIDI_CTRL;
-      type = MIDI_KNOB;
-      //t_print("%s: MIDI:CTL:%d\n",__FUNCTION__, key);
-    }
+void midiRestoreState() {
+  char str[128];
+  int channel;
+  int event;
+  int type;
+  int action;
+  int vfl1, vfl2;
+  int fl1, fl2;
+  int lft1, lft2;
+  int rgt1, rgt2;
+  int fr1, fr2;
+  int vfr1, vfr2;
+  int i, j;
+  get_midi_devices();
+  MidiReleaseCommands();
+  //t_print("%s\n",__FUNCTION__);
+  GetPropI0("midiIgnoreCtrlPairs", midiIgnoreCtrlPairs);
 
-    if ((cp = strstr(zeile, "PITCH "))) {
-      event = MIDI_PITCH;
-      type = MIDI_KNOB;
-      //t_print("%s: MIDI:PITCH\n",__FUNCTION__);
-    }
+  //
+  // Note this is too early to open the MIDI devices, since the
+  // radio has not yet fully been configured. Therefore, only
+  // set the "active" flag, and the devices will be opened in
+  // radio.c when it is appropriate
+  //
+  for (i = 0; i < MAX_MIDI_DEVICES; i++) {
+    snprintf(str, sizeof(str), "NO_MIDI_DEVICE_FOUND");
+    GetPropS1("mididevice[%d].name", i,  str);
 
-    //
-    // If event is still undefined, skip line
-    //
-    if (event == EVENT_NONE) {
-      //t_print("%s: no event found: %s\n", __FUNCTION__, zeile);
-      continue;
-    }
-
-    //
-    // beware of illegal key values
-    //
-    if (key < 0  ) { key = 0; }
-
-    if (key > 127) { key = 127; }
-
-    if ((cp = strstr(zeile, "CHAN="))) {
-      sscanf(cp + 5, "%d", &chan);
-      chan--;
-
-      if (chan < 0 || chan > 15) { chan = -1; }
-
-      //t_print("%s:CHAN:%d\n",__FUNCTION__,chan);
-    }
-
-    if ((cp = strstr(zeile, "WHEEL")) && (type == MIDI_KNOB)) {
-      // change type from MIDI_KNOB to MIDI_WHEEL
-      type = MIDI_WHEEL;
-      //t_print("%s:WHEEL\n",__FUNCTION__);
-    }
-
-    if ((cp = strstr(zeile, "THR="))) {
-      sscanf(cp + 4, "%d %d %d %d %d %d %d %d %d %d %d %d",
-             &t1, &t2, &t3, &t4, &t5, &t6, &t7, &t8, &t9, &t10, &t11, &t12);
-      //t_print("%s: THR:%d/%d, %d/%d, %d/%d, %d/%d, %d/%d, %d/%d\n",__FUNCTION__,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12);
-    }
-
-    if ((cp = strstr(zeile, "ACTION="))) {
-      // cut zeile at the first blank character following
-      cq = cp + 7;
-
-      while (*cq != 0 && *cq != '\n' && *cq != ' ' && *cq != '\t') { cq++; }
-
-      *cq = 0;
-      action = keyword2action(cp + 7);
-      //t_print("MIDI:ACTION:%s (%d)\n",cp+7, action);
-    }
-
-    //
-    // All data for a descriptor has been read. Construct it!
-    //
-    desc = (struct desc *) malloc(sizeof(struct desc));
-    desc->next = NULL;
-    desc->action = action;
-    desc->type = type;
-    desc->event = event;
-    desc->vfl1  = t1;
-    desc->vfl2  = t2;
-    desc->fl1   = t3;
-    desc->fl2   = t4;
-    desc->lft1  = t5;
-    desc->lft2  = t6;
-    desc->rgt1  = t7;
-    desc->rgt2  = t8;
-    desc->fr1   = t9;
-    desc->fr2   = t10;
-    desc->vfr1  = t11;
-    desc->vfr2  = t12;
-    desc->channel  = chan;
-
-    //
-    // insert descriptor into linked list.
-    // We have a linked list for each key value to speed up searches
-    //
-    if (event == MIDI_PITCH) {
-      //t_print("%s: Insert desc=%p in CMDS[128] table\n",__FUNCTION__,desc);
-      MidiAddCommand(128, desc);
-    }
-
-    if (event == MIDI_NOTE || event == MIDI_CTRL) {
-      //t_print("%s: Insert desc=%p in CMDS[%d] table\n",__FUNCTION__,desc,key);
-      MidiAddCommand(key, desc);
+    for (j = 0; j < n_midi_devices; j++) {
+      if (strcmp(midi_devices[j].name, str) == 0) {
+        midi_devices[j].active = 1;
+        t_print("%s: MIDI device %s active=%d\n", __FUNCTION__, str, midi_devices[j].active);
+      }
     }
   }
 
-  return 0;
-}
+  // the value i=128 is for the PitchBend
+  for (i = 0; i < 129; i++) {
+    int entries = -1;
+    GetPropI1("midi[%d].entries", i, entries);
 
-#endif
+    for (int entry = 0; entry < entries; entry++) {
+      channel = -1;
+      GetPropI2("midi[%d].entry[%d].channel", i, entry,      channel);
+
+      if (channel < 0) { continue; }
+
+      snprintf(str, sizeof(str), "NONE");
+      GetPropS3("midi[%d].entry[%d].channel[%d].event", i, entry, channel, str);
+      event = String2MidiEvent(str);
+      snprintf(str, sizeof(str), "NONE");
+      GetPropS3("midi[%d].entry[%d].channel[%d].type", i, entry, channel, str);
+      type  = String2MidiType(str);
+      action = NO_ACTION;
+      GetPropA3("midi[%d].entry[%d].channel[%d].action", i, entry, channel, action);
+      //
+      // Look for "wheel" parameters. For those not found,
+      // use default value
+      //
+      vfl1 = -1;
+      vfl2 = -1;
+      fl1 = -1;
+      fl2 = -1;
+      lft1 = 0;
+      lft2 = 63;
+      rgt1 = 65;
+      rgt2 = 127;
+      fr1 = -1;
+      fr2 = -1;
+      vfr1 = -1;
+      vfr2 = -1;
+
+      if (type == MIDI_WHEEL) {
+        GetPropI3("midi[%d].entry[%d].channel[%d].vfl1", i, entry, channel,  vfl1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].vfl2", i, entry, channel,  vfl2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].fl1", i, entry, channel,   fl1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].fl2", i, entry, channel,   fl2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].lft1", i, entry, channel,  lft1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].lft2", i, entry, channel,  lft2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].rgt1", i, entry, channel,  rgt1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].rgt2", i, entry, channel,  rgt2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].fr1", i, entry, channel,   fr1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].fr2", i, entry, channel,   fr2);
+        GetPropI3("midi[%d].entry[%d].channel[%d].vfr1", i, entry, channel,  vfr1);
+        GetPropI3("midi[%d].entry[%d].channel[%d].vfr2", i, entry, channel,  vfr2);
+      }
+
+      //
+      // Construct descriptor and add to the list of MIDI commands
+      //
+      struct desc *desc = (struct desc *) malloc(sizeof(struct desc));
+
+      if (!desc) {
+        fatal_error("FATAL: alloc desc in midi");
+        return;
+      }
+
+      desc->next     = NULL;
+      desc->action   = action; // MIDIaction
+      desc->type     = type;   // MIDItype
+      desc->event    = event;  // MIDIevent
+      desc->vfl1     = vfl1;
+      desc->vfl2     = vfl2;
+      desc->fl1      = fl1;
+      desc->fl2      = fl2;
+      desc->lft1     = lft1;
+      desc->lft2     = lft2;
+      desc->rgt1     = rgt1;
+      desc->rgt2     = rgt2;
+      desc->fr1      = fr1;
+      desc->fr2      = fr2;
+      desc->vfr1     = vfr1;
+      desc->vfr2     = vfr2;
+      desc->channel  = channel;
+      MidiAddCommand(i, desc);
+    }
+  }
+}

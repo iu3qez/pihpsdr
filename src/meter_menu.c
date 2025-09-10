@@ -18,13 +18,8 @@
 */
 
 #include <gtk/gtk.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 #include "client_server.h"
-#include "meter_menu.h"
 #include "meter.h"
 #include "new_menu.h"
 #include "radio.h"

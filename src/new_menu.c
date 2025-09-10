@@ -63,6 +63,7 @@
 #endif
 #include "server_menu.h"
 #include "screen_menu.h"
+#include "sliders_menu.h"
 #include "store_menu.h"
 #include "switch_menu.h"
 #include "toolbar_menu.h"
@@ -214,6 +215,12 @@ static gboolean g2panel_cb (GtkWidget *widget, GdkEventButton *event, gpointer d
 static gboolean toolbar_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   cleanup();
   toolbar_menu(top_window);
+  return TRUE;
+}
+
+static gboolean sliders_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  cleanup();
+  sliders_menu(top_window);
   return TRUE;
 }
 
@@ -691,11 +698,15 @@ void new_menu() {
     col++;
     //
     // Sixth column: Menus for controlling piHPSDR
-    //               Toolbar, RigCtl, MIDI, Encoders, Switches
+    //               Toolbar, Sliders, RigCtl, MIDI, Encoders, Switches
     //
     GtkWidget *toolbar_b = gtk_button_new_with_label("Toolbar");
     g_signal_connect (toolbar_b, "button-press-event", G_CALLBACK(toolbar_cb), NULL);
     gtk_grid_attach(GTK_GRID(grid), toolbar_b, col, row, 1, 1);
+    row++;
+    GtkWidget *sliders_b = gtk_button_new_with_label("Sliders");
+    g_signal_connect (sliders_b, "button-press-event", G_CALLBACK(sliders_cb), NULL);
+    gtk_grid_attach(GTK_GRID(grid), sliders_b, col, row, 1, 1);
     row++;
     GtkWidget *rigctl_b = gtk_button_new_with_label("CAT/TCI");
     g_signal_connect (rigctl_b, "button-press-event", G_CALLBACK(rigctl_cb), NULL);

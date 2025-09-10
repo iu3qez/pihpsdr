@@ -18,14 +18,8 @@
 */
 
 #include <gtk/gtk.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "client_server.h"
-#include "display_menu.h"
 #include "main.h"
 #include "new_menu.h"
 #include "radio.h"

@@ -18,6 +18,5 @@
 */
 
 #include <gtk/gtk.h>
-
 void vox_menu(GtkWidget *parent);
 

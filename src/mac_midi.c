@@ -26,8 +26,8 @@
 #include <CoreAudio/CoreAudio.h>
 
 #include "message.h"
-#include "midi_menu.h"
 #include "midi.h"
+#include "midi_menu.h"
 
 /*
  * MIDI support for pihpsdr

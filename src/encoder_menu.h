@@ -18,6 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void encoder_menu(GtkWidget *parent);
-extern void encoder_select(int pos);

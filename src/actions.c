@@ -23,14 +23,9 @@
 #include "actions.h"
 #include "agc.h"
 #include "band.h"
-#include "band_menu.h"
 #include "bandstack.h"
 #include "client_server.h"
-#include "cw_menu.h"
 #include "discovery.h"
-#include "diversity_menu.h"
-#include "equalizer_menu.h"
-#include "exit_menu.h"
 #include "ext.h"
 #include "filter.h"
 #include "gpio.h"
@@ -40,16 +35,13 @@
 #include "mode.h"
 #include "new_menu.h"
 #include "new_protocol.h"
-#include "noise_menu.h"
 #include "ps_menu.h"
 #include "radio.h"
-#include "radio_menu.h"
 #include "receiver.h"
 #include "sliders.h"
 #include "store.h"
 #include "toolbar.h"
 #include "vfo.h"
-#include "zoompan.h"
 
 //
 // The "short button text" (button_str) needs to be present in ALL cases, and must be different
@@ -225,7 +217,6 @@ ACTION_TABLE ActionTable[] = {
   {TOOLBAR5,            "ToolBar5",             "TBAR5",        MIDI_KEY   | CONTROLLER_SWITCH},
   {TOOLBAR6,            "ToolBar6",             "TBAR6",        MIDI_KEY   | CONTROLLER_SWITCH},
   {TOOLBAR7,            "ToolBar7",             "TBAR7",        MIDI_KEY   | CONTROLLER_SWITCH},
-  {TOOLBAR8,            "ToolBar8",             "TBAR8",        MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE,                "Tune",                 "TUNE",         MIDI_KEY   | CONTROLLER_SWITCH},
   {TUNE_DRIVE,          "Tune\nDrv",            "TUNDRV",       MIDI_KNOB  | MIDI_WHEEL | CONTROLLER_ENCODER},
   {TUNE_FULL,           "Tune\nFull",           "TUNF",         MIDI_KEY   | CONTROLLER_SWITCH},
@@ -432,9 +423,10 @@ int process_action(void *data) {
   PROCESS_ACTION *a = (PROCESS_ACTION *)data;
   double value;
   int i;
+  enum ACTION action = a->action;
 
-  //t_print("%s: a=%p action=%d mode=%d value=%d\n",__FUNCTION__,a,a->action,a->mode,a->val);
-  switch (a->action) {
+  //t_print("%s: a=%p action=%d mode=%d value=%d\n",__FUNCTION__,a,action,a->mode,a->val);
+  switch (action) {
   case A_SWAP_B:
     if (a->mode == PRESSED) {
       vfo_a_swap_b();
@@ -840,45 +832,43 @@ int process_action(void *data) {
 
   case CW_FREQUENCY:
     value = KnobOrWheel(a, (double)cw_keyer_sidetone_frequency, 300.0, 1000.0, 10.0);
-    cw_set_sidetone_freq((int) value);
+    radio_set_sidetone_freq((int) value);
     break;
 
   case CW_SPEED:
     value = KnobOrWheel(a, (double)cw_keyer_speed, 1.0, 60.0, 1.0);
-    cw_keyer_speed = (int)value;
-    keyer_update();
-    g_idle_add(ext_vfo_update, NULL);
+    radio_set_cw_speed((int) value);
     break;
 
   case DIV:
     if (a->mode == PRESSED && n_adc > 1) {
-      set_diversity(NOT(diversity_enabled));
+      radio_set_diversity(NOT(diversity_enabled));
     }
 
     break;
 
   case DIV_GAIN:
-    set_diversity_gain(div_gain + (double)a->val * 0.05);
+    radio_set_diversity_gain(div_gain + (double)a->val * 0.05);
     break;
 
   case DIV_GAIN_COARSE:
-    set_diversity_gain(div_gain + (double)a->val * 0.25);
+    radio_set_diversity_gain(div_gain + (double)a->val * 0.25);
     break;
 
   case DIV_GAIN_FINE:
-    set_diversity_gain(div_gain + (double)a->val * 0.01);
+    radio_set_diversity_gain(div_gain + (double)a->val * 0.01);
     break;
 
   case DIV_PHASE:
-    set_diversity_phase(div_phase + (double)a->val * 0.5);
+    radio_set_diversity_phase(div_phase + (double)a->val * 0.5);
     break;
 
   case DIV_PHASE_COARSE:
-    set_diversity_phase(div_phase + (double)a->val * 2.5);
+    radio_set_diversity_phase(div_phase + (double)a->val * 2.5);
     break;
 
   case DIV_PHASE_FINE:
-    set_diversity_phase(div_phase + (double)a->val * 0.1);
+    radio_set_diversity_phase(div_phase + (double)a->val * 0.1);
     break;
 
   case DRIVE:
@@ -887,21 +877,17 @@ int process_action(void *data) {
     break;
 
   case DUPLEX:
-
-    //
-    // Ignore DUPLEX action while transmitting
-    //
     if (can_transmit && !radio_is_transmitting() && a->mode == PRESSED) {
-      TOGGLE(duplex);
-      g_idle_add(ext_set_duplex, NULL);  // can just use setDuplex ?
+      radio_set_duplex(NOT(duplex));
     }
 
     break;
 
   case FILTER_MINUS:
-
+    //
     // since the widest filters start at f=0, FILTER_MINUS actually
     // cycles upwards
+    //
     if (a->mode == PRESSED) {
       int f = vfo[active_receiver->id].filter + 1;
 
@@ -913,9 +899,10 @@ int process_action(void *data) {
     break;
 
   case FILTER_PLUS:
-
+    //
     // since the widest filters start at f=0, FILTER_PLUS actually
     // cycles downwards
+    //
     if (a->mode == PRESSED) {
       int f = vfo[active_receiver->id].filter - 1;
 
@@ -926,15 +913,13 @@ int process_action(void *data) {
 
     break;
 
-  case FILTER_CUT_HIGH: {
+  case FILTER_CUT_HIGH:
     filter_high_changed(active_receiver->id, a->val);
-  }
-  break;
+    break;
 
-  case FILTER_CUT_LOW: {
+  case FILTER_CUT_LOW:
     filter_low_changed(active_receiver->id, a->val);
-  }
-  break;
+    break;
 
   case FILTER_CUT_DEFAULT:
     if (a->mode == PRESSED) {
@@ -945,36 +930,26 @@ int process_action(void *data) {
 
   case FUNCTION:
     if (a->mode == PRESSED) {
-      function++;
+      tb_function[0]++;
 
-      if (function >= MAX_FUNCTIONS) {
-        function = 0;
+      if (tb_function[0] >= MAX_TB_FUNCTIONS) {
+        tb_function[0] = 0;
       }
 
-      toolbar_switches = switches_controller1[function];
       update_toolbar_labels();
-
-      if (controller == CONTROLLER1) {
-        switches = switches_controller1[function];
-      }
     }
 
     break;
 
   case FUNCTIONREV:
     if (a->mode == PRESSED) {
-      function--;
+      tb_function[0]--;
 
-      if (function < 0) {
-        function = MAX_FUNCTIONS - 1;
+      if (tb_function[0] < 0) {
+        tb_function[0] = MAX_TB_FUNCTIONS - 1;
       }
 
-      toolbar_switches = switches_controller1[function];
       update_toolbar_labels();
-
-      if (controller == CONTROLLER1) {
-        switches = switches_controller1[function];
-      }
     }
 
     break;
@@ -1150,7 +1125,8 @@ int process_action(void *data) {
 
     break;
 
-  case MULTI_BUTTON:                  // swap multifunction from implementing an action, and choosing which action is assigned
+  // swap multifunction from implementing an action, and choosing which action is assigned
+  case MULTI_BUTTON:
     if (a->mode == PRESSED) {
       multi_first = FALSE;
       multi_select_active = !multi_select_active;
@@ -1178,7 +1154,8 @@ int process_action(void *data) {
     g_idle_add(ext_vfo_update, NULL);
     break;
 
-  case MULTI_SELECT:                // know to choose the action for multifunction endcoder
+  // choose an action for a multifunction encoder
+  case MULTI_SELECT:
     multi_first = FALSE;
     multi_action = KnobOrWheel(a, multi_action, 0, VMAXMULTIACTION - 1, 1);
     g_idle_add(ext_vfo_update, NULL);
@@ -1346,19 +1323,19 @@ int process_action(void *data) {
     break;
 
   case PAN:
-    set_pan(active_receiver->id,  active_receiver->pan + a->val);
+    radio_set_pan(active_receiver->id,  active_receiver->pan + a->val);
     break;
 
   case PAN_MINUS:
     if (a->mode == PRESSED) {
-      set_pan(active_receiver->id,  active_receiver->pan - 5);
+      radio_set_pan(active_receiver->id,  active_receiver->pan - 5);
     }
 
     break;
 
   case PAN_PLUS:
     if (a->mode == PRESSED) {
-      set_pan(active_receiver->id,  active_receiver->pan + 5);
+      radio_set_pan(active_receiver->id,  active_receiver->pan + 5);
     }
 
     break;
@@ -1374,7 +1351,7 @@ int process_action(void *data) {
     break;
 
   case PANADAPTER_STEP:
-    value = KnobOrWheel(a, active_receiver->panadapter_step, 5.0, 30.0, 1.0);
+    value = KnobOrWheel(a, active_receiver->panadapter_step, 5.0, 30.0, 5.0);
     active_receiver->panadapter_step = (int)value;
     break;
 
@@ -1412,7 +1389,7 @@ int process_action(void *data) {
   case RCL8:
   case RCL9:
     if (a->mode == PRESSED) {
-      recall_memory_slot(a->action - RCL0);
+      recall_memory_slot(action - RCL0);
     }
 
     break;
@@ -1594,13 +1571,7 @@ int process_action(void *data) {
 
   case SHUTDOWN:
     if (a->mode == PRESSED) {
-      stop_program();
-#ifdef __APPLE__
-      (void) system("shutdown -h now");
-#else
-      (void) system("sudo shutdown -h -P now");
-#endif
-      _exit(0);
+      radio_shutdown();
     }
 
     break;
@@ -1647,40 +1618,25 @@ int process_action(void *data) {
 
     break;
 
-  //
-  // The TOOLBARn actions simply schedule the action currently associated
-  // with the n-th toolbar button
-  //
   case TOOLBAR1:
-    schedule_action(toolbar_switches[0].switch_function, a->mode, a->val);
-    break;
-
   case TOOLBAR2:
-    schedule_action(toolbar_switches[1].switch_function, a->mode, a->val);
-    break;
-
   case TOOLBAR3:
-    schedule_action(toolbar_switches[2].switch_function, a->mode, a->val);
-    break;
-
   case TOOLBAR4:
-    schedule_action(toolbar_switches[3].switch_function, a->mode, a->val);
-    break;
-
   case TOOLBAR5:
-    schedule_action(toolbar_switches[4].switch_function, a->mode, a->val);
-    break;
-
   case TOOLBAR6:
-    schedule_action(toolbar_switches[5].switch_function, a->mode, a->val);
-    break;
+  case TOOLBAR7: {
+      //
+      // The TOOLBARn actions simply schedule the action currently associated
+      // with the n-th toolbar button
+      // NOTE: this gives a circular dependency if any of the toolbar buttons
+      // is TOOLBARn, so filter this out!
+      //
+      int tbaction = tb_actions[tb_function[0]][action-TOOLBAR1];
 
-  case TOOLBAR7:
-    schedule_action(toolbar_switches[6].switch_function, a->mode, a->val);
-    break;
-
-  case TOOLBAR8:
-    schedule_action(toolbar_switches[7].switch_function, a->mode, a->val);
+      if (tbaction < TOOLBAR1 || tbaction > TOOLBAR7) {
+        schedule_action(tbaction, a->mode, a->val);
+      }
+    }
     break;
 
   case TUNE:
@@ -1702,7 +1658,7 @@ int process_action(void *data) {
         send_txmenu(client_socket);
       }
 
-      show_popup_slider(TUNE_DRIVE, 0, 0.0, 100.0, 1.0, value, "TUNE DRIVE");
+      queue_popup_slider(TUNE_DRIVE, -1, 0.0, 100.0, 1.0, value, "TUNE DRIVE");
     }
 
     break;
@@ -1803,17 +1759,21 @@ int process_action(void *data) {
     break;
 
   case VOXLEVEL:
-    vox_threshold = KnobOrWheel(a, vox_threshold, 0.0, 1.0, 0.01);
+    value = KnobOrWheel(a, vox_threshold, 0.0, 1.0, 0.01);
+    vox_threshold = value;
+    queue_popup_slider(VOXLEVEL, -1, 0.0, 1.0, 0.01, vox_threshold, "VOX LVL");
     break;
 
   case WATERFALL_HIGH:
     value = KnobOrWheel(a, active_receiver->waterfall_high, -100.0, 0.0, 1.0);
     active_receiver->waterfall_high = (int)value;
+    queue_popup_slider(WATERFALL_HIGH, active_receiver->id + 1, -100.0, 0.0, 1.0, value, "WFALL HIGH RX");
     break;
 
   case WATERFALL_LOW:
     value = KnobOrWheel(a, active_receiver->waterfall_low, -150.0, -50.0, 1.0);
     active_receiver->waterfall_low = (int)value;
+    queue_popup_slider(WATERFALL_HIGH, active_receiver->id + 1, -150.0, -50.0, 1.0, value, "WFALL LOW RX");
     break;
 
   case XIT:
@@ -1866,19 +1826,19 @@ int process_action(void *data) {
 
   case ZOOM:
     value = KnobOrWheel(a, active_receiver->zoom, 1.0, MAX_ZOOM, 1.0);
-    set_zoom(active_receiver->id, (int)  value);
+    radio_set_zoom(active_receiver->id, (int)  value);
     break;
 
   case ZOOM_MINUS:
     if (a->mode == PRESSED) {
-      set_zoom(active_receiver->id, active_receiver->zoom - 1);
+      radio_set_zoom(active_receiver->id, active_receiver->zoom - 1);
     }
 
     break;
 
   case ZOOM_PLUS:
     if (a->mode == PRESSED) {
-      set_zoom(active_receiver->id, active_receiver->zoom + 1);
+      radio_set_zoom(active_receiver->id, active_receiver->zoom + 1);
     }
 
     break;

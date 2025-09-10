@@ -18,14 +18,9 @@
 */
 
 #include <gtk/gtk.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "band.h"
 #include "bandstack.h"
-#include "bandstack_menu.h"
 #include "filter.h"
 #include "new_menu.h"
 #include "radio.h"

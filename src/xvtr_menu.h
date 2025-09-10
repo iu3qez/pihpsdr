@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 void xvtr_menu(GtkWidget *parent);

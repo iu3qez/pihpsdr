@@ -1364,7 +1364,7 @@ void send_split(int s, int state) {
 
 void send_cw(int s, int state, int wait) {
   //
-  // Send this in one header although wait may exceed a short
+  // Send this in one header, encode wait-time in two shorts
   //
   HEADER header;
   SYNC(header.sync);

@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void oc_menu(GtkWidget *parent);

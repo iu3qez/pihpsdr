@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 void ant_menu(GtkWidget *parent);

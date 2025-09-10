@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void bandstack_menu(GtkWidget *parent);

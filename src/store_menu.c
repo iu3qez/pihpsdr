@@ -34,7 +34,7 @@
 
 static GtkWidget *dialog = NULL;
 
-GtkWidget *store_button[NUM_OF_MEMORYS];
+static GtkWidget *store_button[NUM_MEMORIES];
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -116,7 +116,7 @@ void store_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
 
-  for (int ind = 0; ind < NUM_OF_MEMORYS; ind++) {
+  for (int ind = 0; ind < NUM_MEMORIES; ind++) {
     char label_str[50];
     char fw[16];
     char sm[16];

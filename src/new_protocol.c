@@ -2125,6 +2125,7 @@ void saturn_post_high_priority(mybuffer *buffer) {
 
 void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
   ASSERT_SERVER();
+
   if (!P2running) {
     mybuf->free = 1;
     return;
@@ -2159,6 +2160,7 @@ void saturn_post_micaudio(int bytesread, mybuffer *mybuf) {
 
 void saturn_post_iq_data(int ddc, mybuffer *mybuf) {
   ASSERT_SERVER();
+
   if (ddc < 0 || ddc >= MAX_DDC) {
     t_print("%s: invalid DDC(%d) seen!\n", __FUNCTION__, ddc);
     mybuf->free = 1;
@@ -2565,7 +2567,7 @@ static void process_high_priority() {
   }
 
   if (previous_ptt != radio_ptt) {
-    g_idle_add(ext_set_mox, GINT_TO_POINTER(radio_ptt));
+    g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(radio_ptt));
   }
 
   if (enable_tx_inhibit) {
@@ -2577,7 +2579,7 @@ static void process_high_priority() {
 
     if (!TxInhibit && data == 0) {
       TxInhibit = 1;
-      g_idle_add(ext_set_mox, GINT_TO_POINTER(0));
+      g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(0));
     }
 
     if (data == 1) { TxInhibit = 0; }
@@ -2743,6 +2745,7 @@ void new_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
 
 void new_protocol_iq_samples(int isample, int qsample) {
   ASSERT_SERVER();
+
   if (txiq_count < 0) {
     txiq_count++;
     return;

@@ -18,27 +18,15 @@
 */
 
 #include <gtk/gtk.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include "actions.h"
-#include "adc.h"
 #include "band.h"
 #include "client_server.h"
 #include "discovered.h"
 #include "ext.h"
-#include "filter.h"
-#include "gpio.h"
 #include "main.h"
 #include "new_menu.h"
 #include "new_protocol.h"
-#include "old_protocol.h"
-#include "radio_menu.h"
 #include "radio.h"
-#include "receiver.h"
 #include "sliders.h"
 #ifdef SOAPYSDR
   #include "soapy_protocol.h"
@@ -78,7 +66,7 @@ static void rx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     }
 
     soapy_protocol_set_rx_gain_element(id, (char *)gtk_widget_get_name(widget), gain);
-    g_idle_add(sliders_rf_gain, GINT_TO_POINTER(id));
+    g_idle_add(sliders_rf_gain, GINT_TO_POINTER(100 * suppress_popup_sliders + id));
 #endif
   }
 }
@@ -97,7 +85,7 @@ static void tx_gain_element_changed_cb(GtkWidget *widget, gpointer data) {
     }
 
     soapy_protocol_set_tx_gain_element((char *)gtk_widget_get_name(widget), (int) gain);
-    g_idle_add(sliders_drive, NULL);
+    g_idle_add(sliders_drive, GINT_TO_POINTER(100 * suppress_popup_sliders));
 #endif
   }
 }
@@ -200,33 +188,6 @@ static void split_cb(GtkWidget *widget, gpointer data) {
   }
 }
 
-//
-// call-able from outside, e.g. toolbar or MIDI, through g_idle_add
-//
-void setDuplex() {
-  if (!can_transmit) { return; }
-
-  if (radio_is_remote) {
-    send_duplex(client_socket, duplex);
-  }
-
-  if (duplex) {
-    // TX is in separate window, also in full-screen mode
-    gtk_container_remove(GTK_CONTAINER(fixed), transmitter->panel);
-    tx_reconfigure(transmitter, 4 * tx_dialog_width, tx_dialog_width,  tx_dialog_height);
-    tx_create_dialog(transmitter);
-  } else {
-    GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(transmitter->dialog));
-    gtk_container_remove(GTK_CONTAINER(content), transmitter->panel);
-    gtk_widget_destroy(transmitter->dialog);
-    transmitter->dialog = NULL;
-    int width = display_width[display_size];
-    tx_reconfigure(transmitter, width, width, rx_height);
-  }
-
-  g_idle_add(ext_vfo_update, NULL);
-}
-
 static void duplex_cb(GtkWidget *widget, gpointer data) {
   if (radio_is_transmitting()) {
     //
@@ -236,8 +197,8 @@ static void duplex_cb(GtkWidget *widget, gpointer data) {
     return;
   }
 
-  duplex = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  setDuplex();
+  int val  = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  radio_set_duplex(val);
 }
 
 static void sat_cb(GtkWidget *widget, gpointer data) {
@@ -250,95 +211,34 @@ static void sat_cb(GtkWidget *widget, gpointer data) {
   g_idle_add(ext_vfo_update, NULL);
 }
 
-void n2adr_oc_settings() {
-  ASSERT_SERVER();
-  //
-  // set OC outputs for each band according to the N2ADR board requirements
-  // unlike load_filters(), this can be executed outside the GTK queue
-  //
-  BAND *band;
-  band = band_get_band(band160);
-  band->OCrx = band->OCtx = 1;
-  band = band_get_band(band80);
-  band->OCrx = band->OCtx = 66;
-  band = band_get_band(band60);
-  band->OCrx = band->OCtx = 68;
-  band = band_get_band(band40);
-  band->OCrx = band->OCtx = 68;
-  band = band_get_band(band30);
-  band->OCrx = band->OCtx = 72;
-  band = band_get_band(band20);
-  band->OCrx = band->OCtx = 72;
-  band = band_get_band(band17);
-  band->OCrx = band->OCtx = 80;
-  band = band_get_band(band15);
-  band->OCrx = band->OCtx = 80;
-  band = band_get_band(band12);
-  band->OCrx = band->OCtx = 96;
-  band = band_get_band(band10);
-  band->OCrx = band->OCtx = 96;
-  schedule_high_priority();
-}
-
-void load_filters() {
-  if (radio_is_remote) {
-    send_filter_board(client_socket, filter_board);
-    return;
-  }
-
-  switch (filter_board) {
-  case N2ADR:
-    n2adr_oc_settings();
-    break;
-
-  case ALEX:
-  case APOLLO:
-  case CHARLY25:
-    // This is most likely not necessary here, but can do no harm
-    radio_apply_band_settings(0);
-    break;
-
-  case NO_FILTER_BOARD:
-    break;
-
-  default:
-    break;
-  }
-
-  //
-  // This switches between StepAttenuator slider and CHARLY25 ATT/Preamp checkboxes
-  // when the filter board is switched to/from CHARLY25
-  //
-  g_idle_add(sliders_att_type_changed, NULL);
-}
-
 static void filter_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  int fb;
 
   switch (val) {
   case 0:
   default:
-    filter_board = NO_FILTER_BOARD;
+    fb = NO_FILTER_BOARD;
     break;
 
   case 1:
-    filter_board = ALEX;
+    fb = ALEX;
     break;
 
   case 2:
-    filter_board = APOLLO;
+    fb = APOLLO;
     break;
 
   case 3:
-    filter_board = CHARLY25;
+    fb = CHARLY25;
     break;
 
   case 4:
-    filter_board = N2ADR;
+    fb = N2ADR;
     break;
   }
 
-  load_filters();
+  radio_load_filters(fb);
 }
 
 static void mic_input_cb(GtkWidget *widget, gpointer data) {

@@ -19,26 +19,19 @@
 
 #include <gtk/gtk.h>
 
-#include "gpio.h"
+#include "actions.h"
 
-extern int function;
-extern SWITCH *toolbar_switches;
+#define MAX_TB_FUNCTIONS 6
+#define MAX_TB_BUTTONS 8
+#define MAX_TB_ROWS 3
 
-void update_toolbar_labels(void);
+extern int tb_function[MAX_TB_ROWS];
+extern enum ACTION tb_actions[MAX_TB_FUNCTIONS][MAX_TB_BUTTONS];
 
-void sim_mox_cb(GtkWidget *widget, gpointer data);
-void sim_s1_pressed_cb(GtkWidget *widget, gpointer data);
-void sim_s1_released_cb(GtkWidget *widget, gpointer data);
-void sim_s2_pressed_cb(GtkWidget *widget, gpointer data);
-void sim_s2_released_cb(GtkWidget *widget, gpointer data);
-void sim_s3_pressed_cb(GtkWidget *widget, gpointer data);
-void sim_s3_released_cb(GtkWidget *widget, gpointer data);
-void sim_s4_pressed_cb(GtkWidget *widget, gpointer data);
-void sim_s4_released_cb(GtkWidget *widget, gpointer data);
-void sim_s5_pressed_cb(GtkWidget *widget, gpointer data);
-void sim_s5_released_cb(GtkWidget *widget, gpointer data);
-void sim_s6_pressed_cb(GtkWidget *widget, gpointer data);
-void sim_s6_released_cb(GtkWidget *widget, gpointer data);
-void sim_function_cb(GtkWidget *widget, gpointer data);
+extern void toolbar_save_state();
+extern void toolbar_restore_state();
 
-GtkWidget *toolbar_init(int my_width, int my_height);
+extern void toolbar_create(int width, int height, int rows);
+extern void toolbar_destroy();
+extern void toolbar_show(int ypos);
+extern void update_toolbar_labels(void);

@@ -18,53 +18,11 @@
 */
 
 #include <gtk/gtk.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <string.h>
 
-#include "actions.h"
-#include "discovery.h"
-#include "exit_menu.h"
-#ifdef GPIO
-  #include "gpio.h"
-#endif
-#include "main.h"
-#include "message.h"
 #include "new_menu.h"
-#include "new_protocol.h"
-#include "old_protocol.h"
 #include "radio.h"
-#ifdef SATURN
-  #include "saturnmain.h"
-#endif
-#ifdef SOAPYSDR
-  #include "soapy_protocol.h"
-#endif
 
 static GtkWidget *dialog = NULL;
-
-void stop_program() {
-#ifdef GPIO
-  gpio_close();
-  t_print("%s: GPIO closed\n", __FUNCTION__);
-#endif
-
-  if (!radio_is_remote) {
-    radio_protocol_stop();
-    t_print("%s: protocol stopped\n", __FUNCTION__);
-    radio_stop();
-    t_print("%s: radio stopped\n", __FUNCTION__);
-
-    if (have_saturn_xdma) {
-#ifdef SATURN
-      saturn_exit();
-#endif
-    }
-  }
-
-  radio_save_state();
-  t_print("%s: radio state saved\n", __FUNCTION__);
-}
 
 static void cleanup() {
   if (dialog != NULL) {
@@ -83,22 +41,18 @@ static gboolean close_cb () {
 }
 
 // cppcheck-suppress constParameterCallback
-static gboolean exit_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  stop_program();
-  _exit(0);
+static void exit_cb (GtkWidget *widget, gpointer data) {
+  radio_exit_program();
 }
 
 // cppcheck-suppress constParameterCallback
-static gboolean reboot_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  stop_program();
-  (void) system("sudo reboot");
-  _exit(0);
+static void reboot_cb (GtkWidget *widget, gpointer data) {
+  radio_reboot();
 }
 
 // cppcheck-suppress constParameterCallback
-static gboolean shutdown_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
-  schedule_action(SHUTDOWN, PRESSED, 0);
-  return TRUE;
+static void shutdown_cb (GtkWidget *widget, gpointer data) {
+  radio_shutdown();
 }
 
 void exit_menu(GtkWidget *parent) {

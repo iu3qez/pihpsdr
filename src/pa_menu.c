@@ -26,7 +26,6 @@
 #include "client_server.h"
 #include "message.h"
 #include "new_menu.h"
-#include "pa_menu.h"
 #include "radio.h"
 #include "vfo.h"
 

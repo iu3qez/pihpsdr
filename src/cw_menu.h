@@ -18,6 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void cw_menu(GtkWidget *parent);
-extern void cw_set_sidetone_freq(int f);

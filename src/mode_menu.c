@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "band_menu.h"
 #include "band.h"
 #include "bandstack.h"
 #include "filter.h"

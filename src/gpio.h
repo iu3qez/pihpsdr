@@ -24,7 +24,6 @@
 
 #define MAX_ENCODERS 5
 #define MAX_SWITCHES 16
-#define MAX_FUNCTIONS 6
 
 typedef struct _encoder {
   gboolean bottom_encoder_enabled;
@@ -62,13 +61,7 @@ typedef struct _switch {
   gulong switch_debounce;
 } SWITCH;
 
-extern SWITCH switches_controller1[MAX_FUNCTIONS][MAX_SWITCHES];
-
 extern SWITCH *switches;
-
-extern int *sw_action;
-
-extern long settle_time;
 
 extern void gpio_default_encoder_actions(int ctrlr);
 extern void gpio_default_switch_actions(int ctrlr);

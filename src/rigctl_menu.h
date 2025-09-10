@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void rigctl_menu(GtkWidget *parent);

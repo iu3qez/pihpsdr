@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 void meter_menu (GtkWidget *parent);

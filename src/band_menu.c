@@ -18,14 +18,9 @@
 */
 
 #include <gtk/gtk.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "band.h"
 #include "bandstack.h"
-#include "band_menu.h"
 #include "client_server.h"
 #include "filter.h"
 #include "new_menu.h"
@@ -73,7 +68,7 @@ static gboolean close_cb () {
   return TRUE;
 }
 
-gboolean band_select_cb (GtkWidget *widget, gpointer data) {
+static gboolean band_select_cb (GtkWidget *widget, gpointer data) {
   CHOICE *choice = (CHOICE *) data;
   int newband;
 

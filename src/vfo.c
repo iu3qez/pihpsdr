@@ -47,14 +47,11 @@
 #include "vfo.h"
 #include "channel.h"
 #include "toolbar.h"
-#include "new_menu.h"
 #include "rigctl.h"
 #include "client_server.h"
 #include "ext.h"
 #include "filter.h"
 #include "actions.h"
-#include "noise_menu.h"
-#include "equalizer_menu.h"
 #include "message.h"
 #include "sliders.h"
 
@@ -518,8 +515,8 @@ static inline void vfo_id_adjust_band(int v, long long f) {
   // since one cycles through ALL bands.
   // bandAir is changed to bandGen if we move away from
   // one of the six WWV frequencies,
-  // If the current band is bandGen, we may enter a
-  // "new" bandr.
+  // bandGen is changed to another band if (and only if)
+  // we enter the frequency range of the latter.
   //
   // NOTE: you loose the LO offset when moving > 25kHz
   //       out of a transverter band!
@@ -582,6 +579,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   int id, m;
   id = rx->id;
   m = vfo[id].mode;
+  suppress_popup_sliders++;
   //
   // Apply VFO settings to VFO controlling the receiver
   //
@@ -664,12 +662,11 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     tx_set_compressor(transmitter);
     tx_set_dexp(transmitter);
     tx_set_equalizer(transmitter);
-    suppress_popup_sliders = 1;
     radio_set_mic_gain(mode_settings[m].mic_gain);
-    suppress_popup_sliders = 0;
   }
 
   g_idle_add(ext_vfo_update, NULL);
+  suppress_popup_sliders--;
 }
 
 void vfo_id_band_changed(int id, int b) {
@@ -1971,14 +1968,13 @@ void vfo_update() {
       cairo_set_source_rgba(cr, COLOUR_ATTN);
     }
 
-    if (!transmitter->cfc && transmitter->compressor) {
+    if (!transmitter->cfc) {
       snprintf(temp_text, sizeof(temp_text), "Cmpr %d", (int) transmitter->compressor_level);
-      cairo_set_source_rgba(cr, COLOUR_ATTN);
-    }
-
-    if (!transmitter->cfc && !transmitter->compressor) {
-      snprintf(temp_text, sizeof(temp_text), "Cmpr");
-      cairo_set_source_rgba(cr, COLOUR_SHADE);
+      if (transmitter->compressor) {
+        cairo_set_source_rgba(cr, COLOUR_ATTN);
+      } else {
+        cairo_set_source_rgba(cr, COLOUR_SHADE);
+      }
     }
 
     cairo_show_text(cr, temp_text);

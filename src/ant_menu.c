@@ -18,13 +18,7 @@
 */
 
 #include <gtk/gtk.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include "ant_menu.h"
 #include "band.h"
 #include "client_server.h"
 #include "message.h"

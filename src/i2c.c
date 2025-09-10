@@ -33,7 +33,6 @@
 
 #include "actions.h"
 #include "band.h"
-#include "band_menu.h"
 #include "bandstack.h"
 #include "ext.h"
 #include "gpio.h"

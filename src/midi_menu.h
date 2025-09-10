@@ -23,6 +23,3 @@
 
 extern void midi_menu(GtkWidget *parent);
 extern void NewMidiConfigureEvent(enum MIDIevent event, int channel, int note, int val);
-extern void midiSaveState(void);
-extern void midiRestoreState(void);
-

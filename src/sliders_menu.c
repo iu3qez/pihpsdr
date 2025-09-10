@@ -1,5 +1,4 @@
 /* Copyright (C)
-* 2016 - John Melton, G0ORX/N6LYT
 * 2025 - Christoph van Wüllen, DL1YCF
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -18,15 +17,20 @@
 */
 
 #include <gtk/gtk.h>
-#include <stdio.h>
-#include <string.h>
 
-#include "action_dialog.h"
 #include "actions.h"
-#include "gpio.h"
 #include "new_menu.h"
 #include "radio.h"
-#include "toolbar.h"
+#include "sliders.h"
+
+//
+// List of functions that can be associated with sliders
+//
+#define NUM_FUNCS 13
+static enum ACTION func_list[NUM_FUNCS] = {
+   NO_ACTION, AF_GAIN,     AGC_GAIN, ATTENUATION, COMPRESSION,
+   CW_SPEED,  LINEIN_GAIN, MIC_GAIN, PAN,         RF_GAIN,
+   SQUELCH,   DRIVE,       ZOOM };
 
 static GtkWidget *dialog = NULL;
 
@@ -46,23 +50,20 @@ static gboolean close_cb () {
   return TRUE;
 }
 
-static gboolean switch_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
-  enum ACTION *action = (enum ACTION *) data;
-  int new = action_dialog(dialog, CONTROLLER_SWITCH, *action);
-  gtk_button_set_label(GTK_BUTTON(widget), ActionTable[new].button_str);
-  *action = new;
-  update_toolbar_labels();
-  return TRUE;
+static void combo_cb(GtkWidget *widget, gpointer data) {
+  int pos = GPOINTER_TO_INT(data);
+  int val = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
+  slider_functions[pos] = func_list[val];
+  radio_reconfigure_screen();
 }
 
-void toolbar_menu(GtkWidget *parent) {
-  GtkWidget *widget;
+void sliders_menu(GtkWidget *parent) {
   dialog = gtk_dialog_new();
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   GtkWidget *headerbar = gtk_header_bar_new();
   gtk_window_set_titlebar(GTK_WINDOW(dialog), headerbar);
   gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(headerbar), TRUE);
-  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Toolbar configuration");
+  gtk_header_bar_set_title(GTK_HEADER_BAR(headerbar), "piHPSDR - Sliders configuration");
   g_signal_connect (dialog, "delete_event", G_CALLBACK (close_cb), NULL);
   g_signal_connect (dialog, "destroy", G_CALLBACK (close_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -74,23 +75,23 @@ void toolbar_menu(GtkWidget *parent) {
   GtkWidget *close_b = gtk_button_new_with_label("Close");
   gtk_widget_set_name(close_b, "close_button");
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 3, 1);
-  int lfunction = 0;
+  gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
 
-  for (lfunction = 0; lfunction < MAX_TB_FUNCTIONS; lfunction++) {
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      int pos = 3 * i + j;
+      GtkWidget *w = gtk_combo_box_text_new();
+      int val = 0;
 
-    for (int i = 0; i < MAX_TB_BUTTONS; i++) {
-      if (i == MAX_TB_BUTTONS - 1) {
-        // Rightmost switch is hardwired to FUNCTION
-        gchar text[16];
-        snprintf(text, sizeof(text), "FNC(%d)", lfunction);
-        widget = gtk_button_new_with_label(text);
-        gtk_grid_attach(GTK_GRID(grid), widget, i, lfunction + 1, 1, 1);
-      } else {
-        widget = gtk_button_new_with_label(ActionTable[tb_actions[lfunction][i]].button_str);
-        gtk_grid_attach(GTK_GRID(grid), widget, i, lfunction + 1, 1, 1);
-        g_signal_connect(widget, "button-press-event", G_CALLBACK(switch_cb), (gpointer) &tb_actions[lfunction][i]);
+      for (int k = 0; k < NUM_FUNCS; k++) {
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, ActionTable[func_list[k]].str);
+        if (slider_functions[pos] == func_list[k]) { val = k; }
       }
+
+      gtk_combo_box_set_active(GTK_COMBO_BOX(w), val);
+      my_combo_attach(GTK_GRID(grid), w, j, i+1, 1, 1);
+      g_signal_connect(w, "changed", G_CALLBACK(combo_cb), 
+                       GINT_TO_POINTER(3 * i + j));
     }
   }
 

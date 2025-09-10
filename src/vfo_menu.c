@@ -136,8 +136,8 @@ static void duplex_cb(GtkWidget *widget, gpointer data) {
     return;
   }
 
-  duplex = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  setDuplex();
+  int val = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  radio_set_duplex(val);
 }
 
 static void ctun_cb(GtkWidget *widget, gpointer data) {

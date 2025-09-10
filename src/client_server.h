@@ -140,9 +140,9 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01000018 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01000019 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
-#define AUDIO_DATA_SIZE 1024             // 1024 stereo samples
+#define AUDIO_DATA_SIZE 512              // 512 stereo samples
 
 typedef struct _remote_client {
   int running;
@@ -642,6 +642,7 @@ typedef struct __attribute__((__packed__)) _vfo_data {
 typedef struct __attribute__((__packed__)) _spectrum_data {
   HEADER header;
   uint8_t id;
+  uint8_t avail;
   uint16_t width;
   //
   uint64_t vfo_a_freq;

@@ -251,6 +251,15 @@ typedef struct _receiver {
   double cB;
   double cAp;
   double cBp;
+  //
+  // After changing the Zoom/Pan value, it takes a little time before the
+  // first spectrum is available. If no RX panadapter screen update occurs
+  // during this time, the frequency labels are also not drawn but one
+  // really wants to see them moving when moving the PAN slider. Therefore
+  // we record analyzer changes so we can take care then panadapter is
+  // drawn (without a spectrum) once after the analyzer changes.
+  int analyzer_initializing;
+  int pixels_available;
 
   int x;
   int y;
@@ -294,7 +303,7 @@ extern void   rx_change_adc(const RECEIVER *rx);
 extern void   rx_close(const RECEIVER *rx);
 extern void   rx_create_analyzer(RECEIVER *rx);
 extern void   rx_filter_changed(RECEIVER *rx);
-extern int    rx_get_pixels(RECEIVER *rx);
+extern void   rx_get_pixels(RECEIVER *rx);
 extern double rx_get_smeter(const RECEIVER *rx);
 extern void   rx_frequency_changed(const RECEIVER *rx);
 extern void   rx_mode_changed(RECEIVER *rx);
@@ -322,7 +331,7 @@ extern void   rx_set_fft_latency(const RECEIVER *rx);
 extern void   rx_set_fft_size(const RECEIVER *rx);
 extern void   rx_set_filter(RECEIVER *rx);
 extern void   rx_set_framerate(RECEIVER *rx);
-extern void   rx_set_frequency(RECEIVER *rx, long long frequency);
+extern void   rx_set_frequency(const RECEIVER *rx, long long frequency);
 extern void   rx_set_mode(const RECEIVER* rx);
 extern void   rx_set_noise(const RECEIVER *rx);
 extern void   rx_set_offset(const RECEIVER *rx);

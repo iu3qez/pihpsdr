@@ -59,7 +59,6 @@
 #include "actions.h"
 #include "band.h"
 #include "client_server.h"
-#include "diversity_menu.h"
 #include "ext.h"
 #include "filter.h"
 #include "iambic.h"
@@ -67,14 +66,11 @@
 #include "message.h"
 #include "new_protocol.h"
 #include "radio.h"
-#include "radio_menu.h"
 #ifdef SOAPYSDR
   #include "soapy_protocol.h"
 #endif
 #include "store.h"
-#include "store_menu.h"
 #include "vfo.h"
-#include "zoompan.h"
 
 char hpsdr_pwd[HPSDR_PWD_LEN];
 int  hpsdr_server = 0;
@@ -96,7 +92,7 @@ static GThread *listen_thread_id;
 static int server_running = 0;
 static int listen_socket = -1;
 
-static int remote_command(void * data);
+static int server_command(void * data);
 
 static int send_periodic_data(gpointer arg) {
   //
@@ -183,6 +179,7 @@ void send_rxspectrum(int id) {
   //
   spectrum_data.id = id;
   const RECEIVER *rx = receiver[id];
+  spectrum_data.avail = rx->pixels_available;
   spectrum_data.cA = to_double(rx->cA);
   spectrum_data.cB = to_double(rx->cB);
   spectrum_data.cAp = to_double(rx->cAp);
@@ -405,7 +402,7 @@ static void server_loop() {
   //
   // Send memory slots
   //
-  for (int i = 0; i < NUM_OF_MEMORYS; i++) {
+  for (int i = 0; i < NUM_MEMORIES; i++) {
     send_memory_data(remoteclient.socket, i);
   }
 
@@ -421,7 +418,7 @@ static void server_loop() {
   //
   // Now, enter an "inifinte" loop, get and parse commands from the client.
   // This loop is (only) left if there is an I/O error.
-  // If a complete command has been received, put a "remote_command()" with that
+  // If a complete command has been received, put a "server_command()" with that
   // command into the GTK idle queue.
   //
   while (remoteclient.running) {
@@ -490,7 +487,7 @@ static void server_loop() {
 
     case INFO_TXAUDIO: {
       //
-      // The txaudio  command is statically allocated and the data will be IMMEDIATELY
+      // TX audio will be IMMEDIATELY
       // (not through the GTK queue) put  to the ring buffer
       //
       TXAUDIO_DATA txaudio_data;
@@ -522,7 +519,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(BAND_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -532,7 +529,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(BANDSTACK_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -546,7 +543,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(ADC_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -569,7 +566,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(AGC_GAIN_COMMAND) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -579,7 +576,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(NOISE_COMMAND) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -590,7 +587,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(EQUALIZER_COMMAND) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -600,7 +597,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(RADIOMENU_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -610,7 +607,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(RXMENU_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -620,7 +617,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(DIVERSITY_COMMAND) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -630,7 +627,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(DEXP_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -640,7 +637,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(COMPRESSOR_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -650,7 +647,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(TXMENU_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -660,7 +657,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(PS_PARAMS) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -670,7 +667,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(PATRIM_DATA) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -691,7 +688,7 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(DOUBLE_COMMAND) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
@@ -710,14 +707,14 @@ static void server_loop() {
       command->header = header;
 
       if (recv_bytes(remoteclient.socket, (char *)command + sizeof(HEADER), sizeof(U64_COMMAND) - sizeof(HEADER)) > 0) {
-        g_idle_add(remote_command, command);
+        g_idle_add(server_command, command);
       }
     }
     break;
 
     //
     // All "header-only" commands simply make a copy of the header and
-    // submit that copy  to remote_command().
+    // submit that copy  to server_command().
     //
     case CMD_ADC:
     case CMD_AGC:
@@ -781,7 +778,7 @@ static void server_loop() {
     case CMD_ZOOM: {
       HEADER *command = g_new(HEADER, 1);
       *command = header;
-      g_idle_add(remote_command, command);
+      g_idle_add(server_command, command);
     }
     break;
 
@@ -909,7 +906,7 @@ static void *listen_thread(void *arg) {
       // the RX thread starts to send audio data. If we were TXing
       // when the client successfully connects, go RX.
       //
-      g_idle_add(ext_set_mox, GINT_TO_POINTER(0));
+      g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(0));
       remoteclient.running = TRUE;
       //
       // In order to be prepeared for varying screen dimensions,
@@ -949,7 +946,7 @@ static void *listen_thread(void *arg) {
       //
       // If the connection breaks while transmitting, go RX
       //
-      g_idle_add(ext_set_mox, GINT_TO_POINTER(0));
+      g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(0));
 
       //
       // Stop sending periodic data
@@ -1006,7 +1003,7 @@ int destroy_hpsdr_server() {
 // This is executed on the server side only.
 //
 //
-static int remote_command(void *data) {
+static int server_command(void *data) {
   HEADER *header = (HEADER *)data;
   int type = from_short(header->data_type);
 
@@ -1160,12 +1157,8 @@ static int remote_command(void *data) {
   case CMD_ZOOM: {
     int id = header->b1;
     int zoom = header->b2;
-    set_zoom(id, zoom);
-
-    if (receiver[id]->zoom != zoom) {
-      send_zoom(remoteclient.socket, receiver[id]);
-      send_pan (remoteclient.socket, receiver[id]);
-    }
+    radio_set_zoom(id, zoom);
+    send_pan (remoteclient.socket, receiver[id]);
   }
   break;
 
@@ -1225,40 +1218,42 @@ static int remote_command(void *data) {
   case CMD_PAN: {
     int id = header->b1;
     int pan = header->b2;
-    set_pan(id, pan);
-
-    if (pan != receiver[id]->pan) {
-      send_pan(remoteclient.socket, receiver[id]);
-    }
+    radio_set_pan(id, pan);
   }
   break;
 
   case CMD_VOLUME: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *)data;
+    suppress_popup_sliders++;
     radio_set_af_gain(command->header.b1, from_double(command->dbl));
+    suppress_popup_sliders--;
   }
   break;
 
   case CMD_MICGAIN: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *)data;
+    suppress_popup_sliders++;
     radio_set_mic_gain(from_double(command->dbl));
+    suppress_popup_sliders--;
   }
   break;
 
   case CMD_DRIVE: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *)data;
+    suppress_popup_sliders++;
     radio_set_drive(from_double(command->dbl));
+    suppress_popup_sliders--;
   }
   break;
 
   case CMD_AGC: {
-    int r = header->b1;
+    int id = header->b1;
+    int agc = header->b2;
 
-    if (r < receivers) {
-      RECEIVER *rx = receiver[r];
-      rx->agc = header->b2;
+    if (id < receivers) {
+      RECEIVER *rx = receiver[id];
+      rx->agc = agc;
       rx_set_agc(rx);
-      send_agc(remoteclient.socket, rx->id, rx->agc);
       g_idle_add(ext_vfo_update, NULL);
     }
   }
@@ -1285,7 +1280,10 @@ static int remote_command(void *data) {
   case CMD_MOX: {
     radio_set_mox(header->b1);
     g_idle_add(ext_vfo_update, NULL);
-    send_mox(remoteclient.socket, mox);
+
+    if (mox != header->b1) {
+      send_mox(remoteclient.socket, mox);
+    }
   }
   break;
 
@@ -1296,7 +1294,10 @@ static int remote_command(void *data) {
     //
     radio_set_mox(header->b1);
     g_idle_add(ext_vfo_update, NULL);
-    send_vox(remoteclient.socket, mox);
+
+    if (mox != header->b1) {
+      send_vox(remoteclient.socket, mox);
+    }
   }
   break;
 
@@ -1306,7 +1307,10 @@ static int remote_command(void *data) {
       memory_tune = from_short(header->s2);
       radio_set_tune(header->b1);
       g_idle_add(ext_vfo_update, NULL);
-      send_tune(remoteclient.socket, transmitter->tune);
+
+      if (transmitter->tune != header->b1) {
+        send_tune(remoteclient.socket, transmitter->tune);
+      }
     }
   }
   break;
@@ -1325,12 +1329,14 @@ static int remote_command(void *data) {
     // The client sends gain and hang_threshold
     //
     const AGC_GAIN_COMMAND *agc_gain_command = (AGC_GAIN_COMMAND *)data;
-    int r = agc_gain_command->id;
+    int id = agc_gain_command->id;
 
-    if (r < receivers) {
-      RECEIVER *rx = receiver[r];
+    if (id < receivers) {
+      RECEIVER *rx = receiver[id];
       rx->agc_hang_threshold = from_double(agc_gain_command->hang_thresh);
-      radio_set_agc_gain(r, from_double(agc_gain_command->gain));
+      suppress_popup_sliders++;
+      radio_set_agc_gain(id, from_double(agc_gain_command->gain));
+      suppress_popup_sliders--;
       rx_set_agc(rx);
       //
       // Now hang and thresh have been calculated and need be sent back
@@ -1342,15 +1348,18 @@ static int remote_command(void *data) {
 
   case CMD_RFGAIN: {
     const DOUBLE_COMMAND *command = (DOUBLE_COMMAND *) data;
+    suppress_popup_sliders++;
     radio_set_rf_gain(command->header.b1, from_double(command->dbl));
+    suppress_popup_sliders--;
   }
   break;
 
   case CMD_ATTENUATION: {
     int id = header->b1;
-    double att = (double) from_short(header->s1);
+    int att = (double) from_short(header->s1);
+    suppress_popup_sliders++;
     radio_set_attenuation(id, att);
-    send_attenuation(remoteclient.socket, id, att);
+    suppress_popup_sliders--;
   }
   break;
 
@@ -1359,8 +1368,10 @@ static int remote_command(void *data) {
     int id = command->header.b1;
     int en = command->header.b2;
     double val = from_double(command->dbl);
+    suppress_popup_sliders++;
     radio_set_squelch(id, val);
     radio_set_squelch_enable(id, en);
+    suppress_popup_sliders--;
   }
   break;
 
@@ -1601,8 +1612,7 @@ static int remote_command(void *data) {
   break;
 
   case CMD_DUP: {
-    duplex = header->b1;
-    setDuplex();
+    radio_set_duplex(header->b1);
     g_idle_add(ext_vfo_update, NULL);
   }
   break;
@@ -1754,8 +1764,7 @@ static int remote_command(void *data) {
   break;
 
   case CMD_FILTER_BOARD: {
-    filter_board = header->b1;
-    load_filters();
+    radio_load_filters(header->b1);
     send_radio_data(remoteclient.socket);
 
     if (filter_board == N2ADR) {
@@ -1910,12 +1919,11 @@ static int remote_command(void *data) {
 
   case CMD_DIVERSITY: {
     const DIVERSITY_COMMAND *command = (DIVERSITY_COMMAND *)data;
-    int save = suppress_popup_sliders;
-    suppress_popup_sliders = 1;
-    set_diversity(command->diversity_enabled);
-    set_diversity_gain(from_double(command->div_gain));
-    set_diversity_phase(from_double(command->div_phase));
-    suppress_popup_sliders = save;
+    suppress_popup_sliders++;
+    radio_set_diversity(command->diversity_enabled);
+    radio_set_diversity_gain(from_double(command->div_gain));
+    radio_set_diversity_phase(from_double(command->div_phase));
+    suppress_popup_sliders--;
   }
   break;
 
@@ -1964,7 +1972,9 @@ static int remote_command(void *data) {
     drive_digi_max = from_double(command->dbl);
 
     if ((mode == modeDIGL || mode == modeDIGU) && transmitter->drive > drive_digi_max + 0.5) {
+      suppress_popup_sliders++;
       radio_set_drive(drive_digi_max);
+      suppress_popup_sliders--;
     }
   }
   break;

@@ -18,16 +18,10 @@
 */
 
 #include <gtk/gtk.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <wdsp.h>             // only needed for GetWDSPVersion
 
-#include "about_menu.h"
 #include "discovered.h"
 #include "new_menu.h"
 #include "radio.h"

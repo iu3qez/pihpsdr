@@ -27,7 +27,6 @@
 #include "bandstack.h"
 #include "ext.h"
 #include "filter.h"
-#include "filter_menu.h"
 #include "message.h"
 #include "mode.h"
 #include "new_menu.h"

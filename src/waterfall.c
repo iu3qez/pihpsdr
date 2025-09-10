@@ -94,7 +94,7 @@ static gboolean waterfall_scroll_event_cb (GtkWidget *widget, GdkEventScroll *ev
 }
 
 void waterfall_update(RECEIVER *rx) {
-  if (rx->pixbuf) {
+  if (rx->pixbuf && rx->pixels_available) {
     const float *samples;
     long long frequency = vfo[rx->id].frequency; // access only once to be thread-safe
     int  freq_changed = 0;                    // flag whether we have just "rotated"

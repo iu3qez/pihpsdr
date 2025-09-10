@@ -18,10 +18,6 @@
 */
 
 #include <gtk/gtk.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "band.h"
 #include "client_server.h"
@@ -31,7 +27,6 @@
 #include "new_menu.h"
 #include "radio.h"
 #include "vfo.h"
-#include "xvtr_menu.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *title[BANDS + XVTRS];

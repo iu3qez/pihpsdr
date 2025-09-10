@@ -39,7 +39,6 @@
 #include "store.h"
 #include "vfo.h"
 #include "vox.h"
-#include "zoompan.h"
 
 int client_socket = -1;
 int remote_started = 0;
@@ -395,6 +394,7 @@ static void *client_thread(void* arg) {
     rx->audio_device = -1;
   }
 
+  active_receiver = receiver[0];
   g_mutex_init(&transmitter->display_mutex);
   transmitter->display_panadapter = 1;
   transmitter->display_waterfall = 0;
@@ -769,6 +769,11 @@ static void *client_thread(void* arg) {
       adc[i].gain = from_double(data.gain);
       adc[i].min_gain = from_double(data.min_gain);
       adc[i].max_gain = from_double(data.max_gain);
+
+      if (active_receiver->adc == i) {
+        g_idle_add(sliders_attenuation, GINT_TO_POINTER(100 + active_receiver->id));
+        g_idle_add(sliders_rf_gain, GINT_TO_POINTER(100 + active_receiver->id));
+      }
     }
     break;
 
@@ -842,6 +847,14 @@ static void *client_thread(void* arg) {
 
       if (protocol == ORIGINAL_PROTOCOL && id == 1) {
         rx->sample_rate = receiver[0]->sample_rate;
+      }
+
+      if (id == active_receiver->id) {
+        g_idle_add(sliders_af_gain, GINT_TO_POINTER(100 + id));
+        g_idle_add(sliders_squelch, GINT_TO_POINTER(100 + id));
+        g_idle_add(sliders_zoom, GINT_TO_POINTER(100 + id));
+        g_idle_add(sliders_pan, GINT_TO_POINTER(100 + id));
+        g_idle_add(sliders_agc_gain, GINT_TO_POINTER(100 + id));
       }
     }
     break;
@@ -918,6 +931,9 @@ static void *client_thread(void* arg) {
       }
 
       can_transmit = 1;
+      g_idle_add(sliders_drive, GINT_TO_POINTER(100));
+      g_idle_add(sliders_mic_gain, GINT_TO_POINTER(100));
+      g_idle_add(sliders_cmpr, GINT_TO_POINTER(100));
     }
     break;
 
@@ -992,6 +1008,7 @@ static void *client_thread(void* arg) {
         rx->cAp = from_double(spectrum_data.cAp);
         rx->cBp = from_double(spectrum_data.cBp);
         rx->meter = from_double(spectrum_data.meter);
+        rx->pixels_available = spectrum_data.avail;
         int width = from_short(spectrum_data.width);
 
         if (width == rx->width) {
@@ -1177,14 +1194,14 @@ static void *client_thread(void* arg) {
     case CMD_ZOOM: {
       int id = header.b1;
       receiver[id]->zoom = header.b2;
-      g_idle_add(sliders_zoom, GINT_TO_POINTER(id));
+      g_idle_add(sliders_zoom, GINT_TO_POINTER(100 + id));
     }
     break;
 
     case CMD_PAN: {
       int id = header.b1;
       receiver[id]->pan = header.b2;
-      g_idle_add(sliders_pan, GINT_TO_POINTER(id));
+      g_idle_add(sliders_pan, GINT_TO_POINTER(100 + id));
     }
     break;
 
@@ -1219,8 +1236,8 @@ static void *client_thread(void* arg) {
 
     case CMD_ATTENUATION: {
       int id = header.b1;
-      double value = (double) from_short(header.s1);
-      radio_set_attenuation(id, value);
+      int att = from_short(header.s1);
+      radio_set_attenuation(id, att);
     }
     break;
 

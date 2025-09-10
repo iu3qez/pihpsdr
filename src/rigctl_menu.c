@@ -29,7 +29,6 @@
 #include "message.h"
 #include "new_menu.h"
 #include "radio.h"
-#include "rigctl_menu.h"
 #include "rigctl.h"
 #include "tci.h"
 #include "vfo.h"

@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void mode_menu(GtkWidget *parent);

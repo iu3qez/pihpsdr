@@ -18,13 +18,9 @@
 */
 
 #include <gtk/gtk.h>
-#include <glib/gprintf.h>
-#include <stdio.h>
-#include <string.h>
 
 #include "action_dialog.h"
 #include "actions.h"
-#include "agc_menu.h"
 #include "agc.h"
 #include "band.h"
 #include "channel.h"

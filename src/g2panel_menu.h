@@ -19,6 +19,7 @@
 #include <gtk/gtk.h>
 
 extern void g2panel_menu(GtkWidget *parent);
+
 extern void g2panel_change_command(int andromeda_type, int type, int *buttonvec, int *encodervec, int pos);
 
 extern int g2panel_menu_is_open;

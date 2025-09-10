@@ -18,8 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
-#include "receiver.h"
-#include "transmitter.h"
-
 void equalizer_menu(GtkWidget *parent);

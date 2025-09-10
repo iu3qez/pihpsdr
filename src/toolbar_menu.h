@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 void toolbar_menu(GtkWidget *parent);

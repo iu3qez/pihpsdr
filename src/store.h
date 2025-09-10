@@ -21,12 +21,9 @@
 #define _STORE_H_
 
 #include <gtk/gtk.h>
-#include "bandstack.h"
 
-/* --------------------------------------------------------------------------*/
-/**
-* @brief Band definition
-*/
+#define NUM_MEMORIES 10
+
 struct _MEM_STORE {
   int sat_mode;
   int split;        // this will only be used with SAT/RSAT

@@ -28,7 +28,6 @@
 #include "filter.h"
 #include "mode.h"
 #include "new_menu.h"
-#include "noise_menu.h"
 #include "radio.h"
 #include "vfo.h"
 

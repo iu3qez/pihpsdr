@@ -32,7 +32,6 @@
 #include "message.h"
 #include "new_menu.h"
 #include "new_protocol.h"
-#include "oc_menu.h"
 #include "radio.h"
 
 static GtkWidget *dialog = NULL;

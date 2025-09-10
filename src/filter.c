@@ -584,7 +584,10 @@ void filter_high_changed(int id, int increment) {
     }
   }
 
-  g_idle_add(sliders_filter_high, GINT_TO_POINTER(100000 * id + 50000 + new));
+  if (!suppress_popup_sliders) {
+    g_idle_add(sliders_filter_high, GINT_TO_POINTER(100000 * id + 50000 + new));
+  }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -671,7 +674,10 @@ void filter_low_changed(int id, int increment) {
     }
   }
 
-  g_idle_add(sliders_filter_low, GINT_TO_POINTER(100000 * id + 50000 + new));
+  if (!suppress_popup_sliders) {
+    g_idle_add(sliders_filter_low, GINT_TO_POINTER(100000 * id + 50000 + new));
+  }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -775,7 +781,10 @@ void filter_width_changed(int id, int increment) {
     }
   }
 
-  g_idle_add(sliders_filter_width, GINT_TO_POINTER(100000 * id + 50000 + high - low));
+  if (!suppress_popup_sliders) {
+    g_idle_add(sliders_filter_width, GINT_TO_POINTER(100000 * id + 50000 + high - low));
+  }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -858,6 +867,9 @@ void filter_shift_changed(int id, int increment) {
     shft -= cw_keyer_sidetone_frequency;
   }
 
-  g_idle_add(sliders_filter_shift, GINT_TO_POINTER(100000 * id + 50000 + shft));
+  if (!suppress_popup_sliders) {
+    g_idle_add(sliders_filter_shift, GINT_TO_POINTER(100000 * id + 50000 + shft));
+  }
+
   g_idle_add(ext_vfo_update, NULL);
 }

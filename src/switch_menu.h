@@ -18,6 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void switch_menu(GtkWidget *parent);
-extern void switch_select(int pos);

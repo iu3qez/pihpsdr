@@ -18,6 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void tx_menu(GtkWidget *parent);
-extern void set_tune(double value);

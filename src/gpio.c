@@ -44,8 +44,6 @@
 #include "bandstack.h"
 #include "channel.h"
 #include "discovered.h"
-#include "diversity_menu.h"
-#include "encoder_menu.h"
 #include "ext.h"
 #include "filter.h"
 #include "gpio.h"
@@ -54,14 +52,12 @@
 #include "main.h"
 #include "message.h"
 #include "mode.h"
-#include "new_menu.h"
 #include "new_protocol.h"
 #include "property.h"
 #include "radio.h"
 #include "sliders.h"
 #include "toolbar.h"
 #include "vfo.h"
-#include "zoompan.h"
 
 //
 // for controllers which have spare GPIO lines,
@@ -233,14 +229,6 @@ guchar encoder_state_table[13][4] = {
   static GThread *monitor_thread_id;
 #endif
 
-int I2C_INTERRUPT = 15;
-
-#define MAX_LINES 32
-unsigned int monitor_lines[MAX_LINES];
-int lines = 0;
-
-long settle_time = 50; // ms
-
 //
 // The "static const" data is the DEFAULT assignment for encoders,
 // and for Controller2 and G2 front panel switches
@@ -317,110 +305,28 @@ static const SWITCH switches_no_controller[MAX_SWITCHES] = {
   {FALSE, FALSE, 0, NO_ACTION, 0L}
 };
 
-SWITCH switches_controller1[MAX_FUNCTIONS][MAX_SWITCHES] = {
-  { {TRUE,  TRUE, 27, MOX,            0L},
-    {TRUE,  TRUE, 13, MENU_BAND,      0L},
-    {TRUE,  TRUE, 12, MENU_BANDSTACK, 0L},
-    {TRUE,  TRUE,  6, MENU_MODE,      0L},
-    {TRUE,  TRUE,  5, MENU_FILTER,    0L},
-    {TRUE,  TRUE, 24, MENU_NOISE,     0L},
-    {TRUE,  TRUE, 23, MENU_AGC,       0L},
-    {TRUE,  TRUE, 22, FUNCTION,       0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L}
-  },
-  { {TRUE,  TRUE, 27, MOX,            0L},
-    {TRUE,  TRUE, 13, LOCK,           0L},
-    {TRUE,  TRUE, 12, CTUN,           0L},
-    {TRUE,  TRUE,  6, A_TO_B,         0L},
-    {TRUE,  TRUE,  5, B_TO_A,         0L},
-    {TRUE,  TRUE, 24, A_SWAP_B,       0L},
-    {TRUE,  TRUE, 23, SPLIT,          0L},
-    {TRUE,  TRUE, 22, FUNCTION,       0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L}
-  },
-  { {TRUE,  TRUE, 27, MOX,            0L},
-    {TRUE,  TRUE, 13, MENU_FREQUENCY, 0L},
-    {TRUE,  TRUE, 12, MENU_MEMORY,    0L},
-    {TRUE,  TRUE,  6, RIT_ENABLE,     0L},
-    {TRUE,  TRUE,  5, RIT_PLUS,       0L},
-    {TRUE,  TRUE, 24, RIT_MINUS,      0L},
-    {TRUE,  TRUE, 23, RIT_CLEAR,      0L},
-    {TRUE,  TRUE, 22, FUNCTION,       0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L}
-  },
-  { {TRUE,  TRUE, 27, MOX,            0L},
-    {TRUE,  TRUE, 13, MENU_FREQUENCY, 0L},
-    {TRUE,  TRUE, 12, MENU_MEMORY,    0L},
-    {TRUE,  TRUE,  6, XIT_ENABLE,     0L},
-    {TRUE,  TRUE,  5, XIT_PLUS,       0L},
-    {TRUE,  TRUE, 24, XIT_MINUS,      0L},
-    {TRUE,  TRUE, 23, XIT_CLEAR,      0L},
-    {TRUE,  TRUE, 22, FUNCTION,       0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L}
-  },
-  { {TRUE,  TRUE, 27, MOX,            0L},
-    {TRUE,  TRUE, 13, MENU_FREQUENCY, 0L},
-    {TRUE,  TRUE, 12, SPLIT,          0L},
-    {TRUE,  TRUE,  6, DUPLEX,         0L},
-    {TRUE,  TRUE,  5, SAT,            0L},
-    {TRUE,  TRUE, 24, RSAT,           0L},
-    {TRUE,  TRUE, 23, MENU_BAND,      0L},
-    {TRUE,  TRUE, 22, FUNCTION,       0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L}
-  },
-  { {TRUE,  TRUE, 27, MOX,            0L},
-    {TRUE,  TRUE, 13, TUNE,           0L},
-    {TRUE,  TRUE, 12, TUNE_FULL,      0L},
-    {TRUE,  TRUE,  6, TUNE_MEMORY,    0L},
-    {TRUE,  TRUE,  5, MENU_BAND,      0L},
-    {TRUE,  TRUE, 24, MENU_MODE,      0L},
-    {TRUE,  TRUE, 23, MENU_FILTER,    0L},
-    {TRUE,  TRUE, 22, FUNCTION,       0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L},
-    {FALSE, FALSE, 0, NO_ACTION,      0L}
-  },
-
+//
+// All toolbar-related stuff is now removed from gpio.c:
+// The eight push-buttons of controller1 are
+// hard-wired to the commands TOOLBAR1-7 and FUNCTION
+//
+static const SWITCH switches_controller1[MAX_SWITCHES] = {
+  {TRUE,  TRUE, 27, TOOLBAR1,  0L},
+  {TRUE,  TRUE, 13, TOOLBAR2,  0L},
+  {TRUE,  TRUE, 12, TOOLBAR3,  0L},
+  {TRUE,  TRUE,  6, TOOLBAR4,  0L},
+  {TRUE,  TRUE,  5, TOOLBAR5,  0L},
+  {TRUE,  TRUE, 24, TOOLBAR6,  0L},
+  {TRUE,  TRUE, 23, TOOLBAR7,  0L},
+  {TRUE,  TRUE, 22, FUNCTION,  0L},
+  {FALSE, FALSE, 0, NO_ACTION, 0L},
+  {FALSE, FALSE, 0, NO_ACTION, 0L},
+  {FALSE, FALSE, 0, NO_ACTION, 0L},
+  {FALSE, FALSE, 0, NO_ACTION, 0L},
+  {FALSE, FALSE, 0, NO_ACTION, 0L},
+  {FALSE, FALSE, 0, NO_ACTION, 0L},
+  {FALSE, FALSE, 0, NO_ACTION, 0L},
+  {FALSE, FALSE, 0, NO_ACTION, 0L}
 };
 
 static const SWITCH switches_controller2_v1[MAX_SWITCHES] = {
@@ -488,8 +394,14 @@ SWITCH *switches = NULL;
 
 #ifdef GPIO
 
+#define I2C_INTERRUPT = 15;
+#define MAX_LINES 32
+
 static GThread *rotary_encoder_thread_id;
 static uint64_t epochMilli;
+static long settle_time = 50; // ms
+static unsigned int monitor_lines[MAX_LINES];
+static int lines = 0;
 
 static void initialiseEpoch() {
   struct timespec ts ;
@@ -879,8 +791,9 @@ void gpio_set_defaults(int ctrlr) {
     PTTOUT_LINE = 15;
     CWOUT_LINE = -1;
     memcpy(my_encoders, encoders_controller1, sizeof(my_encoders));
+    memcpy(my_switches, switches_controller1, sizeof(my_switches));
     encoders = my_encoders;
-    switches = switches_controller1[0];
+    switches = my_switches;
     break;
 
   case CONTROLLER2_V1:
@@ -1007,20 +920,10 @@ void gpioRestoreState() {
     GetPropI1("encoders[%d].switch_address", i,                   encoders[i].switch_address);
   }
 
-  for (int f = 0; f < MAX_FUNCTIONS; f++) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      GetPropI2("switches[%d,%d].switch_enabled", f, i,           switches_controller1[f][i].switch_enabled);
-      GetPropI2("switches[%d,%d].switch_pullup", f, i,            switches_controller1[f][i].switch_pullup);
-      GetPropI2("switches[%d,%d].switch_address", f, i,           switches_controller1[f][i].switch_address);
-    }
-  }
-
-  if (controller != CONTROLLER1) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      GetPropI1("switches[%d].switch_enabled", i,                 switches[i].switch_enabled);
-      GetPropI1("switches[%d].switch_pullup", i,                  switches[i].switch_pullup);
-      GetPropI1("switches[%d].switch_address", i,                 switches[i].switch_address);
-    }
+  for (int i = 0; i < MAX_SWITCHES; i++) {
+    GetPropI1("switches[%d].switch_enabled", i,                 switches[i].switch_enabled);
+    GetPropI1("switches[%d].switch_pullup", i,                  switches[i].switch_pullup);
+    GetPropI1("switches[%d].switch_address", i,                 switches[i].switch_address);
   }
 }
 
@@ -1042,20 +945,10 @@ void gpioSaveState() {
     SetPropI1("encoders[%d].switch_address", i,                   encoders[i].switch_address);
   }
 
-  for (int f = 0; f < MAX_FUNCTIONS; f++) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      SetPropI2("switches[%d,%d].switch_enabled", f, i,           switches_controller1[f][i].switch_enabled);
-      SetPropI2("switches[%d,%d].switch_pullup", f, i,            switches_controller1[f][i].switch_pullup);
-      SetPropI2("switches[%d,%d].switch_address", f, i,           switches_controller1[f][i].switch_address);
-    }
-  }
-
-  if (controller != CONTROLLER1) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      SetPropI1("switches[%d].switch_enabled", i,                 switches[i].switch_enabled);
-      SetPropI1("switches[%d].switch_pullup", i,                  switches[i].switch_pullup);
-      SetPropI1("switches[%d].switch_address", i,                 switches[i].switch_address);
-    }
+  for (int i = 0; i < MAX_SWITCHES; i++) {
+    SetPropI1("switches[%d].switch_enabled", i,                 switches[i].switch_enabled);
+    SetPropI1("switches[%d].switch_pullup", i,                  switches[i].switch_pullup);
+    SetPropI1("switches[%d].switch_address", i,                 switches[i].switch_address);
   }
 
   saveProperties("gpio.props");
@@ -1064,17 +957,6 @@ void gpioSaveState() {
 void gpioRestoreActions() {
   int props_controller = NO_CONTROLLER;
   gpio_set_defaults(controller);
-  //
-  //  "toolbar" functions
-  //
-  GetPropI0("switches.function",                                 function);
-
-  for (int f = 0; f < MAX_FUNCTIONS; f++) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      GetPropA2("switches[%d,%d].switch_function", f, i,         switches_controller1[f][i].switch_function);
-    }
-  }
-
   GetPropI0("controller",                                        props_controller);
 
   //
@@ -1096,19 +978,6 @@ void gpioRestoreActions() {
 }
 
 void gpioSaveActions() {
-  char name[128];
-  char value[128];
-  //
-  //  "toolbar" functions
-  //
-  SetPropI0("switches.function",                                 function);
-
-  for (int f = 0; f < MAX_FUNCTIONS; f++) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      SetPropA2("switches[%d,%d].switch_function", f, i,         switches_controller1[f][i].switch_function);
-    }
-  }
-
   SetPropI0("controller",                                        controller);
 
   //
@@ -1122,29 +991,8 @@ void gpioSaveActions() {
     SetPropA1("encoders[%d].switch_function", i,                 encoders[i].switch_function);
   }
 
-  if (controller != CONTROLLER1) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      SetPropA1("switches[%d].switch_function", i,               switches[i].switch_function);
-    }
-  }
-
-  snprintf(value, sizeof(value), "%d", function);
-  setProperty("switches.function", value);
-
-  for (int f = 0; f < MAX_FUNCTIONS; f++) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      snprintf(name, sizeof(name), "switches[%d,%d].switch_function", f, i);
-      Action2String(switches_controller1[f][i].switch_function, value, sizeof(value));
-      setProperty(name, value);
-    }
-  }
-
-  if (controller == CONTROLLER2_V1 || controller == CONTROLLER2_V2 || controller == G2_FRONTPANEL) {
-    for (int i = 0; i < MAX_SWITCHES; i++) {
-      snprintf(name, sizeof(name), "switches[%d].switch_function", i);
-      Action2String(switches[i].switch_function, value, sizeof(value));
-      setProperty(name, value);
-    }
+  for (int i = 0; i < MAX_SWITCHES; i++) {
+    SetPropA1("switches[%d].switch_function", i,               switches[i].switch_function);
   }
 }
 

@@ -1,5 +1,4 @@
 /* Copyright (C)
-* 2020 - John Melton, G0ORX/N6LYT
 * 2025 - Christoph van Wüllen, DL1YCF
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -18,16 +17,4 @@
 */
 
 #include <gtk/gtk.h>
-
-#define MAX_ZOOM 32
-
-extern GtkWidget *zoompan_init(int my_width, int my_height);
-extern int zoompan_active_receiver_changed(gpointer data);
-extern int sliders_pan(gpointer data);
-extern int sliders_zoom(gpointer data);
-
-extern void set_pan(int rx, double value);
-extern void set_zoom(int rx, double value);
-
-extern void remote_set_pan(int rx, double value);
-extern void remote_set_zoom(int rx, double value);
+void sliders_menu(GtkWidget *parent);

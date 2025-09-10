@@ -360,6 +360,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
 
 void old_protocol_stop() {
   ASSERT_SERVER();
+
   //
   // Mutex is needed since in the TCP case, sending TX IQ packets
   // must not occur while the "stop" packet is sent.
@@ -1185,7 +1186,7 @@ static void process_control_bytes() {
   radio_ptt  = (control_in[0]     ) & 0x01;
 
   if (previous_ptt != radio_ptt) {
-    g_idle_add(ext_set_mox, GINT_TO_POINTER(radio_ptt));
+    g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(radio_ptt));
   }
 
   if ((device == DEVICE_HERMES_LITE2) && (control_in[0] & 0x80)) {
@@ -1249,7 +1250,7 @@ static void process_control_bytes() {
 
       if (!TxInhibit && data == 0) {
         TxInhibit = 1;
-        g_idle_add(ext_set_mox, GINT_TO_POINTER(0));
+        g_idle_add(ext_radio_set_mox, GINT_TO_POINTER(0));
       }
 
       if (data == 1) { TxInhibit = 0; }
@@ -1355,13 +1356,13 @@ static void process_control_bytes() {
       //
       if (mercury_software_version[0] != control_in[1] >> 1 && control_in[1] >> 1 != 0x7F) {
         mercury_software_version[0] = control_in[1] >> 1;
-        t_print("  Mercury 1 Software version: %d.%d\n", mercury_software_version[0] / 10, mercury_software_version[0] % 10);
+        t_print("Mercury 1 Software version: %d.%d\n", mercury_software_version[0] / 10, mercury_software_version[0] % 10);
         receiver[0]->adc = 0;
       }
 
       if (mercury_software_version[1] != control_in[2] >> 1 && control_in[2] >> 1 != 0x7F) {
         mercury_software_version[1] = control_in[2] >> 1;
-        t_print("  Mercury 2 Software version: %d.%d\n", mercury_software_version[1] / 10, mercury_software_version[1] % 10);
+        t_print("Mercury 2 Software version: %d.%d\n", mercury_software_version[1] / 10, mercury_software_version[1] % 10);
 
         if (receivers > 1) { receiver[1]->adc = 1; }
       }
@@ -1380,6 +1381,7 @@ static int st_txfdbk;
 
 static void process_ozy_byte(int b) {
   ASSERT_SERVER();
+
   switch (state) {
   case SYNC_0:
     if (b == SYNC) {
@@ -1553,6 +1555,7 @@ static void process_ozy_byte(int b) {
 static void queue_two_ozy_input_buffers(unsigned const char *buf1,
                                         unsigned const char *buf2) {
   ASSERT_SERVER();
+
   //
   // To achieve minimum overhead in the RX thread, the data is
   // simply put into a large ring buffer. We queue two buffers
@@ -1588,6 +1591,7 @@ static void queue_two_ozy_input_buffers(unsigned const char *buf1,
 
 static gpointer process_ozy_input_buffer_thread(gpointer arg) {
   ASSERT_SERVER(NULL);
+
   //
   // This thread constantly monitors the input ring buffer and
   // processes the data whenever a bunch is available. Note this
@@ -1627,6 +1631,7 @@ static gpointer process_ozy_input_buffer_thread(gpointer arg) {
 
 void old_protocol_audio_samples(short left_audio_sample, short right_audio_sample) {
   ASSERT_SERVER();
+
   if (!radio_is_transmitting()) {
     pthread_mutex_lock(&send_audio_mutex);
 
@@ -1699,6 +1704,7 @@ void old_protocol_audio_samples(short left_audio_sample, short right_audio_sampl
 
 void old_protocol_iq_samples(int isample, int qsample, int side) {
   ASSERT_SERVER();
+
   if (radio_is_transmitting()) {
     pthread_mutex_lock(&send_audio_mutex);
 
@@ -2957,6 +2963,7 @@ static void metis_start_stop(int command) {
 
 static void metis_send_buffer(unsigned char* buffer, int length) {
   ASSERT_SERVER();
+
   //
   // Send using either the UDP or TCP socket. Do not use TCP for
   // packets that are not 1032 bytes long

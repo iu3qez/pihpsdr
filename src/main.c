@@ -17,12 +17,7 @@
 *
 */
 #include <gtk/gtk.h>
-#include <gdk/gdk.h>
 #include <math.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <semaphore.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -41,7 +36,6 @@
 #include "css.h"
 #include "discovery.h"
 #include "discovered.h"
-#include "exit_menu.h"
 #include "ext.h"
 #include "gpio.h"
 #include "hpsdr_logo.h"
@@ -106,7 +100,7 @@ static void* wisdom_thread(void *arg) {
 // cppcheck-suppress constParameterCallback
 static gboolean main_delete (GtkWidget *widget) {
   if (radio != NULL) {
-    stop_program();
+    radio_stop_program();
   }
 
   _exit(0);

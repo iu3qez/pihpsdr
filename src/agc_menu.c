@@ -18,13 +18,8 @@
 */
 
 #include <gtk/gtk.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "agc.h"
-#include "agc_menu.h"
 #include "band.h"
 #include "ext.h"
 #include "new_menu.h"

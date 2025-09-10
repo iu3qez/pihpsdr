@@ -18,5 +18,4 @@
 */
 
 #include <gtk/gtk.h>
-
 extern void agc_menu(GtkWidget *parent);

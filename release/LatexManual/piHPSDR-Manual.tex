@@ -163,7 +163,7 @@ the waterfall is user-adjustable.}
 capability if compiled on MacOS.}
 \item{Better support for LIME-SDR (2RX) and LIME-mini (1RX) radios.}
 \item{Option to have an SWR-dependent side tone while TUNE-ing.}
-\item{ZOOM now up to 32x.}
+\item{ZOOM now up to 32x, and reorganised the slider area.}
 \end{itemize}
 
 \medskip
@@ -413,13 +413,10 @@ if this succeeds, you see something like shown in Fig. \ref{fig:FirstDisplay}.
 \begin{figure}
 \center
 \includegraphics[scale=0.45]{FirstDisplay.png}
-\caption{The radio with two RX. Sliders and Toolbar are not on display
-by default when using a controller.}
+\caption{First start of the radio with two RX}
 \label{fig:FirstDisplay}
 \end{figure}
 
-The bottom of the window looks different (more controls) if you have chosen \rett{No Controller} in the
-preceding menu.
 You see two receiver panels stacked vertically, both of them having a spectrum display and a waterfall area.
 At the top,
 just below the window title, you have the VFO bar which contains information on the frequencies of the two
@@ -428,7 +425,8 @@ as well as lots of further information, to be explained later. At the top right,
 \rett{Hide}
 and \rett{Menu} which will be explained in the next chapter. To the left of these two buttons, there is the
 meter bar which by default is a digital S-meter. At this point, you have started \pH successfully for
-the first time.
+the first time. At the bottom of the window, you see the toolbar buttons, and above them
+an area containing several sliders. All this will be explained in the next section.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -486,8 +484,7 @@ resolution, of course.
 \begin{figure}[ht]
 \center
 \includegraphics[scale=0.45]{SingleReceiver.png}
-\caption{\pH with a single RX and all controls (Zoom/Pan,
-Sliders, Toolbar) at the  bottom.}
+\caption{\pH with a single RX and all controls (Sliders, Toolbar) at the  bottom.}
 \label{fig:SingleReceiver}
 \end{figure}
 
@@ -497,10 +494,13 @@ The RX panel only contains a
 spectrum scope with a white line and no waterfall (this can be changed in the
 \bltt{Display} menu). In addition, you see the toolbar
 with eight buttons at the lower edge of the window, and above
-it an area with sliders. Showing the sliders is the default
-(and necessary) if there is no GPIO or MIDI controller attached,
-since then these sliders are the only way to change, for example,
-the AF volume. If there is only one receiver, it is controlled
+it an area with sliders. Both the toolbar and the slider area can be
+hidden (in the \bltt{Display} menu), which gives you a larger (vertical) space
+for the RX panadapter(s). This only makes sense if you have an external controller
+with knobs and buttons attached and used this controller e.g. to change the
+AF volume.
+
+If there is only one receiver, it is controlled
 by VFO-A. VFO-B then actually only controls controls the transmitter
 if using split mode, but the data stored in VFO-B can
 be quickly used, for example by copying VFO-B to VFO-A (the
@@ -508,34 +508,37 @@ be quickly used, for example by copying VFO-B to VFO-A (the
 This Figure has been recorded (just to demonstrate this)
 on an Apple Macintosh, therefore, among other details, the
 top bar of the window looks a little different from what one sees
-on LINUX (see e.g. Fig. \ref{fig:zoom}).
+on LINUX.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{What is a spectrum?}
-Some people get confused if the spectrum shows a noise floor at $-122$ dBm, while their S-meter
-reading ,,without signal'' is $-109$ dBm. These people then often ask which of the two figures tells
+The RX panadapter shows a the RX spectrum.
+Some people get confused if the spectrum shows a noise floor at $-120$ dBm, while their S-meter
+reading ,,without signal'' is $-112$ dBm. These people then often ask which of the two figures tells
 them how much noise there is.
 
 It is important to note that a spectrum plots an energy \textit{density}, that is an energy (in dBm)
 per frequency interval. The RX panadapters in \pH normalise the spectrum to a frequency interval
-that is the frequency width of one pixel on the screen. An immediate consequence of this is, that the
+that (roughly) is the frequency width of one pixel on the screen. An immediate consequence of this is, that the
 noise floor moves down when increasing the ZOOM value, since the frequency width of one pixel gets
-smaller. Another option would be to normalise the spectrum to one Hz, that is, to display the
-energy within an interval one Hz wide. While it would be easy to do so, the noise floor is then
-much lower of what one is used from other SDR programs and I wanted to avoid a new source of
-confusion.
+smaller (see below why this is the preferred normalisation).
 
 The S-meter reading, on the other hand, integrates the spectral energy density over the filter
-passband. For example, if your spectrum is 96 kHz wide but displayed in a window 800 pixels wide,
-then the width of one pixel is 120 Hz. If the spectrum shows a noise floor at -122 dBm, this means
-the energy density of the noise is $-122$ dBm per 120 Hz. The S-meter reading for a filter
-2400 Hz wide is then $-109$ dBm which is twenty times more energy than $-122$ dBm. Switching to
-a filter 5000 Hz wide increases the S-meter reading  to $-106$ dBm (a factor of two
- is 3 dB).
-
-If you want to measure the noise floor and report or compare the result,
-the best you can do is to get an S-meter reading (in dBm) with
+passband. Since the filter width (on the screen) is usually much larger than one pixel,
+the S-meter reading is far above the noise floor as read off the panadapter.
+If you want to measure and compare the noise floor, the best you can do is to get an S-meter reading (in dBm) with
 a filter that is 1000 Hz wide, and then subtract 30 from the S-meter value to
-produce a noise floor figure in dBm/Hz.
+produce a noise floor figure in dBm/Hz. If you use a rather wide filter here (1000 Hz) here, the
+final result will not be sensitive to the filter's shape factor.
+
+Now consider an unmodulated carrier, e.g. a signal from a (calibrated)
+signal source. The S-meter should show the correct signal level, but the question is how tall the peak
+in the panadapter should be. Theoretically, such a peak is infinitely narrow and then must be infinitely high, since
+the signal level (in dBm) is encoded in the \textit{area} below the peak rather than in its height.
+In practice, the signal has a natural (minimum) width, depending on the 
+Fourier transformation used to generate the spectrum. The spectrum in the \pH panadapter is normalised
+to this natural width, such that the height of the peak (roughly) matches the signal level.
+Because of this normalisation, the height of the peak should only weakly depend on the width and
+the zoom factor of the display, and we can label the horizontal lines in the panadapter with dBm.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Spectrum scope options}
 \label{sec:FillingGradient}
@@ -571,9 +574,8 @@ in the \bltt{TX} menu), but that there
 is no gradient option.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Zoom and Pan}
-\label{sec:ZoomPanArea}
-
+\section{The Slider Area}
+\label{sec:SliderArea}
 \begin{figure}[ht!]
 \center
 \includegraphics[scale=0.45]{ZoomPan.png}
@@ -581,50 +583,73 @@ is no gradient option.
 large Zoom value.}
 \label{fig:zoom}
 \end{figure}
+Looking at Fig. \ref{fig:zoom}, you clearly see an area containing sliders below
+the RX panadapter. These sliders are arranged in three rows. The first row contains
+sliders that affect the display of the spectrum, while the sliders in the second and
+third row control the active receiver and the transmitter.
+Note that the etire slider area can be hidden (removed) via the \bltt{Display} menu (see there).
 
+\subsection{Sliders affecting the display}
+We start with the Zoom and PAN sliders in the first row.
 The width of the RX spectrum equals the sample rate
 of the receiver. This means that if you use, say,
-a sample rate of 96 kHz for a receiver, its spectrum
-will be 96 kHz wide, which may encompass a larger part
-of the spectrum than you are interested in. As a drawback,
-the part which is relevant to you may look a little bit
+a sample rate of 192 kHz for a receiver (as in Fig. \ref{fig:zoom},
+ its spectrum
+will be 192 kHz wide. While it is sometimes convenient to
+have a wide spectrum on display, the part which is relevant to
+you may look a little bit
 compressed. This is where the \bltt{Zoom} command
 comes in. The zoom value can adopt integral values between
 1 (no zoom) and 32. In the latter case, only 1/32 of the
 overall spectrum is displayed on the screen. In the
-picture below, you see that the RX scope is only 12 kHz
-wide (which is 1/8 of the RX sample rate, 1/8 of 96 kHz in our
-example). Note that what is displayed is in full resolution.
-Internally, a spectrum with 8 times the number of pixels
-of the screen width is created and only a part of it is
-displayed. The zoom value can be changed using the \rett{Zoom}
+picture below, you see that the RX scope is only about 8 kHz
+wide (which is 1/24 of the RX sample rate in our
+example).  The zoom value can be changed using the \rett{Zoom}
 slider (at the left edge below the RX panel).
 
-When changing the zoom value, then the pan value is
-automatically adjusted such that the RX frequency
+With a \bltt{Zoom} value of 24 and a RX sample rate of 192k,
+the question is which part (8 kHz wide) of the spectrum is actually
+show. This is where the horizontal PAN \rett{H-Pan} slider comes in.
+This slider can be moved from -100 (show leftmost part) to
+100 (show rightmost part of the spectrum), if the slider is 
+at zero (in the middle), the central part of the spectrum is
+shown. When the Zoom value is changed, the horizontal
+PAN value is automatically re-adjusted 
+uch that the RX frequency
 (the CTUN frequency if CTUN is active) is at the
-centre of the display. In the example shown, the PAN
-sliders has been manually adjusted such that the signal
-at the RX frequency (14100 kHz) appears close to the left
-edge of the display. In my view, PAN makes little sense
-if not using CTUN. While it is possible to move the PAN
-slider when the zoom factor is unity, this simply has
-no effect.
+centre of the display. So if you went astray with the
+PAN sliders, just change the Zoom value and then go
+back, and your signal will be centred. Of course, the
+\rett{H-PAN} slider has no effect if the Zoom value
+is 1, since then the whole spectrum is shown anyway.
+
+Whenever you change the ZOOM or horizontal PAN value, the display of the
+spectrum is re-initialised. So it may take a while until the
+display of the spectrum is resumed. This is especially true
+for small RX sample rates and large ZOOM values.
 
 Note that the TX spectrum scope always has a fixed spectral
 width, namely 24 kHz in non-duplex mode when the TX spectrum
 scope is shown in the main window, and 6 kHz in duplex mode
 when the TX spectrum is shown in a small separate window.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The slider area}
-\label{sec:SliderArea}
-Looking at Fig. \ref{fig:SingleReceiver}, one sees more sliders below the \rett{Zoom} and \rett{Pan}
-sliders. Although they are largely self-explanatory, I take the occasion to describe them shortly.
+The third (\rett{V-PAN}) slider in the first row lets you move the
+spectrum in the vertical direction. Vertical PAN values range from
+-20 to +20 dB and can be viewed as an offset both for the low and high
+end of the panadapter range. The noise floor can be very different
+on different bands, and the vertical PAN slider can be used to place
+the noise floor close to the bottom of the panadapter, leaving more
+room for displaying strong signals above.
 
+\subsection{Sliders affecting the active receiver}
+The second row of sliders affect the RX signal and need only be described briefly.
+
+\begin{itemize}
+\item{
 The \rett{AF} slider controls the audio volume of the active receiver, from -40 to 0 dB. If moved to the
-far left (at -40 dB) the audio is muted completely.
+far left (at -40 dB) the audio is muted completely.}
 
+\item{
 The \rett{AGC} slider controls the AGC of the currently active receiver, it goes from 0 to 120 dB. There
 is a green horizontal line (with a letter G at the left edge) in the RX panadapter, and the \rett{AGC}
 slider should be positioned such that the green line is at the level (or slightly above) the noise
@@ -632,8 +657,9 @@ floor. Note that the AGC value does not only depend on the attenuation/gain in t
 (e. g. the position of the \rett{ATT} slider) but also on the current filter bandwidth (for a filter
 10 times narrower the \rett{AGC} value can be increased by 10 dB). Note that if the green line
 is higher up than the signals you want to receive, they will probably not be heard in the
-RX audio.
+RX audio.}
 
+\item{
 The \rett{ATT} slider controls a programmable attenuator in the RF front end of the active receiver. For
 HPSDR hardware, it goes from 0 to 31 dB. The HermesLite-II has a slider named \rett{RF} at this place,
 since this radio has a programmable preamplifier/attenuator that goes from -12 to +48 dB. For the STEMlab
@@ -641,31 +667,38 @@ since this radio has a programmable preamplifier/attenuator that goes from -12 t
 Radios which have a programmable RF gain rather than an attenuator (e.g. the HermesLite-II) have an
 \rett{RF gain} slider at this position. Note that the position of these sliders is stored internally
 for each band, and restored upon a band change. The idea behind this is that one usually wants no
-attenuation, say, on the 10m band while it might be necessary to have some attenuation on the 80m band.
+attenuation, say, on the 10m band while it might be necessary to have some attenuation on the 80m band.}
+\end{itemize}
 
+\subsection{Sliders affecting the transmitter}
+Again, the sliders will only very briefly be described. For details on the TX signal chain,
+see Sec. \ref{sec:txchain}.
+
+\begin{itemize}
+\item{
 The \rett{Mic} slider adds an amplification from -12 to +50 dB to the audio signal fed to the transmitter.
 This amplification is purely done numerically (no effect on any hardware) and applies to the audio signal
 no matter where it comes from, let it be real microphones or virtual audio cable. For digital modes using
 virtual audio cables, one normally uses no compression, no TX equaliser etc. and the \rett{Mic} slider
 should stay at +0 dB. For many microphones, it might be useful to advance the \rett{Mic} slider
-to positive values. For more information, see chapter \ref{sec:txchain} on the TX audio chain.
+to positive values. For more information, see chapter \ref{sec:txchain} on the TX audio chain.}
 
+\item{
 The \rett{TX Drv} slider controls the RF output power. It goes from 0 to 100 and is meant in percent. That is,
 a 5-Watt radio such as the HermesLite-II should transmit 5 Watts if this slider is at position 100. See the
-\bltt{PA} menu for adjusting the RF output levels.
+\bltt{PA} menu for adjusting the RF output levels.}
 
-The \rett{Squlch} slider adjusts the squelch level. If moved up from zero, the check-box will automatically
-be activated. If moved down to zero, the check box will be deactivated. If you found a suitable squelch
-level and want to disable squelch temporarily, you can uncheck the check box and active squelch later
-on by checking it.
-
-Note that the slider area can be hidden (removed) via the \bltt{Display} menu (see there).
+\item{
+The \rett{Cmpr} sliders controls the amount of compression used in the TX compressor (if enabled).
+The compressor can be enabled or disabled with the small check box to the left of the slider.
+}
+\end{itemize}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The \texttt{Hide} button}
 \begin{figure}[ht]
 \center
 \includegraphics[scale=0.35]{Hidden.png}
-\caption{\pH window with the Toolbar/Sliders/Zoom
+\caption{\pH window with the Toolbar and Slider
 area ,,hidden''.}
 \end{figure}
 
@@ -705,17 +738,12 @@ Between the VFO bar and the \rett{Hide}/\rett{Menu} buttons,
 you see the meter area where you find the S-meter (during RX)
 and information about output power, SWR, etc. during TX.
 
-Below the RX  spectrum scope, you see the Zoom/Pan area with
-the  Zoom and Pan sliders, as already discussed. This area
-can be ,,hidden'' with the \bltt{Display} menu to save some
-vertical space. Below the
-Zoom/Pan sliders you see a larger  Sliders area containing
-several sliders for adjusting AF volume, TX  drive level,
-RX  AGC threshold, etc. Although the Sliders area can also
+Below the RX  spectrum scope, you see the Slider area, 
+as discussed in Sec \ref{sec:SliderArea}. Although the Sliders area can also
 be hidden via the \bltt{Display} menu, you should not do so
-unless you have a GPIO or MIDI controller which knobs that
+unless you have a controller (GPIO, MIDI, ANDROMEDA) which knobs that
 you can assign to the slider functions. This is so since
-for  normal operation, having access to the sliders is vital.
+normal operation usually requires to move the sliders frequently.
 Remember that for temporarily enlarging the space for
 the RX  panel, there is the \rett{Hide} button!
 
@@ -726,13 +754,11 @@ the RX  panel, there is the \rett{Hide} button!
 \label{fig:SliderOnScreen}
 \end{figure}
 
-If you have a GPIO or  MIDI  console, and, say, assigned
+If you operate such a console, and, say, assigned
 a knob there to control the AF volume, then turning the
 knob will auto-magically also move the AF slider if its
 on display (that is, if the sliders area is not hidden).
-If you turn a knob for which function there is slider
-on display, either because the slider area is hidden or
-because this function does not have a slider in that area,
+If the slider is not on display,
 then a graphical slider will temporarily pop up in the
 middle of the window to inform you about the changes
 you have  made. To give one example, a knob at a
@@ -745,9 +771,8 @@ the knob. But when the sliders are not displayed, then a slider image
 pops up  on the middle of the screen, and the
 bar contained therein moves when turning the knob,
 and the numerical value is displayed as well (Fig. \ref{fig:SliderOnScreen}).
-Such a pop-up slider always occurs if a knob on the GPIO or MIDI
-console is turned and no slider associated with the value changing is
-on display.
+Such a pop-up slider always occurs for several functions which have no
+associated slider in the Slider area, such as changing filter widths etc.
 
 At the very bottom of the window, there is the toolbar. This can also be
 individually hidden/shown via the \bltt{Display} menu. The toolbar consists
@@ -767,7 +792,7 @@ there is no difference if you do a primary or secondary mouse click on that
 button (that is, it does not matter whether you use the left or right mouse
 button). But for the rightmost toolbar button, a normally mouse click cycles
 forward through the layers, while a secondary mouse click cycles backwards.
-If you use a V2 or G2 front panel GPIO controller or a MIDI console, then you
+If you operate a controller, then you
 can also map this function (\bltt{FuncRev}) to a spare button.
 
 
@@ -788,9 +813,6 @@ hand, a mouse click in the panel of the active receiver changes
 the VFO frequency of that receiver to the value clicked on.
 This means, if you see a signal in the spectrum scope, click
 on that signal and your VFO will move (\textit{jump}) to that signal.
-Note the VFO frequency will be  rounded to the next multiple of
-the VFO step size when jumping by a mouse  click or
-touch screen press.
 
 The second option to change the VFO frequency of the active receiver
 is to click (and hold) into its panel, then drag the mouse to the left
@@ -800,7 +822,15 @@ where the first click actually occurred, only the difference
 in horizontal position between click and release is used. You must
 drag at least three pixels so there is clear discrimination between
 a \textit{VFO jump} (click then release) and a \textit{VFO drag} (click, drag,
-and release) operation. Finally, the VFO frequency of the active
+and release) operation.
+
+Especially if you are using a touch screen, it may be very difficult
+to click or drag exactly to the desired frequency. This is where
+the \rett{VFO snap} option comes in (see the \bltt{Radio} menu).
+With this option enabled, the frequency chosen by a click or drag
+will be rounded to the nearest multiple of the VFO step size.
+
+ Finally, the VFO frequency of the active
 receiver can be changed by the scroll wheel of the mouse, if there
 is any. Using the scroll wheel lets the VFO frequency move in multiples
 of the VFO step size, while mouse dragging can also be used for
@@ -4235,15 +4265,30 @@ an entry, click  into the text  field and clear it, then this entry is  removed 
 In this way, you can configure your client computer to use several different \pH server instances, but also
 to use a \pH server instance that has different IP addresses or host names depending from where you connect.
 
-The second text field in the server line must be used to enter a password. This password will not be
-stored in the preferences file so you have to enter it each time you connect (I might change this in the
-future, but at the moment this seems to be the most secure option). By default, the last button in
+The second text field in the server line must be used to enter a password. Normally, this password will not be
+stored in the preferences file so you have to enter it each time you connect. This seems to be the most
+secure setup. However, to support portable client operations where no keyboard is available, there is
+a hook to circumvent this restriction. To this end, a line for the form
+
+\texttt{host\_pwd=}$\langle$\texttt{pwd}$\rangle$
+
+has to be \textit{manually} added to the file \texttt{remote.props} in the \pH working directory. The
+password $\langle$\texttt{pwd}$\rangle$ will only be accepted if it is at least 5 characters long
+and will then be filled into the text entry field for the host password. It can be changed there,
+then the changed password will be written to \texttt{remote.props} but only if such as password
+has initially been successfully read therefrom, and if the (possibly updated) password is at least
+5 characters long. This means, changing a password read from the props file to a short one effectively
+deletes it from the props file. I know that this procedure looks terribly inconvenient, and it is so
+by design. For general operation, storing passwords on client computers is not recommended and the
+hook described here is for those who need it and are aware of the possible security implications.
+
+By default, the last button in
 the server line reads \rett{Show} and the password is hidden (each character is represented by a bullet).
 If clicking the \rett{Show} button, its label changes to \rett{Hide} and the password becomes visible. You
 might have guessed that clicking the \rett{Hide} button then conceals the password again and the button
 label reads \rett{Show} again.
 
-\textbf{A note on network security:}
+\textbf{A note on network security}
 
 The password you enter is \textbf{never ever} transmitted ``as is'' over the line. Instead, the server sends a random
 512 bit (64 byte) \textit{challenge} which is different for each connection.
@@ -5424,11 +5469,6 @@ enabled (disabled) if the resulting value  is non-zero (zero).}
 
 \phcommand{ToolBar7}{TBAR7}{B}{Pressing/Releasing this button is equivalent to pressing the seventh
 (from the left) of the eight toolbar buttons on the screen.}
-
-\phcommand{ToolBar8}{TBAR8}{B}{Pressing/Releasing this button is equivalent to pressing the rightmost
-(last) of the eight toolbar buttons on the screen, and thus scroll through the six possible
-assignments. Note that this toolbar button is always
-and constantly mapped to the \bltt{FUNCTION} command.}
 
 
 \phcommand{Tune}{TUNE}{B}{Toggle (on/off) TUNE. If \texttt{TuneBits} are checked in the \bltt{OC} menu,

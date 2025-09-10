@@ -18,10 +18,6 @@
 */
 
 #include <gtk/gtk.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "appearance.h"
 #include "ext.h"
@@ -32,7 +28,6 @@
 #include "transmitter.h"
 #include "vfo.h"
 #include "vox.h"
-#include "vox_menu.h"
 
 static GtkWidget *dialog = NULL;
 
