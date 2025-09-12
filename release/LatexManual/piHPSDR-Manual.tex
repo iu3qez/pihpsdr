@@ -8057,7 +8057,7 @@ The \pH repository is downloaded, and support libraries are installed, with the 
 Proceeding as shown above will provide an up-to-date ,,snap shot'' of the \pH repository.
 This ensures that you have the latest (development) version which corresponds to the present
 version of the manual, but there is a chance that there is a recently introduced bug
-which has not yet been found and fixed. Currently, the development version has version number 2.5.
+which has not yet been found and fixed. Currently, the development version has version number 2.6.
 
 There is also a ,,release'' version which is the previous version. The ,,release'' version lags
 behind the current development since new features are not included there. This means that any
@@ -8067,11 +8067,12 @@ To get the release version, you must, after typing in the the command \texttt{cd
 insert the command
 
 \vskip0.2cm
-\grtt{git checkout Rel-2.4}
+\grtt{git checkout Rel-2.5}
 
 \vskip0.2cm
-and this will then switch your local repository to the release version 2.4. No more details on how
-to switch between version with the \texttt{git} command can be given in this manual.
+and this will then switch your local repository to the release version 2.5. No more details on how
+to switch between versions with the \texttt{git} command can be given in this manual, since these
+are standard procedures with git.
 }
 }
 \end{center}
@@ -8296,8 +8297,8 @@ On my computer the output is
 
 You can ignore the  lines starting with \texttt{remotes}. The other lines display the names of all
 existing branches, and the line starting with a star indicates the branch you are currently on.
-The branches \texttt{RELEASE-2.2-DL1YCF} and {Rel-2.3} are meanwhile outdated, the actual release branch
-at the time of  this writing is \texttt{Rel-2.4}.
+Older branches (\texttt{RELEASE-2.2-DL1YCF}, \texttt{Rel-2.3}) are meanwhile outdated, the previous
+release branch is names \texttt{Rel-2.4} and the current one, at the time of this writing, is \texttt{Rel-2.5}.
 
 \medskip
 \textbf{Which version do I have?}
@@ -8317,14 +8318,14 @@ Your branch is up to date with 'origin/master'.
 \end{verbatim}
 
 then you are using the ``current version'' (that is, the master branch). If you are using a release
-version, then the output reads (for the v2.4 release)
+version, then the output reads (for the v2.5 release)
 
 \begin{verbatim}
-On branch Rel-2.4
-Your branch is up to date with 'origin/Rel-2.4'.
+On branch Rel-2.5
+Your branch is up to date with 'origin/Rel-2.5'.
 \end{verbatim}
 
-which tells you you are on the Rel-2.4 branch. Note that if you committed local modifications,
+which tells you you are on the Rel-2.5 branch. Note that if you committed local modifications,
 your branch will not be up to date with the repository as indicated in the outputs shown above,
 and in this case this whole section does  not apply  to you. But if you have committed  local
 modifications, this usually means you are an expert and know what to do.
@@ -8362,10 +8363,10 @@ latest ``current'' version, that is, the latest version of the master branch:
 \textbf{Switching to a release branch}
 
 No matter whether your starting point is the master branch or another release branch, the following
-commands will bring you to  the v2.4 release branch:
+commands will bring you to  the v2.5 release branch:
 
 \grtt{cd \$HOME/pihpsdr} \\
-\grtt{git checkout Rel-2.4} \\
+\grtt{git checkout Rel-2.5} \\
 \grtt{git pull} \\
 \grtt{make clean} \\
 \grtt{LINUX/libinstall.sh} \\
@@ -8488,10 +8489,10 @@ To get the release version, you must, after typing in the the command \grtt{cd p
 insert the command
 
 \vskip0.2cm
-\grtt{git checkout Rel-2.4}
+\grtt{git checkout Rel-2.5}
 
 \vskip0.2cm
-and this will then switch your local repository to the release version 2.4. No more details on how
+and this will then switch your local repository to the release version 2.5. No more details on how
 to switch between version with the \texttt{git} command can be given in this manual.
 }
 }

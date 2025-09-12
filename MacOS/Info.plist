@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>pihpsdr</string>
 	<key>CFBundleIconFile</key>
-	<string>piHPSDR-logo.icns</string>
+	<string>piHPSDR_logo.icns</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
