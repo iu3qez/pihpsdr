@@ -3648,6 +3648,47 @@ it will always be assigned to \bltt{Function}, since if one has no access to thi
 function, one is stuck and can no longer cycle through the function layers.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \texttt{Sliders} Menu}
+
+\begin{figure}[ht!]
+\center
+\includegraphics[scale=0.45]{SlidersMenu.png}
+\caption{The \bltt{Sliders} menu.}
+\label{fig:SlidersMenu}
+\end{figure}
+
+The sliders lets you assign function to the nine sliders in the 3x3 Sliders area. It does not matter
+how many slider rows (0 to 3) are actually shown, you can assign a function to all nine sliders.
+The functions you can assign are (in the order they appear in the combo-boxes)
+\begin{itemize}
+\item[\rett{None}]{No function is assigned to this slider (and it will thus not appear)}
+\item[\rett{AF Gain}]{AF volume of the active receiver}
+\item[\rett{AGC Gain}]{AGC gain of the active receiver}
+\item[\rett{Atten}]{RF front-end attenuation for the ADC feeding the active receiver. Note if the ,,other''
+receiver gets the signal from the same ADC, it is also affected. If the radio does not have a step attenuator
+in the RF front end, the slider is not shown.} 
+\item[\rett{Cmpr Lvl}]{Compression level of the transmitter. Together with this slider, there appears a
+check-box that enables or disables the TX compressor.}
+\item[\rett{CW Speed}]{CW speed (in wpm) of the internal or the radio keyer.}
+\item[\rett{LineinGain}]{The gain of the Line-In jack of the radio (if available).}
+\item[\rett{Mic Gain}]{The gain applied to the AF signal at the beginning of the TX chain.}
+\item[\rett{PanZoom}]{The PAN value of the ZOOM function. This slider has no effect when ZOOM=1.}
+\item[\rett{RF Gain}]{RF front-end gain for the ADC feeding the active receiver. Note if the ,,other''
+receiver gets the signal from the same ADC, it is also affected. If the radio does not have a programmeable
+gain in the RF front end, the slider is not shown.}
+\item[\rett{Squelch}]{The squelch level applied to the audio from the active receiver. Together with this
+sliders, there appears a check-box that enables or disables squelch.}
+\item[\rett{TX Drive}]{The TX drive.}
+\item[\rett{Zoom}]{The ZOOM value for the panadapter of the active receiver.}
+\end{itemize}
+
+For example, a CW operator usually does not need to adjust mic gain, a TX compressor, or a Squelch. But
+this operator may find it convenient to have a slider at hand that adjusts the CW speed. With an
+individually configured Slider area, it should be possible to have only two rows of sliders on display
+in most situations. It is possible to assign the same function to more than one slider, but a given
+function will only be assigned to one slider (the first one if going throught the sliders row-wise).
+So in case of a duplicate assignment, the second slider position will just be empty.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The \texttt{CAT/TCI} Menu}
 
 \pH has a built-in rig control or CAT (computer aided transceiver) facility. This can be used to control
