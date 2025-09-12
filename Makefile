@@ -472,7 +472,6 @@ src/filter_menu.c \
 src/g2panel.c \
 src/g2panel_menu.c \
 src/gpio.c \
-src/hpsdr_logo.c \
 src/i2c.c \
 src/iambic.c \
 src/led.c \
@@ -490,6 +489,7 @@ src/oc_menu.c \
 src/old_discovery.c \
 src/old_protocol.c \
 src/pa_menu.c \
+src/piHPSDR_logo.c \
 src/property.c \
 src/protocols.c \
 src/ps_menu.c \
@@ -566,7 +566,6 @@ src/filter_menu.h \
 src/g2panel.h \
 src/g2panel_menu.h \
 src/gpio.h \
-src/hpsdr_logo.h \
 src/iambic.h \
 src/i2c.h \
 src/led.h \
@@ -584,6 +583,7 @@ src/oc_menu.h \
 src/old_discovery.h \
 src/old_protocol.h \
 src/pa_menu.h \
+src/piHPSDR_logo.h \
 src/property.h \
 src/protocols.h \
 src/ps_menu.h \
@@ -655,7 +655,6 @@ src/filter_menu.o \
 src/g2panel.o \
 src/g2panel_menu.o \
 src/gpio.o \
-src/hpsdr_logo.o \
 src/iambic.o \
 src/i2c.o \
 src/led.o \
@@ -673,6 +672,7 @@ src/oc_menu.o \
 src/old_discovery.o \
 src/old_protocol.o \
 src/pa_menu.o \
+src/piHPSDR_logo.o \
 src/property.o \
 src/protocols.o \
 src/ps_menu.o \
@@ -978,7 +978,6 @@ src/gpio.o: src/receiver.h src/transmitter.h src/filter.h src/gpio.h
 src/gpio.o: src/i2c.h src/iambic.h src/main.h src/message.h
 src/gpio.o: src/new_protocol.h src/MacOS.h src/property.h src/radio.h
 src/gpio.o: src/adc.h src/sliders.h src/toolbar.h src/vfo.h
-src/hpsdr_logo.o: src/message.h
 src/hpsdrsim.o: src/MacOS.h src/hpsdrsim.h
 src/i2c.o: src/actions.h src/band.h src/bandstack.h src/ext.h
 src/i2c.o: src/client_server.h src/mode.h src/receiver.h src/transmitter.h
@@ -993,11 +992,11 @@ src/mac_midi.o: src/message.h src/midi.h src/actions.h src/midi_menu.h
 src/main.o: src/actions.h src/appearance.h src/css.h src/audio.h
 src/main.o: src/receiver.h src/band.h src/bandstack.h src/configure.h
 src/main.o: src/discovery.h src/discovered.h src/ext.h src/client_server.h
-src/main.o: src/mode.h src/transmitter.h src/gpio.h src/hpsdr_logo.h
-src/main.o: src/main.h src/message.h src/new_menu.h src/new_protocol.h
-src/main.o: src/MacOS.h src/old_protocol.h src/radio.h src/adc.h
-src/main.o: src/saturnmain.h src/saturnregisters.h src/soapy_protocol.h
-src/main.o: src/startup.h src/test_menu.h src/version.h src/vfo.h
+src/main.o: src/mode.h src/transmitter.h src/gpio.h src/main.h src/message.h
+src/main.o: src/new_menu.h src/new_protocol.h src/MacOS.h src/old_protocol.h
+src/main.o: src/radio.h src/adc.h src/saturnmain.h src/saturnregisters.h
+src/main.o: src/soapy_protocol.h src/startup.h src/test_menu.h src/version.h
+src/main.o: src/vfo.h
 src/meter.o: src/appearance.h src/css.h src/band.h src/bandstack.h
 src/meter.o: src/meter.h src/receiver.h src/message.h src/mode.h
 src/meter.o: src/new_menu.h src/radio.h src/adc.h src/discovered.h
@@ -1058,6 +1057,7 @@ src/ozyio.o: src/message.h src/ozyio.h
 src/pa_menu.o: src/band.h src/bandstack.h src/client_server.h src/mode.h
 src/pa_menu.o: src/receiver.h src/transmitter.h src/message.h src/new_menu.h
 src/pa_menu.o: src/radio.h src/adc.h src/discovered.h src/vfo.h
+src/piHPSDR_logo.o: src/message.h
 src/portaudio.o: src/audio.h src/receiver.h src/client_server.h src/mode.h
 src/portaudio.o: src/transmitter.h src/message.h src/radio.h src/adc.h
 src/portaudio.o: src/discovered.h src/vfo.h

@@ -38,7 +38,7 @@
 #include "discovered.h"
 #include "ext.h"
 #include "gpio.h"
-#include "hpsdr_logo.h"
+#include "piHPSDR_logo.h"
 #include "main.h"
 #include "message.h"
 #include "new_menu.h"
@@ -253,7 +253,7 @@ static void activate_pihpsdr(GtkApplication *app, gpointer data) {
   // Closely following Heiko's suggestion, we now have the HPSDR log contained
   // in the code and need not fiddle around with the question from where to load it.
   //
-  GtkWidget *image = hpsdr_logo();
+  GtkWidget *image = piHPSDR_logo();
 
   if (image) {
     gtk_grid_attach(GTK_GRID(topgrid), image, 0, 0, 1, 3);
