@@ -156,7 +156,7 @@ Type=Application
 Terminal=false
 Name[eb_GB]=piHPSDR
 Exec=$TARGET/pihpsdr.sh
-Icon=$TARGET/hpsdr_icon.png
+Icon=$TARGET/pihpsdr_logo.png
 Name=piHPSDR
 EOT
 
@@ -164,7 +164,7 @@ cp $TARGET/pihpsdr.desktop $HOME/Desktop
 mkdir -p $HOME/.local/share/applications
 cp $TARGET/pihpsdr.desktop $HOME/.local/share/applications
 
-cp $PIHPSDR/hpsdr_icon.png $TARGET
+cp $PIHPSDR/piHPSDR_logo.png $TARGET
 
 
 ################################################################
