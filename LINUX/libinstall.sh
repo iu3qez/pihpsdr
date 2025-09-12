@@ -156,7 +156,7 @@ Type=Application
 Terminal=false
 Name[eb_GB]=piHPSDR
 Exec=$TARGET/pihpsdr.sh
-Icon=$TARGET/pihpsdr_logo.png
+Icon=$TARGET/piHPSDR_logo.png
 Name=piHPSDR
 EOT
 
