@@ -866,7 +866,7 @@ endif
 	@cp pihpsdr pihpsdr.app/Contents/MacOS/pihpsdr
 	@cp MacOS/PkgInfo pihpsdr.app/Contents
 	@cp MacOS/Info.plist pihpsdr.app/Contents
-	@cp MacOS/piHPSDR-logo.icns pihpsdr.app/Contents/Resources/piHPSDR-logo.icns
+	@cp MacOS/piHPSDR_logo.icns pihpsdr.app/Contents/Resources/piHPSDR_logo.icns
 
 #############################################################################
 #
