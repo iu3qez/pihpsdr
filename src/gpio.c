@@ -394,7 +394,7 @@ SWITCH *switches = NULL;
 
 #ifdef GPIO
 
-#define I2C_INTERRUPT = 15;
+#define I2C_INTERRUPT  15
 #define MAX_LINES 32
 
 static GThread *rotary_encoder_thread_id;
