@@ -19,8 +19,12 @@
 \begin{document}
 \frontmatter
 \title{
-\pH User's Manual \\
-\small{\pH development version 2.5}
+\begin{figure}
+\center
+\includegraphics[scale=0.75]{piHPSDR_logo.png}
+\end{figure}
+User's Manual \\
+\small{\pH Version 2.5}
 }
 \author{
 Christoph van W\"ullen, DL1YCF \\
@@ -152,7 +156,7 @@ convention as laid out here.
 Here we list the main new featured introduced in each version.
 
 \medskip
-\textbf{\pH Version 2.5, release planned for Sep. 2025}
+\textbf{\pH Version 2.5, released October 2025}
 \begin{itemize}
 \item{First complete version of the Client/Server model (including TX and CW).
 Server access is password protected.}
@@ -163,7 +167,8 @@ the waterfall is user-adjustable.}
 capability if compiled on MacOS.}
 \item{Better support for LIME-SDR (2RX) and LIME-mini (1RX) radios.}
 \item{Option to have an SWR-dependent side tone while TUNE-ing.}
-\item{ZOOM now up to 32x, and reorganised the slider area.}
+\item{ZOOM now up to 32x}
+\item{User-configurable Slider and Toolbar areas, with 0--3 slider rows and 0--3 toolbars.}
 \end{itemize}
 
 \medskip
@@ -176,7 +181,7 @@ by Lukasz).}
 \item{Stripped-down TCI server for use with logbook programs and linear amplifiers (\bltt{CAT/TCI} menu)}
 \end{itemize}
 
-\medskip
+\clearpage
 \textbf{\pH Version 2.3, released August 2024}
 \begin{itemize}
 \item{Preliminary ``accessibility'' support for the blind (see Appendix \ref{sec:accessibility})}
@@ -202,10 +207,13 @@ by Lukasz).}
 \end{itemize}
 
 \medskip
-\textbf{\pH Version 2.0.8}\\
+\textbf{\pH Version 2.0.8}
+
+\smallskip
 The last synchronisation with John Melton's (G0ORX) \pH version 2.0.8 took place in January 2022.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Starting \pH for the first time}
+\section{First invocation of \pH}
 Let us assume you have an SDR (say, an Anan-7000 or a HermesLite-II) powered up and connected to an antenna,
 and you have \pH installed on a computer (say, a Raspberry Pi or an Apple Macintosh), the first thing to
 do is to establish a proper connection between the computer and the radio. Although advocated at many
@@ -412,22 +420,72 @@ if this succeeds, you see something like shown in Fig. \ref{fig:FirstDisplay}.
 
 \begin{figure}
 \center
-\includegraphics[scale=0.45]{FirstDisplay.png}
-\caption{First start of the radio with two RX}
+\includegraphics[scale=0.40]{FirstDisplay.png}
+\caption{First start of the radio with defaults settings.}
 \label{fig:FirstDisplay}
 \end{figure}
 
-You see two receiver panels stacked vertically, both of them having a spectrum display and a waterfall area.
-At the top,
+At the top (denoted ,,VFO bar'' in Fig. \ref{fig:FirstDisplay}),
 just below the window title, you have the VFO bar which contains information on the frequencies of the two
 VFOs A and B,
 as well as lots of further information, to be explained later. At the top right, there are two buttons
 \rett{Hide}
 and \rett{Menu} which will be explained in the next chapter. To the left of these two buttons, there is the
-meter bar which by default is a digital S-meter. At this point, you have started \pH successfully for
-the first time. At the bottom of the window, you see the toolbar buttons, and above them
-an area containing several sliders. All this will be explained in the next section.
+meter bar which by default is a digital S-meter.
 
+Below you see the panels (panadapters) for two receivers (,,RX1 panel'' and ,,RX2 panel''), stacked vertically.
+Both panadapters show both a spectrum and a waterfall. The default setting, if both are shown, is that
+the spectrum gets 75\% and the waterfall 25\% of the vertical space of the RX panel.
+Below the RX panel(s), there is the ,,Slider Area'' which has two rows of sliders, each row containing
+three sliders.
+At the bottom of the window you see two toolbars, each with eight buttons.
+
+\clearpage
+\textbf{All this is fully user configurable.} The user can
+\begin{itemize}
+\item{Change the overall size of the \pH window (\bltt{Screen} menu). This includes
+a ,,full screen'' option where \pH uses the entire space on the monitor.}
+\item{Choose different VFO bar layouts, depending on the size of the \pH window (\bltt{Screen} menu).}
+\item{Choose whether \pH runs one or two receivers (\bltt{Radio} menu).}
+\item{Choose (for each receiver) whether a spectrum, a waterfall, or both are displayed in the receiver
+panel (\bltt{Display} menu).}
+\item{Set, if both spectrum and waterfall are displayed, how much of the vertical space the waterfall
+gets (\bltt{Display} menu).}
+\item{Choose several filling or colouring options for the spectrum (\bltt{Display} menu, see
+Sec. \ref{sec:FillingGradient}).}
+\item{Choose, if two receivers are run, whether their panels are stacked horizontally or
+vertically (\bltt{Display} menu).}
+\item{Choose the number of rows (0--3) to display in the Slider area (\bltt{Screen} menu).}
+\item{Assign functions to each of the 9 possible sliders (\bltt{Sliders} menu).}
+\item{Choose the number of toolbars (0--3) to be shown at the bottom of the window (\bltt{Screen} menu).}
+\item{Assign functions to toolbar buttons (\bltt{Toolbar} menu).}
+\end{itemize}
+
+In summary, \pH now allows the user to adjust the layout of the window to the needs of the user. 
+For example, CW operators
+may not need a slider to adjust Mic gain or TX compression but will want a slider to adjust the CW
+speed. FM operators may need a Squelch slider, but for SSB operators a slider to change the
+level (and enable/disable) a TX compressor (speech processor) will be more important.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Prominent beginner's problems}
+There are some problems that occur again and again, so the purpose of this section is to name them.
+
+\subsection{No (or too little) RF power out when transmitting}
+
+This is actually the most prominent beginner's problem. Read Sec. \ref{sec:PAmenu} on the \bltt{PA} menu,
+where one has to adjust the output level up to the nominal power of the PA. By default \pH wants to
+be on the safe side, therefore many radios produce no or very little output power before you make
+the proper adjustments in the \bltt{PA} menu.
+
+
+\subsection{The RX spectrum looks fine, but I hear no RX signal}
+
+Many radios do not have built-in audio codecs. In this case, you must choose local audio output in
+the \bltt{RX} menu.
+
+
+(this section will be extended if other ,,frequent problems'' are reported to me.)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Main window layout}
@@ -439,8 +497,8 @@ there were two receiver panels in the
 (the green-coloured noise floor) and a waterfall. The waterfall area
 is completely black in the above picture since there was no RF signal.
 \pH can be switched between having one or two receivers in the
-\texttt{Radio} menu. If there are two receivers (called RX1 and RX2),
-one of the two is the \textit{active receiver}. If you look closely
+\bltt{Radio} menu. If there are two receivers (called RX1 and RX2),
+one of them is the \textit{active receiver}. If you look closely
 at the above picture, you will note that the spectrum scope of
 the lower (RX2) panel is shaded, while it is in bright colour for RX1.
 This indicates that RX1 is currently the active receiver. By simply
@@ -477,41 +535,60 @@ RX2. This can be done in the \bltt{RX} menu.
 By default, if there are two receivers, they are vertically stacked,
 with RX1 in the upper part and RX2 in the lower part of the display.
 This can be changed in the \bltt{Screen} menu to horizontal stacking,
-where RX1 is  in the left half and RX2 in the right half of  the
+where RX1 is in the left half and RX2 in the right half of  the
 display. Changing the stacking trades vertical against horizontal
 resolution, of course.
 
 \begin{figure}[ht]
 \center
 \includegraphics[scale=0.45]{SingleReceiver.png}
-\caption{\pH with a single RX and all controls (Sliders, Toolbar) at the  bottom.}
+\caption{\pH with a single RX, three rows of sliders and a single toolbar.}
 \label{fig:SingleReceiver}
 \end{figure}
 
 Fig. \ref{fig:SingleReceiver} picture shows, for demonstration purpose, a \pH
-window with a single receiver.
-The RX panel only contains a
-spectrum scope with a white line and no waterfall (this can be changed in the
-\bltt{Display} menu). In addition, you see the toolbar
-with eight buttons at the lower edge of the window, and above
-it an area with sliders. Both the toolbar and the slider area can be
-hidden (in the \bltt{Display} menu), which gives you a larger (vertical) space
-for the RX panadapter(s). This only makes sense if you have an external controller
-with knobs and buttons attached and used this controller e.g. to change the
-AF volume.
+window with a single receiver, and three rows of sliders but only a single
+toolbar. There is a strong S9 (-73 dBm) signal at 14.1 kHz which has left
+a spur in the waterfall.
 
 If there is only one receiver, it is controlled
-by VFO-A. VFO-B then actually only controls controls the transmitter
+by VFO-A. VFO-B then actually only controls the transmitter
 if using split mode, but the data stored in VFO-B can
 be quickly used, for example by copying VFO-B to VFO-A (the
 \bltt{A<B} command), or by swapping the two VFOs (the \bltt{A<>B} command).
-This Figure has been recorded (just to demonstrate this)
-on an Apple Macintosh, therefore, among other details, the
-top bar of the window looks a little different from what one sees
-on LINUX.
+
+\textbf{The transmitter spectrum.} When transmitting, the RX panels are replaced
+by the spectrum of the transmitter. This has a fixed width of 24 kHz. It shows
+the TX signal as sent to the radio, unless PURESIGNAL is active and the monitor
+function (\rett{MON} button in the \bltt{PS} menu) is active. In this case,
+provided that there is feedback circuitry, the transmitted signal as it shows up
+at the antenna is shown. If using \bltt{Duplex}, then the RX panels are kept while
+transmitting, and a small separate window containing the TX spectrum (only 6 kHz wide)
+pops up.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \texttt{Hide} button}
+\begin{figure}[ht]
+\center
+\includegraphics[scale=0.35]{Hidden.png}
+\caption{\pH window with the Toolbar and Slider
+area ,,hidden''.}
+\end{figure}
+
+On small screens, space is scarce. This in in particular true
+for the vertical space if one used two RX panels and both
+with a spectrum scope and a waterfall. I this case, it may be
+hard to actually watch the signals if the screen is small.
+This is where the \rett{Hide} button comes in. Clicking on
+this button ,,hides'' the toolbar and slider area:
+
+
+The text on the button then changes to \rett{Show}, and
+clicking this button again will then return to the
+previous display.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{What is a spectrum?}
-The RX panadapter shows a the RX spectrum.
+The RX panadapter shows the RX spectrum, but what is a spectrum?.
 Some people get confused if the spectrum shows a noise floor at $-120$ dBm, while their S-meter
 reading ,,without signal'' is $-112$ dBm. These people then often ask which of the two figures tells
 them how much noise there is.
@@ -567,30 +644,29 @@ spectrum is displayed in white colour. With the gradient option,
 the colour changes from green over yellow towards red depending
 on the signal strength (red colour is reached for S9). The above
 picture demonstrates the four possible combinations, and in
-the \bltt{Display} menu, you can make your choice. This setting
-refers to both receivers when there are two. Note that the TX
-spectrum can be a filled one or a line spectrum (to be specified
+the \bltt{Display} menu, you can make your choice. These settings
+can be made for both receivers separately. Note that the TX
+spectrum can be a line spectrum or can be filled (to be specified
 in the \bltt{TX} menu), but that there
 is no gradient option.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The Slider Area}
 \label{sec:SliderArea}
+Most sliders should be fairly self-explanatory, such as
+the one labelled \rett{TX Drv} to adjust the TX RF output
+power, or \rett{AF} to adjust the RX audio volume. All functions
+that can be mapped to a slider are listed in Sec. \ref{sec:SlidersMenu}
+on the \bltt{Sliders} menu. However, the \bltt{Zoom} and \bltt{Pan}
+sliders deserve some explanation.
+
 \begin{figure}[ht!]
 \center
 \includegraphics[scale=0.45]{ZoomPan.png}
-\caption{The spectrum scope of Fig. \ref{fig:SingleReceiver} with a
-large Zoom value.}
+\caption{SSB on the 40m band with a large Zoom value.}
 \label{fig:zoom}
 \end{figure}
-Looking at Fig. \ref{fig:zoom}, you clearly see an area containing sliders below
-the RX panadapter. These sliders are arranged in three rows. The first row contains
-sliders that affect the display of the spectrum, while the sliders in the second and
-third row control the active receiver and the transmitter.
-Note that the etire slider area can be hidden (removed) via the \bltt{Display} menu (see there).
 
-\subsection{Sliders affecting the display}
-We start with the Zoom and PAN sliders in the first row.
 The width of the RX spectrum equals the sample rate
 of the receiver. This means that if you use, say,
 a sample rate of 192 kHz for a receiver (as in Fig. \ref{fig:zoom},
@@ -601,199 +677,95 @@ you may look a little bit
 compressed. This is where the \bltt{Zoom} command
 comes in. The zoom value can adopt integral values between
 1 (no zoom) and 32. In the latter case, only 1/32 of the
-overall spectrum is displayed on the screen. In the
-picture below, you see that the RX scope is only about 8 kHz
-wide (which is 1/24 of the RX sample rate in our
-example).  The zoom value can be changed using the \rett{Zoom}
-slider (at the left edge below the RX panel).
+overall spectrum is displayed on the screen.
 
-With a \bltt{Zoom} value of 24 and a RX sample rate of 192k,
-the question is which part (8 kHz wide) of the spectrum is actually
-show. This is where the horizontal PAN \rett{H-Pan} slider comes in.
-This slider can be moved from -100 (show leftmost part) to
-100 (show rightmost part of the spectrum), if the slider is 
-at zero (in the middle), the central part of the spectrum is
-shown. When the Zoom value is changed, the horizontal
-PAN value is automatically re-adjusted 
-uch that the RX frequency
-(the CTUN frequency if CTUN is active) is at the
-centre of the display. So if you went astray with the
-PAN sliders, just change the Zoom value and then go
-back, and your signal will be centred. Of course, the
-\rett{H-PAN} slider has no effect if the Zoom value
-is 1, since then the whole spectrum is shown anyway.
+Fig. \ref{fig:zoom} shows a real-life example, taken while
+operating SSB on the 40m band with a sample rate of 192 kHz.
+Using a Zoom factor of 12, the width of the spectrum is only
+16 kHz which makes it easy to spot the RX signal on the
+waterfall and set the RX frequency accordingly. Note the
+dial frequency (marked by a thin red line in the panadapter)
+is at the center of the screen, the signal is to the left
+of that line because the lower side band is used on the
+40m band.
 
-Whenever you change the ZOOM or horizontal PAN value, the display of the
-spectrum is re-initialised. So it may take a while until the
-display of the spectrum is resumed. This is especially true
+If only a small fraction of the whole spectrum is actually shown, this
+leads to the question \textit{which} part is shown. In normal operation,
+the dial frequency is always at the center of the screen so then one
+normally wants to see the central part of the spectrum. In \bltt{CTUN}
+mode on the other hand, one can receive signals from anywhere in the spectrum:
+the center frequency is fixed and one moves the ,,RX window'' around. In
+this case one may want to see a non-central part of a zoomed spectrum.
+This is where the \bltt{Pan} slider comes in. The Pan value
+(between $-100$ and 100) determines which part of a zoomed spectrum
+is actually displayed. For a Pan value of $-100$, the leftmost part is
+on display, and the rightmost part is displayed if the Pan value is 100.
+A Pan value of zero shows the central part of the spectrum. Note that the
+Pan value has no effect if there is no zoom, and that the Pan value is
+automatically adjusted when changing the Zoom value such that the RX
+frequency is at the center of the display after changing Zoom.
+Normally you should not need the \bltt{Pan} slider if you are not using
+\bltt{CTUN}.
+
+Whenever you change the Zoom or Pan value, the display of the
+spectrum is re-initialised. So it may take a while until enough
+data has been collected to be able to display the first
+spectrum after re-initialisation. This is especially true
 for small RX sample rates and large ZOOM values.
 
-Note that the TX spectrum scope always has a fixed spectral
-width, namely 24 kHz in non-duplex mode when the TX spectrum
-scope is shown in the main window, and 6 kHz in duplex mode
-when the TX spectrum is shown in a small separate window.
+\textbf{Pop-up sliders}
 
-The third (\rett{V-PAN}) slider in the first row lets you move the
-spectrum in the vertical direction. Vertical PAN values range from
--20 to +20 dB and can be viewed as an offset both for the low and high
-end of the panadapter range. The noise floor can be very different
-on different bands, and the vertical PAN slider can be used to place
-the noise floor close to the bottom of the panadapter, leaving more
-room for displaying strong signals above.
-
-\subsection{Sliders affecting the active receiver}
-The second row of sliders affect the RX signal and need only be described briefly.
-
-\begin{itemize}
-\item{
-The \rett{AF} slider controls the audio volume of the active receiver, from -40 to 0 dB. If moved to the
-far left (at -40 dB) the audio is muted completely.}
-
-\item{
-The \rett{AGC} slider controls the AGC of the currently active receiver, it goes from 0 to 120 dB. There
-is a green horizontal line (with a letter G at the left edge) in the RX panadapter, and the \rett{AGC}
-slider should be positioned such that the green line is at the level (or slightly above) the noise
-floor. Note that the AGC value does not only depend on the attenuation/gain in the RF front end
-(e. g. the position of the \rett{ATT} slider) but also on the current filter bandwidth (for a filter
-10 times narrower the \rett{AGC} value can be increased by 10 dB). Note that if the green line
-is higher up than the signals you want to receive, they will probably not be heard in the
-RX audio.}
-
-\item{
-The \rett{ATT} slider controls a programmable attenuator in the RF front end of the active receiver. For
-HPSDR hardware, it goes from 0 to 31 dB. The HermesLite-II has a slider named \rett{RF} at this place,
-since this radio has a programmable preamplifier/attenuator that goes from -12 to +48 dB. For the STEMlab
-(RedPitaya based) radios, you find a combo-box here where you can select the fixed attenuators/preamps.
-Radios which have a programmable RF gain rather than an attenuator (e.g. the HermesLite-II) have an
-\rett{RF gain} slider at this position. Note that the position of these sliders is stored internally
-for each band, and restored upon a band change. The idea behind this is that one usually wants no
-attenuation, say, on the 10m band while it might be necessary to have some attenuation on the 80m band.}
-\end{itemize}
-
-\subsection{Sliders affecting the transmitter}
-Again, the sliders will only very briefly be described. For details on the TX signal chain,
-see Sec. \ref{sec:txchain}.
-
-\begin{itemize}
-\item{
-The \rett{Mic} slider adds an amplification from -12 to +50 dB to the audio signal fed to the transmitter.
-This amplification is purely done numerically (no effect on any hardware) and applies to the audio signal
-no matter where it comes from, let it be real microphones or virtual audio cable. For digital modes using
-virtual audio cables, one normally uses no compression, no TX equaliser etc. and the \rett{Mic} slider
-should stay at +0 dB. For many microphones, it might be useful to advance the \rett{Mic} slider
-to positive values. For more information, see chapter \ref{sec:txchain} on the TX audio chain.}
-
-\item{
-The \rett{TX Drv} slider controls the RF output power. It goes from 0 to 100 and is meant in percent. That is,
-a 5-Watt radio such as the HermesLite-II should transmit 5 Watts if this slider is at position 100. See the
-\bltt{PA} menu for adjusting the RF output levels.}
-
-\item{
-The \rett{Cmpr} sliders controls the amount of compression used in the TX compressor (if enabled).
-The compressor can be enabled or disabled with the small check box to the left of the slider.
-}
-\end{itemize}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The \texttt{Hide} button}
-\begin{figure}[ht]
-\center
-\includegraphics[scale=0.35]{Hidden.png}
-\caption{\pH window with the Toolbar and Slider
-area ,,hidden''.}
-\end{figure}
-
-On small screens, space is scarce. This in in particular true
-for the vertical space if one used two RX panels and both
-with a spectrum scope and a waterfall. I this case, it may be
-hard to actually watch the signals if the screen is small.
-This is where the \rett{Hide} button comes in. Clicking on
-this button ,,hides'' the toolbar and slider area:
-
-
-The text on the button then changes to \rett{Show}, and
-clicking this button again will then return to the
-previous display.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Window areas}
-
-Look again at Fig. \ref{fig:SingleReceiver}! Starting from the
-top, you see the title bar of the window. This bar is not visible
-in full screen mode, where the size of the \pH window matches
-the display size. The title bar contains some basis information
-about the radio, e.g.  its type, the protocol used, the  IP
-and the hardware address of the radio. If you are really interested
-in this information, it is recommended to open the
-\bltt{About} menu.
-
-Between the title bar and the RX spectrum scope, you see
-a small vertical area, most of  which is taken by the VFO bar
-(containing the large frequency dials). At the rightmost
-end of this area, you see two buttons \rett{Hide} (already
-discussed) and \rett{Menu}. Clicking on the latter button opens
-the main menu, which will be discussed in detail in the following
-chapters. The \rett{Menu} button is really important, since it
-enables access to one of the menus used for configuring \pH.
-Between the VFO bar and the \rett{Hide}/\rett{Menu} buttons,
-you see the meter area where you find the S-meter (during RX)
-and information about output power, SWR, etc. during TX.
-
-Below the RX  spectrum scope, you see the Slider area, 
-as discussed in Sec \ref{sec:SliderArea}. Although the Sliders area can also
-be hidden via the \bltt{Display} menu, you should not do so
-unless you have a controller (GPIO, MIDI, ANDROMEDA) which knobs that
-you can assign to the slider functions. This is so since
-normal operation usually requires to move the sliders frequently.
-Remember that for temporarily enlarging the space for
-the RX  panel, there is the \rett{Hide} button!
+If using an external controller (GPIO, MIDI, G2 front panel, ANDROMEDA), one can
+assign \pH functions to knobs (rotary encoders) of that controller. Just to give
+an example, suppose you can change the RF front end attenuation with such a knob.
+If you have a slider executing that function on-screen, it will auto-magically
+move when turning the knob, as to reflect the current value of the attenuation.
+But normally you do not need an \bltt{ATT} slider if you can change the attenuation
+with a knob and will not have it on-screen. In this case, a sliders pops up
+in the middle of the screen showing you the attenuation value you are selecting.
+This is shown in Fig. \ref{fig:SliderOnScreen}. No sliders are displayed and the
+attenuation is changed via a controller, and the pop-up slider moves while you
+turn the knob and lets you adjust the attenuation to a specific value, if you want.
 
 \begin{figure}
 \center
 \includegraphics[scale=0.45]{SliderOnScreen.png}
-\caption{A pop-up attenuation slider.}
+\caption{A pop-up slider.}
 \label{fig:SliderOnScreen}
 \end{figure}
 
-If you operate such a console, and, say, assigned
-a knob there to control the AF volume, then turning the
-knob will auto-magically also move the AF slider if its
-on display (that is, if the sliders area is not hidden).
-If the slider is not on display,
-then a graphical slider will temporarily pop up in the
-middle of the window to inform you about the changes
-you have  made. To give one example, a knob at a
-MIDI console has been assigned to the RF attenuator (\bltt{Atten}
-function, see Appendix A), which controls the step
-attenuator in the RF front-end (if there is one). As long
-as the  sliders  are  on display, the \rett{Att} slider
-in the right part of the slider area moves when turning
-the knob. But when the sliders are not displayed, then a slider image
-pops up  on the middle of the screen, and the
-bar contained therein moves when turning the knob,
-and the numerical value is displayed as well (Fig. \ref{fig:SliderOnScreen}).
-Such a pop-up slider always occurs for several functions which have no
-associated slider in the Slider area, such as changing filter widths etc.
+In addition to all the function you can map onto sliders, pop-up sliders also appear
+if you apply temporary changes to filter edges while fighting QRM. For those functions
+that are shown in the VFO bar (e.g. TX compression), pop-up sliders are not needed
+and will not be shown.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The toolbars}
 
-At the very bottom of the window, there is the toolbar. This can also be
-individually hidden/shown via the \bltt{Display} menu. The toolbar consists
-of eight ,,buttons'' which you can click with a mouse or on a touchscreen.
-If you are using the original (V1) \pH GPIO controller, is has eight
-push buttons below the screen and pressing those is equivalent to clicking
-the buttons on the screen. You might still want to keep the toolbar on display
-even if you are using the Controller1 since it shows you to which functions
-the buttons are actually assigned. This assignments consists of six ,,layers''
-(0 through 5). The rightmost button is hard-wired to the \bltt{Function}
-command which cycles through the layers. The button text includes the
-number of the currently active layer, and the button text of the other buttons
-reflect the functions assigned to the buttons in the current layer.
+At the bottom of the screen there are 0--3 toolbars. \pH maintains
+six toolbars, each with 8 buttons. The rightmost button has a fixed
+function (see below) but any \pH function trigger-able by a
+push-button (see Appendix \ref{sec:commandlist}) can be assigned
+to any of the 42 (6*7) programmable buttons of the toolbars in the
+\bltt{Toolbar} menu (Sec. \ref{sec:toolbarmenu}). The number of
+toolbars shown at the bottom of the screen (0--3) can be
+chosen in the \bltt{Screen} menu.
 
-\textbf{Bonus for mouse users only.} For the first seven toolbar buttons,
-there is no difference if you do a primary or secondary mouse click on that
-button (that is, it does not matter whether you use the left or right mouse
-button). But for the rightmost toolbar button, a normally mouse click cycles
-forward through the layers, while a secondary mouse click cycles backwards.
-If you operate a controller, then you
-can also map this function (\bltt{FuncRev}) to a spare button.
+The rightmost toolbar button is labelled \texttt{FNC(x)} where
+x is a number from 0 to 5, indicating which of the six possible
+toolbars we have here. Pushing this buttons cycles that specific
+toolbar, so a toolbar showing \texttt{FNC(3)} will become one
+showing \texttt{FNC(4)}, etc. As a bonus for mouse users,
+a secondary click (usually a click with the ,,other'' mouse
+button) cycles in the other direction.
+
+If you are using and external controller (GPIO, MIDI, etc.) there
+are push-button assignments that bind the function of a button
+to the toolbar. A prominent example for such a controller
+is the first version of the \pH GPIO controller, referred to
+as \texttt{Controller1} in this manual.
+In such a case, it is always the function of the
+toolbar displayed at the very bottom of the screen (if more than
+one toolbar is on display) that is executed.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -920,7 +892,7 @@ frequency (in Hz) is stated as well. For CW, the filter size may be appended
 by a ,,P'', which indicates whether the CW audio peak filter (see the
 \bltt{Filter} menu) is effective on top of the normal filter.
 For the FMN mode, an indicator of the form C=xxx.y is added if
-CTCSS is enables, and then xxx.y shows the CTCSS frequency.
+CTCSS is enabled, and then xxx.y shows the CTCSS frequency.
 
 Now we continue line by line, from left to right and find
 the string \rett{AGC med} printed in yellow. This means
@@ -1246,18 +1218,20 @@ this is very important information so you should always include a screen shot of
 menu when reporting problems. Of particular importance is the so-called \rett{commit},
 this hexadecimal number (here: a1bbb70) identifies the exact status of the source code files
 when the program has been compiled. If a string \texttt{-dirty} is appended to the version number
-(here: v2.4, that is, \textit{not} dirty) this means that one or more files have been locally  modified
+(here: v2.5, that is, \textit{not} dirty) this means that one or more files have been locally  modified
 and do not match the commit, and problem reports from a ,,dirty'' version are difficult to handle.
 
 Finally, there is
 some data on the radio, namely the device type and version numbers, and which protocol is running.
-For diagnostic purposes, you also see the MAC address of the radio, its IP address (here overwritten
-with xxx.xxx.xxx.xxx)
-and the
-IP address of the computer running \pH (here overwritten with yyy.yyy.yyy.yyy). The IP and MAC address of
-the radio are also given in the \pH main window title bar, the MAC address is of interest since the radio-specific
+For diagnostic purposes, you also see the MAC address of the radio, its IP address (in the
+example shown, 192.168.8.10) and the
+IP address of the computer running \pH (here 192.168.8.1, this is the IP address of the network
+interface that actually does the connection with the radio).
+The radio's IP and MAC address are also displayed in the \pH main window title bar,
+the MAC address is of interest since the radio-specific
 preferences are stored in a file whose name derived from the MAC address of the radio, replacing
-the colons by dashes and appending ,,.props''.
+the colons by dashes and appending ,,.props''. This means you can have separate sets of settings
+for different radios.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter[Radio-related menus]{The Main Menu: Radio-related menus}
@@ -1640,24 +1614,18 @@ not fit into a \pH window smaller than that.
 of the two receivers (if two receivers are used) side-by-side instead of on top
 of each other.
 
-\rett{Display Zoom/Pan} This option can be used to show/hide the Zoom and
-Pan slider below the RX or TX panel. If you do not use Zoom, or control
-Zoom via an external GPIO or MIDI controller, this can be used to save
-some vertical space.
-
-\rett{Display Sliders} This option can be used to show/hide the slider area
-(that is where the AF gain and the Drive slider resides).
-Hiding them makes little sense unless you
-have a GPIO or MIDI controller. For temporarily gaining vertical space,
+\rett{Slider Rows}. This spin-button lets you choose how many rows of sliders
+(0--3) are shown. Choosing zero rows means that no sliders are shown at all.
+This however, makes little sense unless you
+operate an external controller that has knows with which you can
+change, for example the RX audio volume or the AGC gain.
+For temporarily gaining vertical space,
 use the \rett{Hide} button at the top right of the main window.
 
-\rett{Display Toolbar} This option can be used to show/hide the toolbar. This
-only makes sense of using an external GPIO or MIDI controller. Note that
-when using the \pH Controller1, the toolbar should remain on display since
-this then serves as an indication which function is associated with each of
-the 8 push buttons immediately below the screen.
+\rett{Toolbar Rows}. This spin-button lets you choose how many toolbars
+(0--3) are shown. Choosing zero rows means that no toolbar is shown at all.
 
-\rett{Display Warnings} There are several non-fatal conditions that can
+\rett{Display Warnings}. There are several non-fatal conditions that can
 be displayed either on the pan-adapter of the first receiver or, in non-duplex
 mode, on the TX pan-adapter. Normally these warnings are no reason to worry
 if you see them  only occasionally. These conditions are
@@ -2189,6 +2157,28 @@ if \pH is running two receivers, you can open the \bltt{RX} menu for both receiv
 right-clicked. Note secondary clicks are usually not possible with a touch screen.
 The menu is shown in Fig. \ref{fig:RXMenu}.
 
+\rett{Local Audio Output:} If checked, the audio from this radio is sent to a local
+sound card (or virtual audio cable). The sound card itself is selected in the
+pop-down menu below this check box. One line further below, one can select between
+\texttt{Stereo}, \texttt{Left} and \texttt{Right}, and select whether the RX
+audio should be sent to both channels or to the left or right channel only.
+
+In the example shown, checking the Local Audio box would send the RX audio
+samples to the HDMI monitor attached to the RaspPi, but one could equally
+well choose the headphone output or a virtual cable, if one wants to use
+digital modes.
+
+If running two receivers, it depends on the audio output module whether
+it is possible to use the \textit{same} audio output device as local audio output
+for both receivers. With PulseAudio (and PipeWire), this is possible which gives you an additional
+bonus:
+Choose the same output device for RX1 and RX2 and activate only
+the left channel for the first and only the right channel for the second receiver.
+With this setup,
+one gets the audio output of the first receiver on the left ear and the audio output of
+the second receiver on the right ear. This can be very convenient for hunting DX in split mode,
+because one then hears the hounds and the fox on different ears.
+
 \rett{Sample Rate} This box is only shown for radios running Protocol-2, since only there the
 receivers can have an individual sample rate. For radios running Protocol-1 or radios accessed
 through the SoapySDR library, the sample rate is a global quantity that is modified
@@ -2211,9 +2201,10 @@ the ADC converter in some HPSDR boards.
 the ADC converter in some HPSDR boards.
 
 \textbf{Note:} On radios where the ,,dither'' and ,,random'' bits have no effect, these
-two check boxes do not appear. Examples for such radios are RedPitaya based radios,
-the HermesLite-II or the RadioBerry, or all radios connected through the SoapySDR
-library.
+two check boxes do not appear. Examples for such radios are RedPitaya based radios
+or the RadioBerry, or all radios connected through the SoapySDR
+library. For the HermesLite-II, there also is no such function, but these bits
+are hi-jacked for some custom functions, so they appear here in the menu.
 
 \rett{Preamp}. This checkbox is not shown in Fig. \ref{fig:RXMenu}, it only occurs
 for some legacy HPSDR boards which had a switch-able RX preamp.
@@ -2246,27 +2237,9 @@ features a filter board (Anan-7000/8000 and G2 radios).
 If checked, the filters in the RF front-end for ADC1
 are by-passed during receive.
 
-\rett{Local Audio Output:} If checked, the audio from this radio is sent to a local
-sound card (or virtual audio cable). The sound card itself is selected in the
-pop-down menu below this check box. One line further below, one can select between
-\texttt{Stereo}, \texttt{Left} and \texttt{Right}, and select whether the RX
-audio should be sent to both channels or to the left or right channel only.
-
-In the example shown, checking the Local Audio box would send the RX audio
-samples to the HDMI monitor attached to the RaspPi, but one could equally
-well choose the headphone output or a virtual cable, if one wants to use
-digital modes.
-
-If running two receivers, it depends on the audio output module whether
-it is possible to use the \textit{same} audio output device as local audio output
-for both receivers. With PulseAudio (and PipeWire), this is possible which gives you an additional
-bonus:
-Choose the same output device for RX1 and RX2 and activate only
-the left channel for the first and only the right channel for the second receiver.
-With this setup,
-one gets the audio output of the first receiver on the left ear and the audio output of
-the second receiver on the right ear. This can be very convenient for hunting DX in split mode,
-because one then hears the hounds and the fox on different ears.
+\rett{Squelch}. This check-box lets you enable or disable squelch for this receiver, and the slider
+to the right lets you adjust the squelch level. Use these functions if you want to use squelch
+and do not have the squelch slider on display.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The \texttt{Filter} menu}
@@ -2818,6 +2791,7 @@ This spin-box is inactive is the \rett{SWR-dependent Sidetone with TUNE} is not 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \section{The \texttt{PA} Menu}
+\label{sec:PAmenu}
 
 In the \bltt{PA} menu, you can adjust the output level of your HPSDR board
 to the PA being used, and you can establish a calibration of the
@@ -3570,6 +3544,7 @@ that a positioned below the screen, are bound to the eight toolbar buttons on th
 Therefore, there is no "Switches" menu for this controller, and the switches are implicitly
 configured via the Toolbar menu.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[ht]
 \center
 \includegraphics[scale=0.45]{ToolbarMenu1.png}
@@ -3649,6 +3624,7 @@ function, one is stuck and can no longer cycle through the function layers.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The \texttt{Sliders} Menu}
+\label{sec:SlidersMenu}
 
 \begin{figure}[ht!]
 \center
@@ -3659,27 +3635,29 @@ function, one is stuck and can no longer cycle through the function layers.
 
 The sliders lets you assign function to the nine sliders in the 3x3 Sliders area. It does not matter
 how many slider rows (0 to 3) are actually shown, you can assign a function to all nine sliders.
-The functions you can assign are (in the order they appear in the combo-boxes)
+The functions you can assign are (in the order they appear in the combo-boxes). Since the space
+on screen is scarce for labelling the sliders, the acronym used there is also given in parentheses.
+
 \begin{itemize}
 \item[\rett{None}]{No function is assigned to this slider (and it will thus not appear)}
-\item[\rett{AF Gain}]{AF volume of the active receiver}
+\item[\rett{AF Gain}]{(AF) AF volume of the active receiver}
 \item[\rett{AGC Gain}]{AGC gain of the active receiver}
-\item[\rett{Atten}]{RF front-end attenuation for the ADC feeding the active receiver. Note if the ,,other''
+\item[\rett{Atten}]{(ATT) RF front-end attenuation for the ADC feeding the active receiver. Note if the ,,other''
 receiver gets the signal from the same ADC, it is also affected. If the radio does not have a step attenuator
 in the RF front end, the slider is not shown.} 
-\item[\rett{Cmpr Lvl}]{Compression level of the transmitter. Together with this slider, there appears a
+\item[\rett{Cmpr Lvl}]{(Cmpr) Compression level of the transmitter. Together with this slider, there appears a
 check-box that enables or disables the TX compressor.}
-\item[\rett{CW Speed}]{CW speed (in wpm) of the internal or the radio keyer.}
-\item[\rett{LineinGain}]{The gain of the Line-In jack of the radio (if available).}
-\item[\rett{Mic Gain}]{The gain applied to the AF signal at the beginning of the TX chain.}
-\item[\rett{PanZoom}]{The PAN value of the ZOOM function. This slider has no effect when ZOOM=1.}
-\item[\rett{RF Gain}]{RF front-end gain for the ADC feeding the active receiver. Note if the ,,other''
+\item[\rett{CW Speed}]{(WPM) CW speed (in wpm) of the internal or the radio keyer.}
+\item[\rett{LineinGain}]{(Line) The gain of the Line-In jack of the radio (if available).}
+\item[\rett{Mic Gain}]{(Mic) The gain applied to the AF signal at the beginning of the TX chain.}
+\item[\rett{PanZoom}]{(Pan) The PAN value of the ZOOM function. This slider has no effect when ZOOM=1.}
+\item[\rett{RF Gain}]{(RF) RF front-end gain for the ADC feeding the active receiver. Note if the ,,other''
 receiver gets the signal from the same ADC, it is also affected. If the radio does not have a programmeable
 gain in the RF front end, the slider is not shown.}
-\item[\rett{Squelch}]{The squelch level applied to the audio from the active receiver. Together with this
+\item[\rett{Squelch}]{(Sqlch) The squelch level applied to the audio from the active receiver. Together with this
 sliders, there appears a check-box that enables or disables squelch.}
-\item[\rett{TX Drive}]{The TX drive.}
-\item[\rett{Zoom}]{The ZOOM value for the panadapter of the active receiver.}
+\item[\rett{TX Drive}]{(TX Drv) The TX drive.}
+\item[\rett{Zoom}]{(Zoom) The ZOOM value for the panadapter of the active receiver.}
 \end{itemize}
 
 For example, a CW operator usually does not need to adjust mic gain, a TX compressor, or a Squelch. But
@@ -8655,8 +8633,8 @@ On my computer the output is
 
 You can ignore the  lines starting with \texttt{remotes}. The other lines display the names of all
 existing branches, and the line starting with a star indicates the branch you are currently on.
-The branches \texttt{RELEASE-2.2-DL1YCF} and {Rel-2.3} are meanwhile outdated, the actual release branch
-at the time of  this writing is \texttt{Rel-2.4}.
+Older branches (\texttt{RELEASE-2.2-DL1YCF}, \texttt{Rel-2.3}) are meanwhile outdated, the previous
+release branch is names \texttt{Rel-2.4} and the current one, at the time of this writing, is \texttt{Rel-2.5}.
 
 \medskip
 \textbf{Which version do I have?}
@@ -8676,11 +8654,11 @@ Your branch is up to date with 'origin/master'.
 \end{verbatim}
 
 then you are using the ``current version'' (that is, the master branch). If you are using a release
-version, then the output reads (for the v2.4 release)
+version, then the output reads (for the v2.5 release)
 
 \begin{verbatim}
-On branch Rel-2.4
-Your branch is up to date with 'origin/Rel-2.4'.
+On branch Rel-2.5
+Your branch is up to date with 'origin/Rel-2.5'.
 \end{verbatim}
 
 which tells you you are on the Rel-2.4 branch. Note that if you committed local modifications,
@@ -8724,10 +8702,10 @@ Note the command \texttt{libinstall.sh} will take some time and is not necessary
 \textbf{Switching to a release branch}
 
 No matter whether your starting point is the master branch or another release branch, the following
-commmands will bring you to  the v2.4 release branch:
+commmands will bring you to  the v2.5 release branch:
 
 \grtt{cd \$HOME/pihpsdr} \\
-\grtt{git checkout Rel-2.4} \\
+\grtt{git checkout Rel-2.5} \\
 \grtt{git pull} \\
 \grtt{make clean} \\
 \grtt{MacOS/libinstall.sh} \\
