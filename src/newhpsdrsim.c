@@ -1836,9 +1836,10 @@ void *mic_thread(void *data) {
     *p++ = (seqnum >>  0) & 0xFF;
     seqnum++;
     // 64 samples with 48000 kHz, makes 1333333 nsec
-    delay.tv_nsec += 1333333;
 
-    if (speed == 1) {
+    if (speed == 0) {
+      delay.tv_nsec += 1333333;
+    } else if (speed == 1) {
       delay.tv_nsec += 1320000;
     } else if (speed == -1) {
       delay.tv_nsec += 1346666;
