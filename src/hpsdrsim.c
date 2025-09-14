@@ -202,6 +202,7 @@ static double  last_q_sample = 0.0;
 static int  txptr = -1;
 static int  oldnew = 3;  // 1: only P1, 2: only P2, 3: P1 and P2,
 static int  anan10e = 0; // HERMES with anan10e set behaves like METIS
+int  speed = 0;   // 0: nominal speed, -1: radio is 1% too slow, +1: radio is 1% too fast
 
 static double txlevel;
 
@@ -313,6 +314,10 @@ int main(int argc, char *argv[]) {
 
     if (!strncmp(argv[i], "-anan10e",      8))  {anan10e = 1; continue;}
 
+    if (!strncmp(argv[i], "-fast",         5))  {speed = 1; continue;}
+
+    if (!strncmp(argv[i], "-slow",         5))  {speed = -1; continue;}
+
     if (!strncmp(argv[i], "-nb",           3))  {
       noiseblank = 1;
 
@@ -330,7 +335,7 @@ int main(int argc, char *argv[]) {
     t_print("Unknown option: %s\n", argv[i]);
     t_print("Valid options are: -atlas | -metis  | -hermes     | -griffin     | -angelia |\n");
     t_print("                   -orion | -orion2 | -hermeslite | -hermeslite2 | -c25     |\n");
-    t_print("                   -diversity | -P1 | -P2                                   |\n");
+    t_print("                   -diversity | -P1 | -P2         | -fast        | -slow    |\n");
     t_print("                   -nb <num> <width>\n");
     exit(8);
   }
@@ -425,6 +430,11 @@ int main(int argc, char *argv[]) {
     break;
   }
 
+  if (speed == 1) {
+    t_print("DEVICE is 1%% too fast\n");
+  } else if (speed == -1) {
+    t_print("DEVICE is 1%% too slow\n");
+  }
   //
   //      Initialise the data in the sample tables
   //
@@ -1582,6 +1592,13 @@ void *handler_ep6(void *arg) {
       n = 504 / size;  // number of samples per 512-byte-block
       // Time (in nanosecs) to "collect" the samples sent in one sendmsg
       wait = (2 * n * 1000000L) / (48 << rate);
+
+      if (speed == 1) {
+        wait = (wait * 99) / 100;
+      } else if (speed == -1) {
+        wait = (wait * 101) / 100;
+      }
+
     } else {
       // this happens until the first packets are received from the radio.
       // however, we must keep things flowing.

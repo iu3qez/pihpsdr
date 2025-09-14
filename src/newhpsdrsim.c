@@ -100,7 +100,7 @@ static int dac = -1;
 static int cwmode = -1;
 static int sidelevel = -1;
 static int sidefreq = -1;
-static int speed = -1;
+static int cwspeed = -1;
 static int weight = -1;
 static int hang = -1;
 static int delay = -1;
@@ -623,9 +623,9 @@ void *duc_specific_thread(void *data) {
       t_print("TX: CW sidetone freq: %d\n", sidefreq);
     }
 
-    if (speed != buffer[9]) {
-      speed = buffer[9];
-      t_print("TX: CW keyer speed: %d wpm\n", speed);
+    if (cwspeed != buffer[9]) {
+      cwspeed = buffer[9];
+      t_print("TX: CW keyer speed: %d wpm\n", cwspeed);
     }
 
     if (weight != buffer[10]) {
@@ -1180,6 +1180,12 @@ void *rx_thread(void *data) {
       size = 238;
       wait = 238000000L / rxrate[myddc]; // time for these samples in nano-secs
       syncadc = 0;
+    }
+
+    if (speed == 1) {
+      wait = (wait * 99) / 100;
+    } else if (speed == -1) {
+      wait = (wait * 101) / 100;
     }
 
     //
@@ -1831,6 +1837,12 @@ void *mic_thread(void *data) {
     seqnum++;
     // 64 samples with 48000 kHz, makes 1333333 nsec
     delay.tv_nsec += 1333333;
+
+    if (speed == 1) {
+      delay.tv_nsec += 1320000;
+    } else if (speed == -1) {
+      delay.tv_nsec += 1346666;
+    }
 
     while (delay.tv_nsec >= 1000000000) {
       delay.tv_nsec -= 1000000000;
