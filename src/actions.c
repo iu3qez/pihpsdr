@@ -1753,7 +1753,7 @@ int process_action(void *data) {
   case VOX:
     if (a->mode == PRESSED) {
       vox_enabled = !vox_enabled;
-      g_idle_add(ext_vfo_update, NULL);
+      g_idle_add(sliders_vox, NULL);
     }
 
     break;
@@ -1761,7 +1761,7 @@ int process_action(void *data) {
   case VOXLEVEL:
     value = KnobOrWheel(a, vox_threshold, 0.0, 1.0, 0.01);
     vox_threshold = value;
-    queue_popup_slider(VOXLEVEL, -1, 0.0, 1.0, 0.01, vox_threshold, "VOX LVL");
+    g_idle_add(sliders_vox, NULL);
     break;
 
   case WATERFALL_HIGH:

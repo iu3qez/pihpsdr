@@ -461,7 +461,7 @@ vertically (\bltt{Display} menu).}
 \item{Assign functions to toolbar buttons (\bltt{Toolbar} menu).}
 \end{itemize}
 
-In summary, \pH now allows the user to adjust the layout of the window to the needs of the user. 
+In summary, \pH now allows the user to adjust the layout of the window to the needs of the user.
 For example, CW operators
 may not need a slider to adjust Mic gain or TX compression but will want a slider to adjust the CW
 speed. FM operators may need a Squelch slider, but for SSB operators a slider to change the
@@ -611,7 +611,7 @@ Now consider an unmodulated carrier, e.g. a signal from a (calibrated)
 signal source. The S-meter should show the correct signal level, but the question is how tall the peak
 in the panadapter should be. Theoretically, such a peak is infinitely narrow and then must be infinitely high, since
 the signal level (in dBm) is encoded in the \textit{area} below the peak rather than in its height.
-In practice, the signal has a natural (minimum) width, depending on the 
+In practice, the signal has a natural (minimum) width, depending on the
 Fourier transformation used to generate the spectrum. The spectrum in the \pH panadapter is normalised
 to this natural width, such that the height of the peak (roughly) matches the signal level.
 Because of this normalisation, the height of the peak should only weakly depend on the width and
@@ -712,6 +712,14 @@ spectrum is re-initialised. So it may take a while until enough
 data has been collected to be able to display the first
 spectrum after re-initialisation. This is especially true
 for small RX sample rates and large ZOOM values.
+
+We will only shortly mention the other functions that can be assigned to
+sliders. For RX, you can adjust the AF gain, the AGC gain, the RF front
+end attenuation or gain, or the Squelch level. For TX, you can adjust
+the TX Drive (RF output power), the TX compressor, the Mic and Line-In
+gain, the VOX threshold and the CW speed (see Sec. \ref{sec:SlidersMenu}).
+Together with the sliders for TX compression, Squelch and VOX, there is
+a small check-box to enable or disable that function.
 
 \textbf{Pop-up sliders}
 
@@ -3644,7 +3652,7 @@ on screen is scarce for labelling the sliders, the acronym used there is also gi
 \item[\rett{AGC Gain}]{AGC gain of the active receiver}
 \item[\rett{Atten}]{(ATT) RF front-end attenuation for the ADC feeding the active receiver. Note if the ,,other''
 receiver gets the signal from the same ADC, it is also affected. If the radio does not have a step attenuator
-in the RF front end, the slider is not shown.} 
+in the RF front end, the slider is not shown.}
 \item[\rett{Cmpr Lvl}]{(Cmpr) Compression level of the transmitter. Together with this slider, there appears a
 check-box that enables or disables the TX compressor.}
 \item[\rett{CW Speed}]{(WPM) CW speed (in wpm) of the internal or the radio keyer.}
@@ -3655,17 +3663,21 @@ check-box that enables or disables the TX compressor.}
 receiver gets the signal from the same ADC, it is also affected. If the radio does not have a programmeable
 gain in the RF front end, the slider is not shown.}
 \item[\rett{Squelch}]{(Sqlch) The squelch level applied to the audio from the active receiver. Together with this
-sliders, there appears a check-box that enables or disables squelch.}
+slider, there appears a check-box that enables or disables squelch.}
 \item[\rett{TX Drive}]{(TX Drv) The TX drive.}
+\item[\rett{VOX Level}]{(VOX) The VOX threshold. Together with this slider, there appears a check-box that enables or disables VOX.}
 \item[\rett{Zoom}]{(Zoom) The ZOOM value for the panadapter of the active receiver.}
 \end{itemize}
 
-For example, a CW operator usually does not need to adjust mic gain, a TX compressor, or a Squelch. But
+For example, a CW operator usually does not need to adjust the Mic gain, the TX compressor, the Squelch
+level or the VOX threshold. But
 this operator may find it convenient to have a slider at hand that adjusts the CW speed. With an
 individually configured Slider area, it should be possible to have only two rows of sliders on display
 in most situations. It is possible to assign the same function to more than one slider, but a given
 function will only be assigned to one slider (the first one if going throught the sliders row-wise).
 So in case of a duplicate assignment, the second slider position will just be empty.
+Note that RF gain and Attenuation are mutually exclusive, since a given radio either has a programmable
+RF gain (HermesLite-II, RadioBerry, SoapySDR radios) or a programmable attenuator (most HPSDR radios).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The \texttt{CAT/TCI} Menu}
 

@@ -84,13 +84,18 @@ static gulong drive_signal_id = 0;
 
 static GtkWidget *squelch_scale;
 static gulong squelch_signal_id = 0;
-static GtkWidget *squelch_enable;
+static GtkWidget *squelch_enable_b;
 static gulong squelch_enable_signal_id = 0;
 
 static GtkWidget *cmpr_scale;
 static gulong cmpr_signal_id = 0;
-static GtkWidget *cmpr_enable;
+static GtkWidget *cmpr_enable_b;
 static gulong cmpr_enable_signal_id = 0;
+
+static GtkWidget *vox_scale;
+static gulong vox_signal_id = 0;
+static GtkWidget *vox_enable_b;
+static gulong vox_enable_signal_id = 0;
 
 static GtkWidget *zoom_scale;
 static gulong zoom_signal_id;
@@ -163,6 +168,13 @@ static void squelch_value_changed_cb(GtkWidget *widget, gpointer data) {
   radio_set_squelch(active_receiver->id, value);
 }
 
+static void vox_value_changed_cb(GtkWidget *widget, gpointer data) {
+  if (can_transmit) {
+    vox_threshold = gtk_range_get_value(GTK_RANGE(widget));
+  }
+  g_idle_add(ext_vfo_update, NULL);
+}
+
 static void cmpr_value_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     transmitter->compressor_level = gtk_range_get_value(GTK_RANGE(widget));
@@ -174,6 +186,13 @@ static void cmpr_value_changed_cb(GtkWidget *widget, gpointer data) {
 static void squelch_enable_cb(GtkWidget *widget, gpointer data) {
   int val = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   radio_set_squelch_enable(active_receiver->id, val);
+}
+
+static void vox_enable_cb(GtkWidget *widget, gpointer data) {
+  if (can_transmit) {
+    vox_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+  }
+  g_idle_add(ext_vfo_update, NULL);
 }
 
 static void cmpr_enable_cb(GtkWidget *widget, gpointer data) {
@@ -718,9 +737,9 @@ int sliders_squelch(gpointer data) {
     g_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
     gtk_range_set_value (GTK_RANGE(squelch_scale), rx->squelch);
     g_signal_handler_unblock(G_OBJECT(squelch_scale), squelch_signal_id);
-    g_signal_handler_block(G_OBJECT(squelch_enable), squelch_enable_signal_id);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable), rx->squelch_enable);
-    g_signal_handler_unblock(G_OBJECT(squelch_enable), squelch_enable_signal_id);
+    g_signal_handler_block(G_OBJECT(squelch_enable_b), squelch_enable_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable_b), rx->squelch_enable);
+    g_signal_handler_unblock(G_OBJECT(squelch_enable_b), squelch_enable_signal_id);
   } else if (val < 100) {
     show_popup_slider(SQUELCH, id + 1, 0.0, 100.0, 1.0, rx->squelch, "Squelch RX");
   }
@@ -743,6 +762,24 @@ int sliders_wpm(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
+int sliders_vox(gpointer data) {
+  //
+  // This ONLY moves the slider and updates the checkbutton
+  // No popup-slider since settings are displayed in VFO bar,
+  //
+  if (can_transmit && vox_scale) {
+    g_signal_handler_block(G_OBJECT(vox_scale), vox_signal_id);
+    gtk_range_set_value (GTK_RANGE(vox_scale), vox_threshold);
+    g_signal_handler_unblock(G_OBJECT(vox_scale), vox_signal_id);
+    g_signal_handler_block(G_OBJECT(vox_enable_b), vox_enable_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vox_enable_b), vox_enabled);
+    g_signal_handler_unblock(G_OBJECT(vox_enable_b), vox_enable_signal_id);
+  }
+ 
+  g_idle_add(ext_vfo_update, NULL);
+  return G_SOURCE_REMOVE;
+}
+
 int sliders_cmpr(gpointer data) {
   //
   // This ONLY moves the slider and updates the checkbutton
@@ -752,9 +789,9 @@ int sliders_cmpr(gpointer data) {
     g_signal_handler_block(G_OBJECT(cmpr_scale), cmpr_signal_id);
     gtk_range_set_value (GTK_RANGE(cmpr_scale), transmitter->compressor_level);
     g_signal_handler_unblock(G_OBJECT(cmpr_scale), cmpr_signal_id);
-    g_signal_handler_block(G_OBJECT(cmpr_enable), cmpr_enable_signal_id);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cmpr_enable), transmitter->compressor);
-    g_signal_handler_unblock(G_OBJECT(cmpr_enable), cmpr_enable_signal_id);
+    g_signal_handler_block(G_OBJECT(cmpr_enable_b), cmpr_enable_signal_id);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cmpr_enable_b), transmitter->compressor);
+    g_signal_handler_unblock(G_OBJECT(cmpr_enable_b), cmpr_enable_signal_id);
   }
 
   g_idle_add(ext_vfo_update, NULL);
@@ -829,6 +866,7 @@ void sliders_destroy() {
   drive_scale = NULL;
   squelch_scale = NULL;
   cmpr_scale = NULL;
+  vox_scale = NULL;
   zoom_scale = NULL;
   pan_scale = NULL;
   speed_scale = NULL;
@@ -1038,12 +1076,12 @@ void sliders_create(int width, int height, int rows) {
           gtk_grid_attach(GTK_GRID(sliders_grid), squelch_scale, pos + twidth + 1, i, swidth - 1, 1);
           squelch_signal_id = g_signal_connect(G_OBJECT(squelch_scale), "value_changed",
                                                G_CALLBACK(squelch_value_changed_cb), NULL);
-          squelch_enable = gtk_check_button_new();
-          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable),
+          squelch_enable_b = gtk_check_button_new();
+          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable_b),
                                                          active_receiver->squelch_enable);
-          gtk_grid_attach(GTK_GRID(sliders_grid), squelch_enable, pos + twidth, i, 1, 1);
-          gtk_widget_set_halign(squelch_enable, GTK_ALIGN_CENTER);
-          squelch_enable_signal_id = g_signal_connect(squelch_enable, "toggled",
+          gtk_grid_attach(GTK_GRID(sliders_grid), squelch_enable_b, pos + twidth, i, 1, 1);
+          gtk_widget_set_halign(squelch_enable_b, GTK_ALIGN_CENTER);
+          squelch_enable_signal_id = g_signal_connect(squelch_enable_b, "toggled",
                                                       G_CALLBACK(squelch_enable_cb), NULL);
         }
         break;
@@ -1080,6 +1118,29 @@ void sliders_create(int width, int height, int rows) {
                                              G_CALLBACK(drive_value_changed_cb), NULL);
         }
         break;
+      case VOXLEVEL:
+        if (can_transmit && vox_scale == NULL) {
+          label = gtk_label_new("VOX");
+          gtk_widget_set_name(label, csslabel);
+          gtk_widget_set_halign(label, GTK_ALIGN_END);
+          gtk_grid_attach(GTK_GRID(sliders_grid), label, pos, i, twidth, 1);
+          vox_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 1.0, 0.01);
+          gtk_widget_set_size_request(vox_scale, 0, height);
+          gtk_widget_set_valign(vox_scale, GTK_ALIGN_CENTER);
+          gtk_range_set_increments (GTK_RANGE(vox_scale), 0.01, 0.01);
+          gtk_range_set_value (GTK_RANGE(vox_scale), vox_threshold);
+          gtk_grid_attach(GTK_GRID(sliders_grid), vox_scale, pos + twidth + 1, i, swidth - 1, 1);
+          vox_signal_id = g_signal_connect(G_OBJECT(vox_scale), "value_changed",
+                                           G_CALLBACK(vox_value_changed_cb), NULL);
+          vox_enable_b = gtk_check_button_new();
+          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vox_enable_b), vox_enabled);
+          gtk_grid_attach(GTK_GRID(sliders_grid), vox_enable_b, pos + twidth, i, 1, 1);
+          gtk_widget_set_halign(vox_enable_b, GTK_ALIGN_CENTER);
+          vox_enable_signal_id = g_signal_connect(vox_enable_b, "toggled",
+                                                 G_CALLBACK(vox_enable_cb), NULL);
+        }
+        break;
+
       case COMPRESSION:
         if (can_transmit && cmpr_scale == NULL) {
           label = gtk_label_new("Cmpr");
@@ -1094,11 +1155,11 @@ void sliders_create(int width, int height, int rows) {
           gtk_grid_attach(GTK_GRID(sliders_grid), cmpr_scale, pos + twidth + 1, i, swidth - 1, 1);
           cmpr_signal_id = g_signal_connect(G_OBJECT(cmpr_scale), "value_changed",
                                             G_CALLBACK(cmpr_value_changed_cb), NULL);
-          cmpr_enable = gtk_check_button_new();
-          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cmpr_enable), transmitter->compressor);
-          gtk_grid_attach(GTK_GRID(sliders_grid), cmpr_enable, pos + twidth, i, 1, 1);
-          gtk_widget_set_halign(cmpr_enable, GTK_ALIGN_CENTER);
-          cmpr_enable_signal_id = g_signal_connect(cmpr_enable, "toggled",
+          cmpr_enable_b = gtk_check_button_new();
+          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cmpr_enable_b), transmitter->compressor);
+          gtk_grid_attach(GTK_GRID(sliders_grid), cmpr_enable_b, pos + twidth, i, 1, 1);
+          gtk_widget_set_halign(cmpr_enable_b, GTK_ALIGN_CENTER);
+          cmpr_enable_signal_id = g_signal_connect(cmpr_enable_b, "toggled",
                                                    G_CALLBACK(cmpr_enable_cb), NULL);
         }
         break;

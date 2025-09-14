@@ -25,6 +25,7 @@
 #include "message.h"
 #include "new_menu.h"
 #include "radio.h"
+#include "sliders.h"
 #include "transmitter.h"
 #include "vfo.h"
 #include "vox.h"
@@ -105,7 +106,7 @@ static gboolean close_cb () {
 
 static gboolean enable_cb (GtkWidget *widget, GdkEventButton *event, gpointer data) {
   vox_enabled = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  g_idle_add(ext_vfo_update, GINT_TO_POINTER(0));
+  g_idle_add(sliders_vox, NULL);
   return TRUE;
 }
 
@@ -121,6 +122,7 @@ static void destroy_cb(GtkWidget *widget, gpointer data) {
 
 static void vox_value_changed_cb(GtkWidget *widget, gpointer data) {
   vox_threshold = gtk_range_get_value(GTK_RANGE(widget)) / 1000.0;
+  g_idle_add(sliders_vox, NULL);
 }
 
 static void vox_hang_value_changed_cb(GtkWidget *widget, gpointer data) {

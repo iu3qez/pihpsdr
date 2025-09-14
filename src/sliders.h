@@ -56,6 +56,7 @@ extern int sliders_attenuation(gpointer data);
 extern int sliders_c25_att(gpointer data);
 extern int sliders_squelch(gpointer data);
 extern int sliders_cmpr(gpointer data);
+extern int sliders_vox(gpointer data);
 extern int sliders_mic_gain(gpointer data);
 extern int sliders_linein_gain(gpointer data);
 extern int sliders_drive(gpointer data);
