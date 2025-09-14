@@ -144,6 +144,10 @@ EXTERN uint8_t radio_io1, radio_io2, radio_io3, radio_io4;
 EXTERN uint8_t radio_io5, radio_io6, radio_io8;
 
 //
+// Flag for modifying the clock speed of the radio
+//
+EXTERN int speed;
+//
 // message printing
 //
 #include <stdarg.h>
