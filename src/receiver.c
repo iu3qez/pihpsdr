@@ -1542,7 +1542,7 @@ void rx_set_analyzer(RECEIVER *rx) {
       afft_size = 32768;
     } else if (afft_size <= 65536) {
       afft_size = 65536;
-    } else if (afft_size <= 131027) {
+    } else if (afft_size <= 131072) {
       afft_size = 131072;
     } else {
       afft_size = 262144;
