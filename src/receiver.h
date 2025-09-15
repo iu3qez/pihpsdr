@@ -210,6 +210,8 @@ typedef struct _receiver {
   float *local_audio_buffer;
   int local_audio_buffer_offset;
 #endif
+  int cwaudio;   // detect RX/TX transitions in CW
+  int cwcount;   // for sample insertion and deletion
 
   GMutex local_audio_mutex;
 

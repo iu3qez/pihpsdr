@@ -578,7 +578,6 @@ static gpointer rigctl_cw_thread(gpointer data) {
     // Take one character from the ring buffer
     //
     cwchar = cw_buf[cw_buf_out];
-    t_print("CWCHAR=%c\n", cwchar);
     i = cw_buf_out + 1;
 
     if (i >= CW_BUF_SIZE) { i = 0; }

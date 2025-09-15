@@ -105,8 +105,6 @@ static          float  *mic_ring_buffer = NULL;
 static volatile int     mic_ring_outpt = 0;
 static volatile int     mic_ring_inpt = 0;
 
-static int cwmode = 0;  // used to detect TRX transitions in CW
-
 //
 // AUDIO_GET_CARDS
 //
@@ -506,6 +504,8 @@ int audio_open_output(RECEIVER *rx) {
     return -1;
   }
 
+  rx->cwaudio = 0;
+  rx->cwcount = 0;
   //
   // Finished!
   //
@@ -607,7 +607,7 @@ int audio_write (RECEIVER *rx, float left, float right) {
   }
 
   g_mutex_lock(&rx->local_audio_mutex);
-  cwmode = 0;
+  rx->cwaudio = 0;
 
   if (rx->playstream != NULL && buffer != NULL) {
     int avail = rx->local_audio_buffer_inpt - rx->local_audio_buffer_outpt;
@@ -698,14 +698,13 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   g_mutex_lock(&rx->local_audio_mutex);
 
   if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
-    static int count = 0;
     int oldpt, newpt;
     int avail = rx->local_audio_buffer_inpt - rx->local_audio_buffer_outpt;
     int adjust = 0;
 
     if (avail < 0) { avail += MY_RING_BUFFER_SIZE; }
 
-    if (cwmode == 0) {
+    if (rx->cwaudio == 0) {
       //
       // First time producing CW audio after RX/TX transition:
       // discard audio buffer and insert *a little bit of* silence
@@ -717,14 +716,14 @@ int cw_audio_write(RECEIVER *rx, float sample) {
       MEMORY_BARRIER;
       rx->local_audio_buffer_outpt = 0;
       avail = MY_CW_LOW_WATER;
-      count = 0;
-      cwmode = 1;
+      rx->cwcount = 0;
+      rx->cwaudio = 1;
     }
 
-    if (sample != 0.0) { count = 0; }
+    if (sample != 0.0) { rx->cwcount = 0; }
 
-    if (++count >= 16) {
-      count = 0;
+    if (++rx->cwcount >= 16) {
+      rx->cwcount = 0;
 
       //
       // We arrive here if we have seen 16 zero samples in a row.
