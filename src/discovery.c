@@ -323,7 +323,7 @@ static void host_entry_cb(GtkWidget *widget, gpointer data) {
   save_hostlist();
 }
 
-static gboolean connect_cb(GtkWidget *widget, GdkEventButton *event, gpointer user_data) {
+static void connect_cb(GtkWidget *widget, gpointer data) {
   char myhost[256];
   int  myport;
   const char *mypwd;
@@ -344,7 +344,7 @@ static gboolean connect_cb(GtkWidget *widget, GdkEventButton *event, gpointer us
 
   if (*myhost == 0 || myport == 0) {
     g_idle_add(fatal_error, "NOTICE: invalid host:port string.");
-    return TRUE;
+    return;
   }
 
   switch (radio_connect_remote(myhost, myport, mypwd)) {
@@ -378,7 +378,6 @@ static gboolean connect_cb(GtkWidget *widget, GdkEventButton *event, gpointer us
     break;
   }
 
-  return TRUE;
 }
 
 static void host_combo_cb(GtkWidget *widget, gpointer data) {
@@ -907,8 +906,11 @@ static void discovery() {
   } else {
     gtk_entry_set_placeholder_text(GTK_ENTRY(host_pwd), "Server Password");
   }
-  gtk_entry_set_placeholder_text(GTK_ENTRY(host_pwd), "Server Password");
   gtk_grid_attach(GTK_GRID(grid), host_pwd, 2, row, 1, 1);
+  //
+  // "Enter" in the pwd file induces connection
+  //
+  g_signal_connect(host_pwd, "activate", G_CALLBACK(connect_cb), NULL);
   // Create the password visibility toggle button
   GtkWidget *toggle_button = gtk_toggle_button_new_with_label("Show");
   g_signal_connect(toggle_button, "toggled", G_CALLBACK(password_visibility_cb), host_pwd);
