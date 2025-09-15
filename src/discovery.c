@@ -98,7 +98,7 @@ static void print_devices(void) {
     switch (discovered[i].protocol) {
     case ORIGINAL_PROTOCOL:
     case NEW_PROTOCOL:
-      t_print("%s: found protocol=%d device=%d software_version=%d status=%d address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s\n",
+      t_print("%s: found protocol=%d device=%d software_version=%d status=%d address=%s (%02X:%02X:%02X:%02X:%02X:%02X) via %s\n",
               __FUNCTION__,
               discovered[i].protocol,
               discovered[i].device,
@@ -115,7 +115,7 @@ static void print_devices(void) {
       break;
 
     case SOAPYSDR_PROTOCOL:
-      t_print("%s: found protocol=%d driver=%s software_version=%d driver_key=%s hardware_key=%s on %s\n", __FUNCTION__,
+      t_print("%s: found protocol=%d driver=%s software_version=%d driver_key=%s hardware_key=%s via %s\n", __FUNCTION__,
               discovered[i].protocol,
               discovered[i].name,
               discovered[i].software_version,
@@ -611,7 +611,7 @@ static void discovery() {
       discovered[devices].protocol = ORIGINAL_PROTOCOL;
       discovered[devices].device = DEVICE_OZY;
       discovered[devices].software_version = 10;              // we can't know yet so this isn't a real response
-      snprintf(discovered[devices].name, sizeof(discovered[devices].name), "Ozy on USB");
+      snprintf(discovered[devices].name, sizeof(discovered[devices].name), "Ozy via USB");
       discovered[devices].frequency_min = 0.0;
       discovered[devices].frequency_max = 61440000.0;
 
@@ -728,11 +728,11 @@ static void discovery() {
           snprintf(text, sizeof(text), "%s (%s via USB)", d->name,
                    d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2");
         } else if (d->device == NEW_DEVICE_SATURN && strcmp(d->network.interface_name, "XDMA") == 0) {
-          snprintf(text, sizeof(text), "%s (%s v%d) fpga:%x (%s) on /dev/xdma*", d->name,
+          snprintf(text, sizeof(text), "%s (%s v%d) fpga:%x (%s) via /dev/xdma*", d->name,
                    d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2", d->software_version,
                    d->fpga_version, macStr);
         } else {
-          snprintf(text, sizeof(text), "%s (%s %s) %s (%s) on %s: ",
+          snprintf(text, sizeof(text), "%s (%s %s) %s (%s) via %s ",
                    d->name,
                    d->protocol == ORIGINAL_PROTOCOL ? "Protocol 1" : "Protocol 2",
                    version,
@@ -745,7 +745,7 @@ static void discovery() {
 
       case SOAPYSDR_PROTOCOL:
 #ifdef SOAPYSDR
-        snprintf(text, sizeof(text), "%s (Protocol SOAPY_SDR %s) on %s", d->name, d->soapy.version, d->soapy.address);
+        snprintf(text, sizeof(text), "%s (Protocol SOAPY_SDR %s) via %s", d->name, d->soapy.version, d->soapy.address);
 #endif
         break;
 

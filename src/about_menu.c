@@ -105,7 +105,9 @@ void about_menu(GtkWidget *parent) {
       char interface_addr[128];
       char addr[128];
       snprintf(addr, sizeof(addr), "%s", inet_ntoa(radio->network.address.sin_addr));
-      snprintf(interface_addr, sizeof(interface_addr), "%s", inet_ntoa(radio->network.interface_address.sin_addr));
+      snprintf(interface_addr, sizeof(interface_addr), " (%s)", inet_ntoa(radio->network.interface_address.sin_addr));
+
+      if (!strcmp(interface_addr," (0.0.0.0)")) { *interface_addr = 0; }
 
       if (have_saturn_xdma) {
         snprintf(text, sizeof(text), "Device: Saturn (via XDMA), Protocol %s, v%d.%d\n",
@@ -114,7 +116,7 @@ void about_menu(GtkWidget *parent) {
       } else {
         snprintf(text, sizeof(text), "Device: %s, Protocol %s, v%d.%d\n"
                                      "Mac Address: %02X:%02X:%02X:%02X:%02X:%02X\n"
-                                     "IP Address: %s on %s (%s)",
+                                     "IP Address: %s via %s%s",
                  radio->name, radio->protocol == ORIGINAL_PROTOCOL ? "1" : "2",
                  radio->software_version / 10, radio->software_version % 10,
                  radio->network.mac_address[0],
