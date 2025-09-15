@@ -114,6 +114,8 @@ struct _mode_settings {
   double nr4_noise_rescale;
   double nr4_post_threshold;
 #endif
+  int squelch_enable;               // Squelch on/off
+  double squelch;                   // squelch value
   int anf;                          // Automatic notch filter
   int snb;                          // Spectral noise blanker
   int agc;                          // AGC characteristics (slow/medium/fast etc.)

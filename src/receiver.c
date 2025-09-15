@@ -2020,6 +2020,13 @@ void rx_set_squelch(const RECEIVER *rx) {
     return;
   }
 
+  int mode = vfo[rx->id].mode;
+
+  if (rx->id == 0) {
+    mode_settings[mode].squelch_enable = rx->squelch_enable;
+    mode_settings[mode].squelch        = rx->squelch;
+    copy_mode_settings(mode);
+  }
   //
   // This applies the squelch mode stored in rx
   //
@@ -2036,7 +2043,7 @@ void rx_set_squelch(const RECEIVER *rx) {
   // FM    squelch:      1.0 ... 0.01      expon. interpolation
   // Voice squelch:      0.0 ... 0.75      linear interpolation
   //
-  switch (vfo[rx->id].mode) {
+  switch (mode) {
   case modeAM:
   case modeSAM:
 

@@ -625,6 +625,9 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   rx_set_equalizer(rx);
   rx_set_noise(rx);
 
+  radio_set_squelch       (rx->id, mode_settings[m].squelch);
+  radio_set_squelch_enable(rx->id, mode_settings[m].squelch_enable);
+
   //
   // Transmitter-specific settings: TXEQ, CMRP, DEXP, CFC
   // only changed if this VFO controls the TX
