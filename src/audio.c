@@ -505,54 +505,6 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
 
 
   if (rx->playback_handle != NULL && rx->local_audio_buffer != NULL) {
-    if (snd_pcm_delay(rx->playback_handle, &delay) != 0) {
-      delay = 0;
-    }
-
-    if (rx->cwaudio == 1 || delay < 512) {
-      //
-      // This happens when we come here for the first time, or after a
-      // TX/RX transision. We have to fill the output buffer (otherwise
-      // sound will not resume) and can then rewind to half-filling.
-      // (We may also arrive here if the output buffer is nearly drained)
-      //
-      //
-      void *silence = NULL;
-      size_t len;
-      int num = (out_buflen - delay);
-
-      switch (rx->local_audio_format) {
-      case SND_PCM_FORMAT_S16_LE:
-        silence = g_new(int16_t, 2 * num);
-        len = 2 * num * sizeof(int16_t);
-        break;
-
-      case SND_PCM_FORMAT_S32_LE:
-        silence = g_new(int32_t, 2 * num);
-        len = 2 * num * sizeof(int32_t);
-        break;
-
-      case SND_PCM_FORMAT_FLOAT_LE:
-        silence = g_new(float, 2 * num);
-        len = 2 * num * sizeof(float);
-        break;
-
-      default:
-        t_print("%s: CATASTROPHIC ERROR: unknown sound format\n", __FUNCTION__);
-        silence = NULL;
-        len = 0;
-        break;
-      }
-
-      if (silence) {
-        memset(silence, 0, len);
-        snd_pcm_writei (rx->playback_handle, silence, num);
-        snd_pcm_rewind (rx->playback_handle, out_buflen / 2);
-        g_free(silence);
-      }
-
-      rx->cwaudio = 0;
-    }
 
     switch (rx->local_audio_format) {
     case SND_PCM_FORMAT_S16_LE: {
@@ -584,7 +536,58 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
     rx->local_audio_buffer_offset++;
 
     if (rx->local_audio_buffer_offset >= out_buffer_size) {
-      long rc;
+      snd_pcm_sframes_t rc;
+
+      if (snd_pcm_delay(rx->playback_handle, &delay) != 0) {
+        delay = 0;
+      }
+
+      if (rx->cwaudio == 1 || delay < 512) {
+        //
+        // This happens when we come here for the first time, or after a
+        // TX/RX transision. We have to fill the output buffer (otherwise
+        // sound will not resume) and can then rewind to half-filling.
+        // (We may also arrive here if the output buffer is nearly drained)
+        //
+        //
+        void *silence = NULL;
+        size_t len;
+        int num = (out_buflen - delay);
+
+        switch (rx->local_audio_format) {
+        case SND_PCM_FORMAT_S16_LE:
+          silence = g_new(int16_t, 2 * num);
+          len = 2 * num * sizeof(int16_t);
+          break;
+
+        case SND_PCM_FORMAT_S32_LE:
+          silence = g_new(int32_t, 2 * num);
+          len = 2 * num * sizeof(int32_t);
+          break;
+
+        case SND_PCM_FORMAT_FLOAT_LE:
+          silence = g_new(float, 2 * num);
+          len = 2 * num * sizeof(float);
+          break;
+
+        default:
+          t_print("%s: CATASTROPHIC ERROR: unknown sound format\n", __FUNCTION__);
+          silence = NULL;
+          len = 0;
+          break;
+        }
+
+        if (silence) {
+          memset(silence, 0, len);
+          snd_pcm_writei (rx->playback_handle, silence, num);
+          snd_pcm_rewind (rx->playback_handle, out_buflen / 2);
+          delay = out_buflen / 2;
+          g_free(silence);
+        }
+
+        rx->cwaudio = 0;
+      }
+
 
       if (delay > out_maxlen) {
         // output buffer is filling up, rewind until it is half filled
