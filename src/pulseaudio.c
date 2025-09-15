@@ -35,10 +35,12 @@
 // Latency management:
 // Note latency is higher than for ALSA so no special CW optimisation here.
 //
-// AUDIO_LAT_HIGH         If this latency is reached, the output buffer is purged
+// AUDIO_LAT_HIGH         If this latency is exceeded, audio output is stopped
+// AUDIO_LAT_LOW          If latency is below this, audio output is resumed
 //
 
 #define AUDIO_LAT_HIGH    250000
+#define AUDIO_LAT_LOW     125000
 
 static const int out_buffer_size = 256;
 static const int mic_buffer_size = 256;
@@ -397,15 +399,6 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     // and rx->local_audio_buffer will not be destroyed until we
     // are finished here.
     //
-    if (rx->cwaudio == 0) {
-      //
-      // First time producing CW audio after RX/TX transition:
-      // flush PA audio data and start with an empty buffer
-      //
-      pa_simple_flush(rx->playstream, &err);
-      rx->local_audio_buffer_offset = 0;
-      rx->cwaudio = 1;
-    }
 
     rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = sample;
     rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = sample;
@@ -418,25 +411,26 @@ int cw_audio_write(RECEIVER *rx, float sample) {
         //
         // If the radio is running a a slightly too high clock rate, or if
         // the audio hardware clocks slightly below 48 kHz, then the PA audio
-        // buffer will fill up. We thus flush the buffer if the high-water mark
-        // is reached.
+        // buffer will fill up. We suppress further writing of audio data until
+	// the latency get below AUDIO_LAT_LOW.
         //
-        rc = pa_simple_flush(rx->playstream, &err);
+	rx->cwcount = 1;
+        t_print("%s: suppressing audio\n", __FUNCTION__);
+      }
+
+      if (latency < AUDIO_LAT_LOW) {
+        rx->cwcount = 0;
+      }
+
+      if (rx->cwcount == 0) {
+        rc = pa_simple_write(rx->playstream,
+                                 rx->local_audio_buffer,
+                                 out_buffer_size * sizeof(float) * 2,
+                                 &err);
 
         if (rc != 0) {
-          t_print("%s: flush failed err=%s\n", __FUNCTION__, pa_strerror(err));
-        } else {
-          t_print("%s: audio buffer flushed\n", __FUNCTION__);
+          t_print("%s: simple_write failed err=%d\n", __FUNCTION__, err);
         }
-
-      }
-      rc = pa_simple_write(rx->playstream,
-                               rx->local_audio_buffer,
-                               out_buffer_size * sizeof(float) * 2,
-                               &err);
-
-      if (rc != 0) {
-        t_print("%s: simple_write failed err=%d\n", __FUNCTION__, err);
       }
 
       rx->local_audio_buffer_offset = 0;
@@ -469,15 +463,6 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
     // and rx->local_audio_buffer will not be destroyes until we
     // are finished here.
     //
-    if (rx->cwaudio == 1) {
-      //
-      // First time after a CW TX/RX transition:
-      // flush PA audio data and start with an empty buffer
-      //
-      pa_simple_flush(rx->playstream, &err);
-      rx->local_audio_buffer_offset = 0;
-      rx->cwaudio = 0;
-    }
 
     rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = left_sample;
     rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = right_sample;
@@ -487,30 +472,31 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
       int rc;
       pa_usec_t latency = pa_simple_get_latency(rx->playstream, &err);
 
-      if (latency > AUDIO_LAT_HIGH) {
+      if (latency > AUDIO_LAT_HIGH && rx->cwcount == 0) {
         //
         // If the radio is running a a slightly too high clock rate, or if
         // the audio hardware clocks slightly below 48 kHz, then the PA audio
-        // buffer will fill up. We thus flush the buffer if the high-water mark
-        // is reached.
+        // buffer will fill up. We audio data until the latency is below
+	// AUDIO_LAT_LOW, but 24 blocks (128 msec) at maximum.
         //
-        rc = pa_simple_flush(rx->playstream, &err);
-
-        if (rc != 0) {
-          t_print("%s: flush failed err=%s\n", __FUNCTION__, pa_strerror(err));
-        } else {
-          t_print("%s: audio buffer flushed\n", __FUNCTION__);
-        }
-
+	rx->cwcount = 25;
+        t_print("%s: suppressing audio block\n", __FUNCTION__);
       }
 
-      rc = pa_simple_write(rx->playstream,
-                           rx->local_audio_buffer,
-                           out_buffer_size * sizeof(float) * 2,
-                           &err);
+      if (rx->cwcount > 0) {
+        rx->cwcount--;
+	//t_print("LAT=%ld CNT=%d\n", (long) latency, rx->cwcount);
+      }
 
-      if (rc != 0) {
+      if (rx->cwcount == 0 || latency < AUDIO_LAT_LOW) {
+        rc = pa_simple_write(rx->playstream,
+                             rx->local_audio_buffer,
+                             out_buffer_size * sizeof(float) * 2,
+                             &err);
+
+        if (rc != 0) {
           t_print("%s: write failed err=%s\n", __FUNCTION__, pa_strerror(err));
+        }
       }
 
       rx->local_audio_buffer_offset = 0;
