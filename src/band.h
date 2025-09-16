@@ -83,6 +83,9 @@ struct _BAND {
   double gain;                    // position of the RF gain slider
   int attenuation;                // position of the ATT slider
   int alexAttenuation;            // if ALEX: attenuator (0/1/2/3 for 0/10/20/30 dB)
+  int panlow;                     // panadapter settings
+  int panhigh;
+  int panstep;
 };
 
 //

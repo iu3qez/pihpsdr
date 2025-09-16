@@ -1342,17 +1342,17 @@ int process_action(void *data) {
 
   case PANADAPTER_HIGH:
     value = KnobOrWheel(a, active_receiver->panadapter_high, -60.0, 20.0, 1.0);
-    active_receiver->panadapter_high = (int)value;
+    radio_set_panhigh(active_receiver->id, (int) value);
     break;
 
   case PANADAPTER_LOW:
     value = KnobOrWheel(a, active_receiver->panadapter_low, -160.0, -60.0, 1.0);
-    active_receiver->panadapter_low = (int)value;
+    radio_set_panlow(active_receiver->id, (int) value);
     break;
 
   case PANADAPTER_STEP:
     value = KnobOrWheel(a, active_receiver->panadapter_step, 5.0, 30.0, 5.0);
-    active_receiver->panadapter_step = (int)value;
+    radio_set_panstep(active_receiver->id, (int) value);
     break;
 
   case PREAMP:

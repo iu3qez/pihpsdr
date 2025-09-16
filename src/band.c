@@ -449,6 +449,9 @@ void bandSaveState() {
     SetPropI1("band.%d.current", b,            bands[b].bandstack->current_entry);
     SetPropI1("band.%d.preamp", b,             bands[b].preamp);
     SetPropI1("band.%d.dither", b,             bands[b].dither);
+    SetPropI1("band.%d.panhigh", b,            bands[b].panhigh);
+    SetPropI1("band.%d.panlow", b,             bands[b].panlow);
+    SetPropI1("band.%d.panstep", b,            bands[b].panstep);
 
     if (have_rx_att) {
       SetPropI1("band.%d.attenuation", b,        bands[b].attenuation);
@@ -499,6 +502,10 @@ void bandRestoreState() {
       bands[b].gain = rx_gain_calibration;
     }
 
+    bands[b].panlow = -140;
+    bands[b].panhigh = -40;
+    bands[b].panstep = 20;
+    bands[b].gain = adc[0].gain;
     //
     // For the "normal" (non-XVTR) bands, do not change the title,
     // and do not fill in XVTR-specific data. There is no GUI for these bands
@@ -518,6 +525,9 @@ void bandRestoreState() {
     GetPropI1("band.%d.current", b,            bands[b].bandstack->current_entry);
     GetPropI1("band.%d.preamp", b,             bands[b].preamp);
     GetPropI1("band.%d.dither", b,             bands[b].dither);
+    GetPropI1("band.%d.panhigh", b,            bands[b].panhigh);
+    GetPropI1("band.%d.panlow", b,             bands[b].panlow);
+    GetPropI1("band.%d.panstep", b,            bands[b].panstep);
 
     if (have_rx_att) {
       GetPropI1("band.%d.attenuation", b,      bands[b].attenuation);

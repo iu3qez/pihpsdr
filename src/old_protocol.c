@@ -69,13 +69,9 @@
 #define SYNC 0x7F
 #define OZY_BUFFER_SIZE 512
 
-// ozy command and control
-#define MOX_DISABLED    0x00
-#define MOX_ENABLED     0x01
-
-#define MIC_SOURCE_JANUS 0x00
-#define MIC_SOURCE_PENELOPE 0x80
-#define CONFIG_NONE     0x00
+//
+// Atlas-Bus configuration bits (METIS/OZY)
+//
 #define CONFIG_PENELOPE 0x20
 #define CONFIG_MERCURY  0x40
 #define CONFIG_BOTH     0x60
@@ -88,13 +84,8 @@
 #define SPEED_96K                 0x01
 #define SPEED_192K                0x02
 #define SPEED_384K                0x03
-#define MODE_CLASS_E              0x01
-#define MODE_OTHERS               0x00
-#define LT2208_GAIN_OFF           0x00
 #define LT2208_GAIN_ON            0x04
-#define LT2208_DITHER_OFF         0x00
 #define LT2208_DITHER_ON          0x08
-#define LT2208_RANDOM_OFF         0x00
 #define LT2208_RANDOM_ON          0x10
 
 // state machine buffer processing

@@ -2328,7 +2328,7 @@ void radio_load_filters(int b) {
   case APOLLO:
   case CHARLY25:
     // This is most likely not necessary here, but can do no harm
-    radio_apply_band_settings(0);
+    radio_apply_band_settings(0, 0);
     break;
 
   case NO_FILTER_BOARD:
@@ -3002,6 +3002,53 @@ void radio_set_preamp(int id, int value) {
     send_rxmenu(client_socket, id);
     return;
   }
+  //
+  // If this is RX1, store value "by the band"
+  //
+  if (id == 0) {
+    BAND *band = band_get_band(vfo[id].band);
+    band->preamp = value;
+  }
+}
+
+void radio_set_panhigh(int id, int value) {
+  if (id < receivers) {
+    receiver[id]->panadapter_high = value;
+  }
+
+  //
+  // If this is RX1, store value "by the band"
+  //
+  if (id == 0) {
+    BAND *band = band_get_band(vfo[id].band);
+    band->panhigh = value;
+  }
+}
+
+void radio_set_panlow(int id, int value) {
+  if (id < receivers) {
+    receiver[id]->panadapter_low = value;
+  }
+  //
+  // If this is RX1, store value "by the band"
+  //
+  if (id == 0) {
+    BAND *band = band_get_band(vfo[id].band);
+    band->panlow = value;
+  }
+}
+
+void radio_set_panstep(int id, int value) {
+  if (id < receivers) {
+    receiver[id]->panadapter_step = value;
+  }
+  //
+  // If this is RX1, store value "by the band"
+  //
+  if (id == 0) {
+    BAND *band = band_get_band(vfo[id].band);
+    band->panstep = value;
+  }
 }
 
 void radio_set_attenuation(int id, int value) {
@@ -3076,49 +3123,61 @@ void radio_set_satmode(int mode) {
   sat_mode = mode;
 }
 
-void radio_apply_band_settings(int flag) {
+void radio_apply_band_settings(int flag, int id) {
   ASSERT_SERVER();
   //
-  // This applies settings stored with the current BAND for VFO-A
-  // and for the transmitter. Settings include
+  // This applies settings stored with the current BAND for
+  // the VFO of receiver #id, and the transmitter
   //
   // flag == 0: RX Antenna, TX Antenna, PA dis/enable status
   // flag == 1: in addition, preamp/dither/attenuation/gain status
   //
   // flag is nonzero if called from a "real" band change
   //
-  const BAND *band = band_get_band(vfo[VFO_A].band);
   suppress_popup_sliders++;
+  int rxadc = 0;
+
+  if (id < receivers) {
+    rxadc = receiver[id]->adc;
+  }
+
+  const BAND *rxband = band_get_band(vfo[id].band);
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
-    adc[0].antenna = band->RxAntenna;
+    adc[rxadc].antenna = rxband->RxAntenna;
 
     if (can_transmit) {
-      band = band_get_band(vfo[vfo_get_tx_vfo()].band);
-      transmitter->antenna = band->TxAntenna;
+      const BAND *txband = band_get_band(vfo[vfo_get_tx_vfo()].band);
+      transmitter->antenna = txband->TxAntenna;
     }
 
     if (flag) {
-      adc[0].preamp = band->preamp;
-      adc[0].dither = band->dither;
+      adc[rxadc].preamp = rxband->preamp;
+      adc[rxadc].dither = rxband->dither;
 
-      if (filter_board == ALEX) {
-        adc[0].alex_attenuation = band->alexAttenuation;
+      if (filter_board == ALEX && rxadc == 0) {
+        adc[rxadc].alex_attenuation = rxband->alexAttenuation;
       }
     }
   }
 
   if (flag) {
-    radio_set_c25_att(0, -12 * band->alexAttenuation + 18 * (band->preamp + band->dither));
-    radio_set_attenuation(0, band->attenuation);
-    radio_set_rf_gain(0, band->gain);
+    if (filter_board == CHARLY25) {
+      radio_set_c25_att(0, -12 * rxband->alexAttenuation + 18 * (rxband->preamp + rxband->dither));
+    } else {
+      radio_set_attenuation(id, rxband->attenuation);
+      radio_set_rf_gain(id, rxband->gain);
+      radio_set_panhigh(id, rxband->panhigh);
+      radio_set_panlow(id, rxband->panlow);
+      radio_set_panstep(id, rxband->panstep);
+    }
   }
 
   //
   // If a client is connected, update ADC0 data on the client side
   //
   if (remoteclient.running) {
-    send_adc_data(remoteclient.socket, 0);
+    send_adc_data(remoteclient.socket, rxadc);
   }
 
   schedule_high_priority();         // possibly update RX/TX antennas
@@ -3197,7 +3256,7 @@ void radio_set_split(int val) {
       send_split(client_socket, val);
     } else {
       radio_tx_vfo_changed();
-      radio_apply_band_settings(0);
+      radio_apply_band_settings(0, 0);
     }
 
     g_idle_add(ext_vfo_update, NULL);

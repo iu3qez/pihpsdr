@@ -127,6 +127,8 @@ static void modesettingsSaveState() {
     SetPropF1("modeset.%d.nr4_noise_rescale", i,      mode_settings[i].nr4_noise_rescale);
     SetPropF1("modeset.%d.nr4_post_threshold", i,     mode_settings[i].nr4_post_threshold);
 #endif
+    SetPropI1("modeset.%d.en_squelch", i,             mode_settings[i].squelch_enable);
+    SetPropF1("modeset.%d.squelch", i,                mode_settings[i].squelch);
     SetPropI1("modeset.%d.anf", i,                    mode_settings[i].anf);
     SetPropI1("modeset.%d.snb", i,                    mode_settings[i].snb);
     SetPropI1("modeset.%d.agc", i,                    mode_settings[i].agc);
@@ -233,6 +235,8 @@ static void modesettingsRestoreState() {
     mode_settings[i].nr4_noise_rescale = 2.0;
     mode_settings[i].nr4_post_threshold = 2.0;
 #endif
+    mode_settings[i].squelch_enable = 0;
+    mode_settings[i].squelch = 0.0;
     mode_settings[i].anf = 0;
     mode_settings[i].snb = 0;
     mode_settings[i].en_rxeq = 0;
@@ -321,6 +325,8 @@ static void modesettingsRestoreState() {
     GetPropF1("modeset.%d.nr4_noise_rescale", i,      mode_settings[i].nr4_noise_rescale);
     GetPropF1("modeset.%d.nr4_post_threshold", i,     mode_settings[i].nr4_post_threshold);
 #endif
+    GetPropI1("modeset.%d.en_squelch", i,             mode_settings[i].squelch_enable);
+    GetPropF1("modeset.%d.squelch", i,                mode_settings[i].squelch);
     GetPropI1("modeset.%d.anf", i,                    mode_settings[i].anf);
     GetPropI1("modeset.%d.snb", i,                    mode_settings[i].snb);
     GetPropI1("modeset.%d.agc", i,                    mode_settings[i].agc);
@@ -526,7 +532,7 @@ static inline void vfo_id_adjust_band(int v, long long f) {
     vfo[v].band = get_band_from_frequency(f);
     bandstack = bandstack_get_bandstack(vfo[v].band);
     vfo[v].bandstack = bandstack->current_entry;
-    radio_apply_band_settings(1);
+    radio_apply_band_settings(1, v);
   }
 }
 
@@ -753,7 +759,7 @@ void vfo_id_band_changed(int id, int b) {
   }
 
   if (oldband != vfo[id].band) {
-    radio_apply_band_settings(SET(id == 0));
+    radio_apply_band_settings(1, id);
   }
 
   //
@@ -935,13 +941,14 @@ void vfo_vfos_changed() {
   // Apply the new data
   //
   rx_vfo_changed(receiver[0]);
+  radio_tx_vfo_changed();
+  radio_apply_band_settings(1, 0);
 
   if (receivers == 2) {
     rx_vfo_changed(receiver[1]);
+    radio_apply_band_settings(1, 1);
   }
 
-  radio_tx_vfo_changed();
-  radio_apply_band_settings(0);
   //
   // radio_set_alex_antennas already scheduled a HighPrio and General packet,
   // but if the mode changed to/from CW, we also need a DUCspecific packet
