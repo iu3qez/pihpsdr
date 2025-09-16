@@ -589,33 +589,58 @@ previous display.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{What is a spectrum?}
 The RX panadapter shows the RX spectrum, but what is a spectrum?.
-Some people get confused if the spectrum shows a noise floor at $-120$ dBm, while their S-meter
-reading ,,without signal'' is $-112$ dBm. These people then often ask which of the two figures tells
+Some people get confused if the spectrum shows a noise floor at about $-105$ dBm, while their S-meter
+reading ,,without signal'' is $-100$ dBm. As an example, see Fig. \ref{fig:noisefloor}
+where there is a calibrated noise floor with $-130$ dBm/Hz.
+These people then often ask how these figures are related and which  the two figures tells
 them how much noise there is.
+
+\begin{figure}[ht]
+\center
+\includegraphics[scale=0.45]{NoiseFloor.png}
+\caption{\pH showing a --73 dBm carrier and a noise floor
+of --130 dBM/Hz.}
+\label{fig:noisefloor}
+\end{figure}
 
 It is important to note that a spectrum plots an energy \textit{density}, that is an energy (in dBm)
 per frequency interval. The RX panadapters in \pH normalise the spectrum to a frequency interval
-that (roughly) is the frequency width of one pixel on the screen. An immediate consequence of this is, that the
+that corresponds to the frequency width of one pixel on the screen. In Fig. \ref{fig:noisefloor}
+for example, the display is 800 pixels wide and the spectrum encompasses 192 kHz (the RX sample
+rate here), such that one pixel is 240 Hz wide. Multiplying the noise floor (--130 dBm/Hz)
+with 240 then gives -106 dBm, and this is indeed the position of the noise floor.
+
+An immediate consequence of this is, that the
 noise floor moves down when increasing the ZOOM value, since the frequency width of one pixel gets
-smaller (see below why this is the preferred normalisation).
-
+smaller. So the noise floor reading on the displays varies with display width and Zooom factor.
 The S-meter reading, on the other hand, integrates the spectral energy density over the filter
-passband. Since the filter width (on the screen) is usually much larger than one pixel,
-the S-meter reading is far above the noise floor as read off the panadapter.
-If you want to measure and compare the noise floor, the best you can do is to get an S-meter reading (in dBm) with
+passband. If you want to measure and compare the noise floor, the best you can do is to get an S-meter reading (in dBm) with
 a filter that is 1000 Hz wide, and then subtract 30 from the S-meter value to
-produce a noise floor figure in dBm/Hz. If you use a rather wide filter here (1000 Hz) here, the
-final result will not be sensitive to the filter's shape factor.
+produce a noise floor figure in dBm/Hz. This is shown in Fig. \ref{fig:noisefloor} where the S-meter reading
+is about --100 dBm for a filter with of 1000 Hz. Since we have used a relatively wide filter here,
+this result is not much affected by the filter's shape factor.
 
-Now consider an unmodulated carrier, e.g. a signal from a (calibrated)
+Now it is demonstrated that this normalisation of the noise floor is what one actually wants.
+Consider an unmodulated carrier, e.g. a signal from a (calibrated)
 signal source. The S-meter should show the correct signal level, but the question is how tall the peak
 in the panadapter should be. Theoretically, such a peak is infinitely narrow and then must be infinitely high, since
 the signal level (in dBm) is encoded in the \textit{area} below the peak rather than in its height.
 In practice, the signal has a natural (minimum) width, depending on the
 Fourier transformation used to generate the spectrum. The spectrum in the \pH panadapter is normalised
 to this natural width, such that the height of the peak (roughly) matches the signal level.
-Because of this normalisation, the height of the peak should only weakly depend on the width and
-the zoom factor of the display, and we can label the horizontal lines in the panadapter with dBm.
+
+\begin{figure}[ht]
+\center
+\includegraphics[scale=0.45]{NoiseFloorZoom.png}
+\caption{The same as before, but with the Zoom slider moved to 32.}
+\label{fig:noisefloorzoom}
+\end{figure}
+
+To demonstrate this, I have moved the Zoom slider from 1 to 32, such that Fig. \ref{noisefloorzoom} results.
+The noise floor has moved down to slightly less than --120 dBm as expected, since one pixel now only is 7.5 Hz wide.
+At the same time, the height of the signal peak remained at about --73 dBm. This demonstrates that
+the normalisation of the spectrum as chosen in \pH is such that the noise floor changes with screen width and/or
+Zoom factor, but that the height of narrow signals are not affected.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Spectrum scope options}
 \label{sec:FillingGradient}
