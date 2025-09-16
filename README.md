@@ -20,7 +20,6 @@ Latest features:
 - HermesLite-II I/O-board support
 - audio recording (RX capture) and playback (TX)
 - automatic installation procedures for compilation from the sources, for Linux (including RaspPi) and MacOS
-  (Appendix J, K).
 - dynamic screen resizing in the "Screen" menu, including transitions
   between full-screen and window mode
 
