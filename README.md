@@ -17,7 +17,6 @@ Latest features:
 - fully configurable Slider and Toolbar area
 - full support for Anan G2-Ultra radios, including customizable panel button/encoder functions
 - added continuous frequency compressor (**CFC**) and downward expander (**DEXP**) to the TX chain
-- in-depth manual (**link given above**)
 - HermesLite-II I/O-board support
 - audio recording (RX capture) and playback (TX)
 - automatic installation procedures for compilation from the sources, for Linux (including RaspPi) and MacOS
