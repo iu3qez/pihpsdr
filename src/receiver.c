@@ -746,6 +746,7 @@ RECEIVER *rx_create_receiver(int id, int width, int height) {
   rx->fps = 10;
   rx->update_timer_id = 0;
   rx->width = width;
+  rx->afft_size = 16384;
   rx->height = height;
   rx->samples = 0;
   rx->displaying = 0;
@@ -1294,9 +1295,14 @@ void rx_update_zoom(RECEIVER *rx) {
 
   if (radio_is_remote) {
     send_zoom(client_socket, rx);
-  } else {
-    rx_set_analyzer(rx);
+    return;
   }
+
+  rx_set_analyzer(rx);
+  //
+  // re-calculate AGC line for panadapter since it depends on afft_size
+  //
+  GetRXAAGCThresh(rx->id, &rx->agc_thresh, (double)rx->afft_size, (double)rx->sample_rate);
 }
 
 void rx_set_filter(RECEIVER *rx) {
@@ -1413,7 +1419,7 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
     //
     // re-calculate AGC line for panadapter since it depends on sample rate
     //
-    GetRXAAGCThresh(rx->id, &rx->agc_thresh, 4096.0, (double)rx->sample_rate);
+    GetRXAAGCThresh(rx->id, &rx->agc_thresh, (double)rx->afft_size, (double)rx->sample_rate);
 
     //
     // If the sample rate is reduced, the size of the audio output buffer must ber increased
@@ -1512,7 +1518,6 @@ void rx_set_analyzer(RECEIVER *rx) {
   const double span_max_freq = 0.0;
   const int clip = 0;
   const int window_type = 5;
-  int afft_size;
   const int pixels = rx->pixels;
   int overlap;
   int max_w;
@@ -1521,34 +1526,37 @@ void rx_set_analyzer(RECEIVER *rx) {
     //
     // RX FEEDBACK receiver:
     // Here we use a hard-wired zoom factor. We display exactly 24 kHz of the
-    // spectrum thus have to clip off
+    // spectrum thus have to clip off. The sample rate of this rx will
+    // be about 192k (zoom = 8), so a fixed width of 16k is fine.
     //
-    afft_size = 16384;
-    fscLin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
-    fscHin = afft_size * (0.5 - 12000.0 / rx->sample_rate);
+    rx->afft_size = 16384;
+    fscLin = rx->afft_size * (0.5 - 12000.0 / rx->sample_rate);
+    fscHin = rx->afft_size * (0.5 - 12000.0 / rx->sample_rate);
   } else {
     //
     // determine clippings accordint to the Zoom/Pan values
     //
-    afft_size = rx->width * rx->zoom;
+    rx->afft_size = rx->width * rx->zoom;
 
     //
     // For a screen width of 4k pixels, and zoom factor of 32,
     // this can go up to 128k. The program limits this to 256k
     //
-    if (afft_size <= 16384) {
-      afft_size = 16384;
-    } else if (afft_size <= 32768) {
-      afft_size = 32768;
-    } else if (afft_size <= 65536) {
-      afft_size = 65536;
-    } else if (afft_size <= 131072) {
-      afft_size = 131072;
+    if (rx->afft_size <= 8192) {
+      rx->afft_size = 8192;
+    } else if (rx->afft_size <= 16384) {
+      rx->afft_size = 16384;
+    } else if (rx->afft_size <= 32768) {
+      rx->afft_size = 32768;
+    } else if (rx->afft_size <= 65536) {
+      rx->afft_size = 65536;
+    } else if (rx->afft_size <= 131072) {
+      rx->afft_size = 131072;
     } else {
-      afft_size = 262144;
+      rx->afft_size = 262144;
     }
 
-    double zz = afft_size * (1.0 - 1.0 / rx->zoom);
+    double zz = rx->afft_size * (1.0 - 1.0 / rx->zoom);
     double pl = 0.005 * (rx->pan + 100);
     double pr = 1.0 - pl;
     fscLin = pl * zz;
@@ -1559,15 +1567,15 @@ void rx_set_analyzer(RECEIVER *rx) {
     rx->cBp = -rx->cA / rx->cB;
   }
 
-  max_w = afft_size + (int) min(keep_time * (double) rx->sample_rate,
-                                keep_time * (double) afft_size * (double) rx->fps);
-  overlap = (int)fmax(0.0, ceil(afft_size - (double)rx->sample_rate / (double)rx->fps));
+  max_w = rx->afft_size + (int) min(keep_time * (double) rx->sample_rate,
+                                keep_time * (double) rx->afft_size * (double) rx->fps);
+  overlap = (int)fmax(0.0, ceil(rx->afft_size - (double)rx->sample_rate / (double)rx->fps));
   SetAnalyzer(rx->id,
               n_pixout,
               spur_elimination_ffts,                // number of LO frequencies = number of ffts used in elimination
               data_type,                            // 0 for real input data (I only); 1 for complex input data (I & Q)
               flp,                                  // vector with one element for each LO frequency, 1 if high-side LO, 0 otherwise
-              afft_size,                            // size of the fft, i.e., number of input samples
+              rx->afft_size,                        // size of the fft, i.e., number of input samples
               rx->buffer_size,                      // number of samples transferred for each OpenBuffer()/CloseBuffer()
               window_type,                          // integer specifying which window function to use
               kaiser_pi,                            // PiAlpha parameter for Kaiser window
@@ -1705,7 +1713,7 @@ void rx_set_agc(RECEIVER *rx) {
   // Recalculate the "panadapter" AGC line positions.
   //
   GetRXAAGCHangLevel(id, &rx->agc_hang);
-  GetRXAAGCThresh(id, &rx->agc_thresh, 4096.0, (double)rx->sample_rate);
+  GetRXAAGCThresh(id, &rx->agc_thresh, (double)rx->afft_size, (double)rx->sample_rate);
 
   //
   // Update mode settings, if this is RX1

@@ -156,6 +156,7 @@ typedef struct _receiver {
 
   int width;
   int height;
+  int afft_size;  // FFT size of the display analyzer
 
   GtkWidget *panel;
   GtkWidget *panadapter;
