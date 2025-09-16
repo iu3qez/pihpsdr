@@ -61,7 +61,7 @@ EXTERN int OLDDEVICE;
 EXTERN int NEWDEVICE;
 
 //
-// A table of (random) noise with about -90 dBm on the whole spectrum
+// A table of (random) noise the whole spectrum
 // This is a very long table such that there is no audible "beating"
 // pattern even at very high sample rates.
 //

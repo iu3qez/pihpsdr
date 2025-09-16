@@ -94,6 +94,7 @@ static int ddcenable[NUMRECEIVERS];
 static int adcmap[NUMRECEIVERS];
 static int rxrate[NUMRECEIVERS];
 static int syncddc[NUMRECEIVERS];
+static double p2noisefac[NUMRECEIVERS];
 
 //data from tx specific packet
 static int dac = -1;
@@ -499,6 +500,7 @@ void *ddc_specific_thread(void *data) {
         modified = 1;
         rxrate[i] = rc;
         modified = 1;
+        p2noisefac[i] = sqrt((double)rxrate[i]);
       }
 
       if (syncddc[i] != buffer[1363 + i]) {
@@ -1224,8 +1226,8 @@ void *rx_thread(void *data) {
       //
       // produce noise depending on the ADC
       //
-      i1sample = i0sample = noiseItab[noisept];
-      q1sample = q0sample = noiseQtab[noisept++];
+      i1sample = i0sample = noiseItab[noisept] * p2noisefac[myddc];
+      q1sample = q0sample = noiseQtab[noisept++] * p2noisefac[myddc];
 
       if (noisept == LENNOISE) { noisept = rand_r(&seed) / NOISEDIV; }
 
