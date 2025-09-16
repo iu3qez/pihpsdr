@@ -1388,6 +1388,7 @@ void rx_change_sample_rate(RECEIVER *rx, int sample_rate) {
     vfo_id_ctun_update(rx->id, 0);
     rx_adjust_pan(rx);
   }
+
   g_mutex_lock(&rx->mutex);
   rx->sample_rate = sample_rate;
   int scale = rx->sample_rate / 48000;
@@ -1568,7 +1569,7 @@ void rx_set_analyzer(RECEIVER *rx) {
   }
 
   max_w = rx->afft_size + (int) min(keep_time * (double) rx->sample_rate,
-                                keep_time * (double) rx->afft_size * (double) rx->fps);
+                                    keep_time * (double) rx->afft_size * (double) rx->fps);
   overlap = (int)fmax(0.0, ceil(rx->afft_size - (double)rx->sample_rate / (double)rx->fps));
   SetAnalyzer(rx->id,
               n_pixout,
@@ -2035,6 +2036,7 @@ void rx_set_squelch(const RECEIVER *rx) {
     mode_settings[mode].squelch        = rx->squelch;
     copy_mode_settings(mode);
   }
+
   //
   // This applies the squelch mode stored in rx
   //

@@ -435,6 +435,7 @@ int main(int argc, char *argv[]) {
   } else if (speed == -1) {
     t_print("DEVICE is 1%% too slow\n");
   }
+
   //
   //      Initialise the data in the sample tables
   //
@@ -1254,7 +1255,7 @@ void process_ep2(uint8_t *frame) {
     chk_data(((frame[4] >> 6) & 1), MicTS, "TimeStampMic");
     chk_data(((frame[4] >> 7) & 1), CommonMercuryFreq, "Common Mercury Freq");
     mod = 0;
-    p1noisefac=sqrt((double)(48 << rate));
+    p1noisefac = sqrt((double)(48 << rate));
     rc = frame[3] & 0x03;
 
     if (rc != AlexAtt) {
@@ -1603,7 +1604,6 @@ void *handler_ep6(void *arg) {
       } else if (speed == -1) {
         wait = (wait * 101) / 100;
       }
-
     } else {
       // this happens until the first packets are received from the radio.
       // however, we must keep things flowing.
@@ -1778,24 +1778,24 @@ void *handler_ep6(void *arg) {
           i1 = isample[rxptr] * txdrv_dbl;
           q1 = qsample[rxptr] * txdrv_dbl;
           fac3 = IM3a + IM3b * (i1 * i1 + q1 * q1);
-          adc1isample = (txatt_dbl * i1 * fac3 + noiseItab[noiseIQpt]*p1noisefac) * 8388607.0;
-          adc1qsample = (txatt_dbl * q1 * fac3 + noiseItab[noiseIQpt]*p1noisefac) * 8388607.0;
+          adc1isample = (txatt_dbl * i1 * fac3 + noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
+          adc1qsample = (txatt_dbl * q1 * fac3 + noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
         } else if (diversity && do_tone == 1) {
           // man made noise to ADC1 samples
-          adc1isample = (noiseItab[noiseIQpt]*p1noisefac + cos(tonearg) * fac1 + divtab[divpt] * fac2) * 8388607.0;
-          adc1qsample = (noiseQtab[noiseIQpt]*p1noisefac + sin(tonearg) * fac1                   ) * 8388607.0;
+          adc1isample = (noiseItab[noiseIQpt] * p1noisefac + cos(tonearg) * fac1 + divtab[divpt] * fac2) * 8388607.0;
+          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac + sin(tonearg) * fac1                   ) * 8388607.0;
         } else if (do_tone == 1) {
-          adc1isample = (noiseItab[noiseIQpt]*p1noisefac + cos(tonearg) * fac1) * 8388607.0;
-          adc1qsample = (noiseQtab[noiseIQpt]*p1noisefac + sin(tonearg) * fac1) * 8388607.0;
+          adc1isample = (noiseItab[noiseIQpt] * p1noisefac + cos(tonearg) * fac1) * 8388607.0;
+          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac + sin(tonearg) * fac1) * 8388607.0;
         } else if (do_tone == 2) {
-          adc1isample = (noiseItab[noiseIQpt]*p1noisefac + (cos(tonearg) + cos(tonearg2)) * fac1) * 8388607.0;
-          adc1qsample = (noiseQtab[noiseIQpt]*p1noisefac + (sin(tonearg) + sin(tonearg2)) * fac1) * 8388607.0;
+          adc1isample = (noiseItab[noiseIQpt] * p1noisefac + (cos(tonearg) + cos(tonearg2)) * fac1) * 8388607.0;
+          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac + (sin(tonearg) + sin(tonearg2)) * fac1) * 8388607.0;
         } else if (do_tone == 3 && t3p >= 0) {
-          adc1isample = (noiseItab[noiseIQpt]*p1noisefac + cos(tonearg) * fac1a) * 8388607.0;
-          adc1qsample = (noiseQtab[noiseIQpt]*p1noisefac + sin(tonearg) * fac1a) * 8388607.0;
+          adc1isample = (noiseItab[noiseIQpt] * p1noisefac + cos(tonearg) * fac1a) * 8388607.0;
+          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac + sin(tonearg) * fac1a) * 8388607.0;
         } else {
-          adc1isample = (noiseItab[noiseIQpt]*p1noisefac ) * 8388607.0;
-          adc1qsample = (noiseQtab[noiseIQpt]*p1noisefac ) * 8388607.0;
+          adc1isample = (noiseItab[noiseIQpt] * p1noisefac ) * 8388607.0;
+          adc1qsample = (noiseQtab[noiseIQpt] * p1noisefac ) * 8388607.0;
         }
 
         // ADC2: noise RX, feedback sig. on TX (only STEMlab)
@@ -1803,15 +1803,15 @@ void *handler_ep6(void *arg) {
           i1 = isample[rxptr] * txdrv_dbl;
           q1 = qsample[rxptr] * txdrv_dbl;
           fac3 = IM3a + IM3b * (i1 * i1 + q1 * q1);
-          adc2isample = (txatt_dbl * i1 * fac3 + noiseItab[noiseIQpt]*p1noisefac) * 8388607.0;
-          adc2qsample = (txatt_dbl * q1 * fac3 + noiseItab[noiseIQpt]*p1noisefac) * 8388607.0;
+          adc2isample = (txatt_dbl * i1 * fac3 + noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
+          adc2qsample = (txatt_dbl * q1 * fac3 + noiseItab[noiseIQpt] * p1noisefac) * 8388607.0;
         } else if (diversity) {
           // man made noise to Q channel only
-          adc2isample = noiseItab[noiseIQpt]*p1noisefac               * 8388607.0;          // Noise
-          adc2qsample = (noiseQtab[noiseIQpt]*p1noisefac + divtab[divpt] * fac4) * 8388607.0;
+          adc2isample = noiseItab[noiseIQpt] * p1noisefac               * 8388607.0;        // Noise
+          adc2qsample = (noiseQtab[noiseIQpt] * p1noisefac + divtab[divpt] * fac4) * 8388607.0;
         } else {
-          adc2isample = noiseItab[noiseIQpt]*p1noisefac  * 8388607.0;                       // Noise
-          adc2qsample = noiseQtab[noiseIQpt]*p1noisefac  * 8388607.0;
+          adc2isample = noiseItab[noiseIQpt] * p1noisefac  * 8388607.0;                     // Noise
+          adc2qsample = noiseQtab[noiseIQpt] * p1noisefac  * 8388607.0;
         }
 
         //

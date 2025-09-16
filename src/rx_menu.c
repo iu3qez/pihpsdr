@@ -361,13 +361,11 @@ void rx_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), myrx->mute_when_not_active);
   gtk_grid_attach(GTK_GRID(grid), btn, 0, row, 2, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(mute_audio_cb), NULL);
-
   btn = gtk_check_button_new_with_label("Mute Receiver");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (btn), myrx->mute_radio);
   gtk_grid_attach(GTK_GRID(grid), btn, 2, row, 1, 1);
   g_signal_connect(btn, "toggled", G_CALLBACK(mute_radio_cb), NULL);
-
   row++;
 
   if (filter_board == ALEX) {

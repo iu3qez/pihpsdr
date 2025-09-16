@@ -201,7 +201,7 @@ char *MidiEvent2String(enum MIDIevent event) {
     break;
 
   case MIDI_PITCH:
-    return "PITCH"; 
+    return "PITCH";
     break;
   }
 }
@@ -232,7 +232,7 @@ char *MidiType2String(enum ACTIONtype type) {
     break;
 
   case MIDI_WHEEL:
-    return "WHEEL"; 
+    return "WHEEL";
     break;
   }
 }
@@ -245,7 +245,7 @@ enum MIDIevent String2MidiEvent(const char *str) {
   if (!strcmp(str, "PITCH")) { return MIDI_PITCH; }
 
   return EVENT_NONE;
-}   
+}
 
 void midiSaveState() {
   struct desc *cmd;

@@ -107,7 +107,7 @@ void about_menu(GtkWidget *parent) {
       snprintf(addr, sizeof(addr), "%s", inet_ntoa(radio->network.address.sin_addr));
       snprintf(interface_addr, sizeof(interface_addr), " (%s)", inet_ntoa(radio->network.interface_address.sin_addr));
 
-      if (!strcmp(interface_addr," (0.0.0.0)")) { *interface_addr = 0; }
+      if (!strcmp(interface_addr, " (0.0.0.0)")) { *interface_addr = 0; }
 
       if (have_saturn_xdma) {
         snprintf(text, sizeof(text), "Device: Saturn (via XDMA), Protocol %s, v%d.%d\n",

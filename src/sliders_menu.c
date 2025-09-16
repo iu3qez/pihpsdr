@@ -28,9 +28,10 @@
 //
 #define NUM_FUNCS 14
 static enum ACTION func_list[NUM_FUNCS] = {
-   NO_ACTION, AF_GAIN,     AGC_GAIN, ATTENUATION, COMPRESSION,
-   CW_SPEED,  LINEIN_GAIN, MIC_GAIN, PAN,         RF_GAIN,
-   SQUELCH,   DRIVE,       VOXLEVEL, ZOOM };
+  NO_ACTION, AF_GAIN,     AGC_GAIN, ATTENUATION, COMPRESSION,
+  CW_SPEED,  LINEIN_GAIN, MIC_GAIN, PAN,         RF_GAIN,
+  SQUELCH,   DRIVE,       VOXLEVEL, ZOOM
+};
 
 static GtkWidget *dialog = NULL;
 
@@ -85,12 +86,13 @@ void sliders_menu(GtkWidget *parent) {
 
       for (int k = 0; k < NUM_FUNCS; k++) {
         gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(w), NULL, ActionTable[func_list[k]].str);
+
         if (slider_functions[pos] == func_list[k]) { val = k; }
       }
 
       gtk_combo_box_set_active(GTK_COMBO_BOX(w), val);
-      my_combo_attach(GTK_GRID(grid), w, j, i+1, 1, 1);
-      g_signal_connect(w, "changed", G_CALLBACK(combo_cb), 
+      my_combo_attach(GTK_GRID(grid), w, j, i + 1, 1, 1);
+      g_signal_connect(w, "changed", G_CALLBACK(combo_cb),
                        GINT_TO_POINTER(3 * i + j));
     }
   }

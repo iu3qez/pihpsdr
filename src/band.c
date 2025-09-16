@@ -502,10 +502,6 @@ void bandRestoreState() {
       bands[b].gain = rx_gain_calibration;
     }
 
-    bands[b].panlow = -140;
-    bands[b].panhigh = -40;
-    bands[b].panstep = 20;
-    bands[b].gain = adc[0].gain;
     //
     // For the "normal" (non-XVTR) bands, do not change the title,
     // and do not fill in XVTR-specific data. There is no GUI for these bands

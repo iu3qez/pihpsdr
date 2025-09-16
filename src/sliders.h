@@ -32,7 +32,7 @@ extern void sliders_save_state();
 extern void sliders_restore_state();
 
 void queue_popup_slider(enum ACTION action, int rx, double min, double max, double delta, double value,
-                       const char *title);
+                        const char *title);
 
 extern void sliders_show_zoompan(int y);
 extern void sliders_show_sliders(int y);

@@ -179,7 +179,6 @@ int audio_open_output(RECEIVER *rx) {
 
   rx->cwaudio = 0;
   rx->cwcount = 0;
-
   t_print("%s: rx=%d audio_device=%d handle=%p buffer=%p size=%d\n", __FUNCTION__, rx->id, rx->audio_device,
           rx->playback_handle, rx->local_audio_buffer, out_buffer_size);
   g_mutex_unlock(&rx->local_audio_mutex);
@@ -359,15 +358,15 @@ int cw_audio_write(RECEIVER *rx, float sample) {
   g_mutex_lock(&rx->local_audio_mutex);
 
   if (rx->playback_handle != NULL && rx->local_audio_buffer != NULL) {
-
     if (rx->cwaudio == 0) {
       //
       // This happens when we come here for the first time after a
       // CW RX/TX transision. Rewind output buffer
       //
       if (snd_pcm_delay(rx->playback_handle, &delay) == 0) {
-          snd_pcm_rewind(rx->playback_handle, delay - cw_mid_water);
+        snd_pcm_rewind(rx->playback_handle, delay - cw_mid_water);
       }
+
       rx->cwcount = 0;
       rx->cwaudio = 1;
     }
@@ -388,6 +387,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
 
       if (snd_pcm_delay(rx->playback_handle, &delay) == 0) {
         if (delay > cw_high_water) { adjust = 0; }  // above high-water
+
         if (delay < cw_low_water)  { adjust = 2; }  // below low-water
       }
     }
@@ -404,29 +404,31 @@ int cw_audio_write(RECEIVER *rx, float sample) {
       switch (rx->local_audio_format) {
       case SND_PCM_FORMAT_S16_LE: {
         int16_t *short_buffer = (int16_t *)rx->local_audio_buffer;
-	int16_t shortsample = (int16_t) (sample * 32767.0F);
+        int16_t shortsample = (int16_t) (sample * 32767.0F);
         short_buffer[rx->local_audio_buffer_offset * 2] = shortsample;
         short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = shortsample;
-	rx->local_audio_buffer_offset++;
-	if (adjust == 2 && rx->local_audio_buffer_offset <  out_buffer_size) {
+        rx->local_audio_buffer_offset++;
+
+        if (adjust == 2 && rx->local_audio_buffer_offset <  out_buffer_size) {
           short_buffer[rx->local_audio_buffer_offset * 2] = shortsample;
           short_buffer[(rx->local_audio_buffer_offset * 2) + 1] = shortsample;
-	  rx->local_audio_buffer_offset++;
-	}
+          rx->local_audio_buffer_offset++;
+        }
       }
       break;
 
       case SND_PCM_FORMAT_S32_LE: {
         int32_t *long_buffer = (int32_t *)rx->local_audio_buffer;
-	int32_t longsample = (int32_t)(sample *  2147483647.0F);
+        int32_t longsample = (int32_t)(sample *  2147483647.0F);
         long_buffer[rx->local_audio_buffer_offset * 2] = longsample;
         long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = longsample;
-	rx->local_audio_buffer_offset++;
-	if (adjust == 2 && rx->local_audio_buffer_offset <  out_buffer_size) {
+        rx->local_audio_buffer_offset++;
+
+        if (adjust == 2 && rx->local_audio_buffer_offset <  out_buffer_size) {
           long_buffer[rx->local_audio_buffer_offset * 2] = longsample;
           long_buffer[(rx->local_audio_buffer_offset * 2) + 1] = longsample;
-	  rx->local_audio_buffer_offset++;
-	}
+          rx->local_audio_buffer_offset++;
+        }
       }
       break;
 
@@ -434,12 +436,13 @@ int cw_audio_write(RECEIVER *rx, float sample) {
         float *float_buffer = (float *)rx->local_audio_buffer;
         float_buffer[rx->local_audio_buffer_offset * 2] = sample;
         float_buffer[(rx->local_audio_buffer_offset * 2) + 1] =  sample;
-	rx->local_audio_buffer_offset++;
-	if (adjust == 2 && rx->local_audio_buffer_offset <  out_buffer_size) {
+        rx->local_audio_buffer_offset++;
+
+        if (adjust == 2 && rx->local_audio_buffer_offset <  out_buffer_size) {
           float_buffer[rx->local_audio_buffer_offset * 2] = sample;
           float_buffer[(rx->local_audio_buffer_offset * 2) + 1] = sample;
-	  rx->local_audio_buffer_offset++;
-	}
+          rx->local_audio_buffer_offset++;
+        }
       }
       break;
 
@@ -503,9 +506,7 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   // lock AFTER checking the "quick return" condition but BEFORE checking the pointers
   g_mutex_lock(&rx->local_audio_mutex);
 
-
   if (rx->playback_handle != NULL && rx->local_audio_buffer != NULL) {
-
     switch (rx->local_audio_format) {
     case SND_PCM_FORMAT_S16_LE: {
       int16_t *short_buffer = (int16_t *)rx->local_audio_buffer;
@@ -587,7 +588,6 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
 
         rx->cwaudio = 0;
       }
-
 
       if (delay > out_maxlen) {
         // output buffer is filling up, rewind until it is half filled

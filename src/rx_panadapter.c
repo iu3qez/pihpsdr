@@ -197,7 +197,6 @@ void rx_panadapter_update(RECEIVER *rx) {
 
   int panhi = rx->panadapter_high;
   int panlo = rx->panadapter_low;
-
   double dbm_per_line = (double)myheight / ((double)(panhi - panlo));
   cairo_set_line_width(cr, PAN_LINE_THIN);
   cairo_select_font_face(cr, DISPLAY_FONT_FACE, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);

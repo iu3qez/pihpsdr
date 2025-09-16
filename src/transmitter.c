@@ -2566,7 +2566,6 @@ void tx_set_bandpass(const TRANSMITTER *tx) {
 }
 
 void tx_set_compressor(TRANSMITTER *tx) {
-
   g_idle_add(sliders_cmpr, GINT_TO_POINTER(100 * suppress_popup_sliders));
 
   if (radio_is_remote) {

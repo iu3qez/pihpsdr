@@ -528,6 +528,7 @@ static inline void vfo_id_adjust_band(int v, long long f) {
   //       out of a transverter band!
   //
   int new_band = get_band_from_frequency(f);
+
   if (b != new_band) {
     vfo[v].band = get_band_from_frequency(f);
     bandstack = bandstack_get_bandstack(vfo[v].band);
@@ -630,7 +631,6 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   rx_set_agc(rx);
   rx_set_equalizer(rx);
   rx_set_noise(rx);
-
   radio_set_squelch       (rx->id, mode_settings[m].squelch);
   radio_set_squelch_enable(rx->id, mode_settings[m].squelch_enable);
 
@@ -1980,6 +1980,7 @@ void vfo_update() {
 
     if (!transmitter->cfc) {
       snprintf(temp_text, sizeof(temp_text), "Cmpr %d", (int) transmitter->compressor_level);
+
       if (transmitter->compressor) {
         cairo_set_source_rgba(cr, COLOUR_ATTN);
       } else {

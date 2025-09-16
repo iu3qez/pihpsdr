@@ -1456,6 +1456,7 @@ static int server_command(void *data) {
     for (int id = 0; id < RECEIVERS; id++) {
       send_rx_data(remoteclient.socket, id);
     }
+
     send_tx_data(remoteclient.socket);
     send_vfo_data(remoteclient.socket, VFO_A);
     send_vfo_data(remoteclient.socket, VFO_B);

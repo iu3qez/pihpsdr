@@ -270,12 +270,15 @@ static void save_hostlist() {
 
   SetPropI0("num_hosts", count);
   SetPropS0("current_host", host_addr);
+
   if (pwd_from_props) {
     const char *mypwd = gtk_entry_get_text(GTK_ENTRY(host_pwd));
+
     if (strlen(mypwd) > 4) {
       SetPropS0("host_pwd", mypwd);
     }
   }
+
   SetPropS0("property_version", "3.00");
   saveProperties("remote.props");
   gtk_combo_box_set_active(GTK_COMBO_BOX(host_combo), host_pos);
@@ -377,7 +380,6 @@ static void connect_cb(GtkWidget *widget, gpointer data) {
     g_idle_add(fatal_error, "NOTICE: unknown error in connect.");
     break;
   }
-
 }
 
 static void host_combo_cb(GtkWidget *widget, gpointer data) {
@@ -900,12 +902,14 @@ static void discovery() {
   //
   *str = 0;
   GetPropS0("host_pwd", str);
+
   if (strlen(str) > 4) {
     gtk_entry_set_text(GTK_ENTRY(host_pwd), str);
     pwd_from_props = 1;
   } else {
     gtk_entry_set_placeholder_text(GTK_ENTRY(host_pwd), "Server Password");
   }
+
   gtk_grid_attach(GTK_GRID(grid), host_pwd, 2, row, 1, 1);
   //
   // "Enter" in the pwd file induces connection

@@ -43,7 +43,8 @@
 
 enum ACTION slider_functions[9] = { ZOOM,         AGC_GAIN, DRIVE,
                                     ATTENUATION,  AF_GAIN,  MIC_GAIN,
-                                    PAN,    SQUELCH,  COMPRESSION};
+                                    PAN,    SQUELCH,  COMPRESSION
+                                  };
 
 static GtkWidget *sliders_grid = NULL;
 
@@ -107,13 +108,13 @@ static gulong pan_signal_id;
 // Store/Restore slider settings
 //
 void sliders_save_state() {
-  for (int i = 0; i< 9; i++) {
+  for (int i = 0; i < 9; i++) {
     SetPropA1("sliders[%d].funcion",  i,   slider_functions[i]);
   }
 }
 
 void sliders_restore_state() {
-  for (int i = 0; i< 9; i++) {
+  for (int i = 0; i < 9; i++) {
     GetPropA1("sliders[%d].funcion",  i,   slider_functions[i]);
   }
 }
@@ -172,6 +173,7 @@ static void vox_value_changed_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     vox_threshold = gtk_range_get_value(GTK_RANGE(widget));
   }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -180,6 +182,7 @@ static void cmpr_value_changed_cb(GtkWidget *widget, gpointer data) {
     transmitter->compressor_level = gtk_range_get_value(GTK_RANGE(widget));
     tx_set_compressor(transmitter);
   }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -192,6 +195,7 @@ static void vox_enable_cb(GtkWidget *widget, gpointer data) {
   if (can_transmit) {
     vox_enabled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
   }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -200,6 +204,7 @@ static void cmpr_enable_cb(GtkWidget *widget, gpointer data) {
     transmitter->compressor = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
     tx_set_compressor(transmitter);
   }
+
   g_idle_add(ext_vfo_update, NULL);
 }
 
@@ -231,7 +236,7 @@ static int scale_timeout_cb(gpointer data) {
 }
 
 static void show_popup_slider(enum ACTION action, int rx, double min, double max, double delta, double value,
-                       const char *what) {
+                              const char *what) {
   //
   // general function for displaying a pop-up slider. This can also be used for a value for which there
   // is no GTK slider. Make the slider "insensitive" so one cannot operate on it.
@@ -277,7 +282,7 @@ static void show_popup_slider(enum ACTION action, int rx, double min, double max
     gtk_widget_set_name(popup_scale, "popup_scale");
     gtk_widget_set_size_request (popup_scale, 400, 30);
     gtk_range_set_value (GTK_RANGE(popup_scale), value),
-    gtk_widget_set_sensitive(popup_scale, FALSE);
+                        gtk_widget_set_sensitive(popup_scale, FALSE);
     gtk_container_add(GTK_CONTAINER(content), popup_scale);
     scale_timer = g_timeout_add(2000, scale_timeout_cb, NULL);
     gtk_widget_show_all(scale_dialog);
@@ -321,7 +326,7 @@ struct _popup_data {
 typedef struct _popup_data POPUP_DATA;
 
 static int remote_popup_slider(gpointer data) {
-  POPUP_DATA *pud = (POPUP_DATA *) data;
+  const POPUP_DATA *pud = (POPUP_DATA *) data;
   show_popup_slider(pud->action, pud->rx, pud->min, pud->max, pud->delta, pud->value, pud->what);
   g_free(data);
   return G_SOURCE_REMOVE;
@@ -329,9 +334,7 @@ static int remote_popup_slider(gpointer data) {
 
 void queue_popup_slider(enum ACTION action, int rx, double min, double max,
                         double delta, double value, const char *what) {
-
   POPUP_DATA *pud = g_new(POPUP_DATA, 1);
-
   pud->action = action;
   pud->rx     = rx;
   pud->min    = min;
@@ -339,7 +342,6 @@ void queue_popup_slider(enum ACTION action, int rx, double min, double max,
   pud->delta  = delta;
   pud->value  = value;
   pud->what   = g_strdup(what);
-
   g_idle_add(remote_popup_slider, (gpointer) pud);
 }
 
@@ -357,7 +359,7 @@ int sliders_att_type_changed(gpointer data) {
     adc[1].gain = 0.0;       // NOT USED in C25
     adc[0].attenuation = 0;  // NOT USED in C25
     adc[1].attenuation = 0;  // NOT USED in C25
-    
+
     if (attenuation_scale) {
       gtk_widget_hide(attenuation_label);
       gtk_widget_hide(attenuation_scale);
@@ -413,7 +415,6 @@ int sliders_att_type_changed(gpointer data) {
 }
 
 int sliders_active_receiver_changed(void *data) {
-
   if (sliders_grid) {
     //
     // Change sliders and check-boxes to reflect the state of the
@@ -477,6 +478,7 @@ int sliders_attenuation(gpointer data) {
   // This ONLY moves the slider
   //
   int rxadc = receiver[id]->adc;
+
   if (active_receiver->adc == rxadc && attenuation_scale) {
     g_signal_handler_block(G_OBJECT(attenuation_scale), att_signal_id);
     gtk_range_set_value (GTK_RANGE(attenuation_scale), (double)adc[rxadc].attenuation);
@@ -541,12 +543,13 @@ int sliders_rf_gain(gpointer data) {
   // This ONLY moves the slider
   //
   int rxadc = receiver[id]->adc;
+
   if (rf_gain_scale && active_receiver->adc == rxadc) {
     g_signal_handler_block(G_OBJECT(rf_gain_scale), rf_signal_id);
     gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[rxadc].gain);
     g_signal_handler_unblock(G_OBJECT(rf_gain_scale), rf_signal_id);
   } else if (val < 100) {
-    show_popup_slider(RF_GAIN, rxadc+1, adc[rxadc].min_gain, adc[rxadc].max_gain, 1.0, adc[rxadc].gain,
+    show_popup_slider(RF_GAIN, rxadc + 1, adc[rxadc].min_gain, adc[rxadc].max_gain, 1.0, adc[rxadc].gain,
                       "RF gain ADC");
   }
 
@@ -604,6 +607,7 @@ int sliders_filter_shift(gpointer data) {
 
 int sliders_linein_gain(gpointer data) {
   int val = GPOINTER_TO_INT(data);
+
   //
   // This ONLY moves the slider
   //
@@ -612,13 +616,15 @@ int sliders_linein_gain(gpointer data) {
     gtk_range_set_value (GTK_RANGE(linein_scale), linein_gain);
     g_signal_handler_unblock(G_OBJECT(linein_scale), linein_signal_id);
   } else if (val < 100) {
-     show_popup_slider(LINEIN_GAIN, -1, -34.0, 12.0, 1.0, linein_gain, "LineIn Gain");
+    show_popup_slider(LINEIN_GAIN, -1, -34.0, 12.0, 1.0, linein_gain, "LineIn Gain");
   }
+
   return G_SOURCE_REMOVE;
 }
 
 int sliders_mic_gain(gpointer data) {
   int val = GPOINTER_TO_INT(data);
+
   //
   // This ONLY moves the slider
   //
@@ -637,6 +643,7 @@ int sliders_mic_gain(gpointer data) {
 
 int sliders_drive(gpointer data) {
   int val = GPOINTER_TO_INT(data);
+
   //
   // This ONLY moves the slider
   //
@@ -727,12 +734,12 @@ int sliders_filter_low(gpointer data) {
 int sliders_squelch(gpointer data) {
   int val = GPOINTER_TO_INT(data);
   int id = val % 100;
- 
+
   if (id > receivers) { return G_SOURCE_REMOVE; }
- 
+
   //
   RECEIVER *rx = receiver[id];
- 
+
   if (squelch_scale && id == active_receiver->id) {
     g_signal_handler_block(G_OBJECT(squelch_scale), squelch_signal_id);
     gtk_range_set_value (GTK_RANGE(squelch_scale), rx->squelch);
@@ -743,7 +750,7 @@ int sliders_squelch(gpointer data) {
   } else if (val < 100) {
     show_popup_slider(SQUELCH, id + 1, 0.0, 100.0, 1.0, rx->squelch, "Squelch RX");
   }
- 
+
   return G_SOURCE_REMOVE;
 }
 
@@ -775,7 +782,7 @@ int sliders_vox(gpointer data) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vox_enable_b), vox_enabled);
     g_signal_handler_unblock(G_OBJECT(vox_enable_b), vox_enable_signal_id);
   }
- 
+
   g_idle_add(ext_vfo_update, NULL);
   return G_SOURCE_REMOVE;
 }
@@ -857,6 +864,7 @@ void sliders_destroy() {
     gtk_container_remove(GTK_CONTAINER(fixed), sliders_grid);
     sliders_grid = NULL;
   }
+
   af_gain_scale = NULL;
   rf_gain_scale = NULL;
   agc_scale = NULL;
@@ -918,7 +926,6 @@ void sliders_create(int width, int height, int rows) {
   }
 
   sliders_destroy();
-
   int cnt = 0;
   sliders_grid = gtk_grid_new();
   gtk_widget_set_size_request (sliders_grid, width, height);
@@ -927,8 +934,9 @@ void sliders_create(int width, int height, int rows) {
 
   for (int i = 0; i < rows; i++) {
     int pos = 0;
+
     for (int j = 0; j < 3; j++) {
-      switch(slider_functions[cnt++]) {
+      switch (slider_functions[cnt++]) {
       case ZOOM:
         if (zoom_scale == NULL) {
           label = gtk_label_new("Zoom");
@@ -944,7 +952,9 @@ void sliders_create(int width, int height, int rows) {
           zoom_signal_id = g_signal_connect(G_OBJECT(zoom_scale), "value_changed",
                                             G_CALLBACK(zoom_value_changed_cb), NULL);
         }
+
         break;
+
       case PAN:
         if (pan_scale == NULL) {
           label = gtk_label_new("Pan");
@@ -960,9 +970,12 @@ void sliders_create(int width, int height, int rows) {
           pan_signal_id = g_signal_connect(G_OBJECT(pan_scale), "value_changed",
                                            G_CALLBACK(pan_value_changed_cb), NULL);
         }
+
         break;
+
       case ATTENUATION:
       case RF_GAIN:
+
         //
         // ATT, RFGAIN, and C25 stuff all go to this position
         //
@@ -972,12 +985,12 @@ void sliders_create(int width, int height, int rows) {
           gtk_widget_set_halign(rf_gain_label, GTK_ALIGN_END);
           gtk_grid_attach(GTK_GRID(sliders_grid), rf_gain_label, pos, i, twidth, 1);
           rf_gain_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL,
-                                                   adc[0].min_gain, adc[0].max_gain, 1.0);
+                          adc[0].min_gain, adc[0].max_gain, 1.0);
           gtk_widget_set_size_request(rf_gain_scale, 0, height);
           gtk_widget_set_valign(rf_gain_scale, GTK_ALIGN_CENTER);
           gtk_range_set_value (GTK_RANGE(rf_gain_scale), adc[0].gain);
           gtk_range_set_increments (GTK_RANGE(rf_gain_scale), 1.0, 1.0);
-          gtk_grid_attach(GTK_GRID(sliders_grid), rf_gain_scale, pos + twidth , i, swidth, 1);
+          gtk_grid_attach(GTK_GRID(sliders_grid), rf_gain_scale, pos + twidth, i, swidth, 1);
           rf_signal_id = g_signal_connect(G_OBJECT(rf_gain_scale), "value_changed",
                                           G_CALLBACK(rf_gain_value_changed_cb), NULL);
         }
@@ -1029,7 +1042,9 @@ void sliders_create(int width, int height, int rows) {
                                            G_CALLBACK(c25_att_cb), NULL);
           gtk_container_add(GTK_CONTAINER(c25_container), c25_grid);
         }
+
         break;
+
       case AF_GAIN:
         if (af_gain_scale == NULL) {
           label = gtk_label_new("AF");
@@ -1045,7 +1060,9 @@ void sliders_create(int width, int height, int rows) {
           af_signal_id = g_signal_connect(G_OBJECT(af_gain_scale), "value_changed",
                                           G_CALLBACK(afgain_value_changed_cb), NULL);
         }
+
         break;
+
       case AGC_GAIN:
         if (agc_scale == NULL) {
           label = gtk_label_new("AGC");
@@ -1061,7 +1078,9 @@ void sliders_create(int width, int height, int rows) {
           agc_signal_id = g_signal_connect(G_OBJECT(agc_scale), "value_changed",
                                            G_CALLBACK(agcgain_value_changed_cb), NULL);
         }
+
         break;
+
       case SQUELCH:
         if (squelch_scale == NULL) {
           label = gtk_label_new("Sqlch");
@@ -1078,13 +1097,15 @@ void sliders_create(int width, int height, int rows) {
                                                G_CALLBACK(squelch_value_changed_cb), NULL);
           squelch_enable_b = gtk_check_button_new();
           gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(squelch_enable_b),
-                                                         active_receiver->squelch_enable);
+                                       active_receiver->squelch_enable);
           gtk_grid_attach(GTK_GRID(sliders_grid), squelch_enable_b, pos + twidth, i, 1, 1);
           gtk_widget_set_halign(squelch_enable_b, GTK_ALIGN_CENTER);
           squelch_enable_signal_id = g_signal_connect(squelch_enable_b, "toggled",
-                                                      G_CALLBACK(squelch_enable_cb), NULL);
+                                     G_CALLBACK(squelch_enable_cb), NULL);
         }
+
         break;
+
       case MIC_GAIN:
         if (can_transmit && mic_gain_scale == NULL) {
           label = gtk_label_new("Mic");
@@ -1100,7 +1121,9 @@ void sliders_create(int width, int height, int rows) {
           mic_signal_id = g_signal_connect(G_OBJECT(mic_gain_scale), "value_changed",
                                            G_CALLBACK(micgain_value_changed_cb), NULL);
         }
+
         break;
+
       case DRIVE:
         if (can_transmit && drive_scale == NULL) {
           label = gtk_label_new("TX Drv");
@@ -1117,7 +1140,9 @@ void sliders_create(int width, int height, int rows) {
           drive_signal_id = g_signal_connect(G_OBJECT(drive_scale), "value_changed",
                                              G_CALLBACK(drive_value_changed_cb), NULL);
         }
+
         break;
+
       case VOXLEVEL:
         if (can_transmit && vox_scale == NULL) {
           label = gtk_label_new("VOX");
@@ -1137,8 +1162,9 @@ void sliders_create(int width, int height, int rows) {
           gtk_grid_attach(GTK_GRID(sliders_grid), vox_enable_b, pos + twidth, i, 1, 1);
           gtk_widget_set_halign(vox_enable_b, GTK_ALIGN_CENTER);
           vox_enable_signal_id = g_signal_connect(vox_enable_b, "toggled",
-                                                 G_CALLBACK(vox_enable_cb), NULL);
+                                                  G_CALLBACK(vox_enable_cb), NULL);
         }
+
         break;
 
       case COMPRESSION:
@@ -1160,9 +1186,11 @@ void sliders_create(int width, int height, int rows) {
           gtk_grid_attach(GTK_GRID(sliders_grid), cmpr_enable_b, pos + twidth, i, 1, 1);
           gtk_widget_set_halign(cmpr_enable_b, GTK_ALIGN_CENTER);
           cmpr_enable_signal_id = g_signal_connect(cmpr_enable_b, "toggled",
-                                                   G_CALLBACK(cmpr_enable_cb), NULL);
+                                  G_CALLBACK(cmpr_enable_cb), NULL);
         }
+
         break;
+
       case CW_SPEED:
         if (speed_scale == NULL) {
           label = gtk_label_new("WPM");
@@ -1178,7 +1206,9 @@ void sliders_create(int width, int height, int rows) {
           speed_signal_id = g_signal_connect(G_OBJECT(speed_scale), "value_changed",
                                              G_CALLBACK(speed_value_changed_cb), NULL);
         }
+
         break;
+
       case LINEIN_GAIN:
         if (linein_scale == NULL) {
           label = gtk_label_new("Line");
@@ -1195,10 +1225,13 @@ void sliders_create(int width, int height, int rows) {
           linein_signal_id = g_signal_connect(G_OBJECT(linein_scale), "value_changed",
                                               G_CALLBACK(linein_value_changed_cb), NULL);
         }
+
         break;
+
       default:
         break;
       }
+
       pos += swidth + twidth;
     }
   }

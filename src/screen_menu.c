@@ -291,7 +291,6 @@ void screen_menu(GtkWidget *parent) {
   // This combo-box spans three columns so the text may be really long
   my_combo_attach(GTK_GRID(grid), vfo_b, col, row, 2, 1);
   vfo_signal_id = g_signal_connect(vfo_b, "changed", G_CALLBACK(vfo_cb), NULL);
-
   row++;
   label = gtk_label_new("Slider Rows");
   gtk_widget_set_name (label, "boldlabel");
@@ -308,7 +307,6 @@ void screen_menu(GtkWidget *parent) {
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(button), toolbar_rows);
   gtk_grid_attach(GTK_GRID(grid), button, 1, row, 1, 1);
   g_signal_connect(button, "value-changed", G_CALLBACK(toolbar_rows_cb), NULL);
-
   row++;
   col = 0;
 
@@ -332,7 +330,6 @@ void screen_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), my_rx_stack_horizontal);
   gtk_grid_attach(GTK_GRID(grid), button, col, row, 1, 1);
   g_signal_connect(button, "toggled", G_CALLBACK(horizontal_cb), NULL);
-
   gtk_widget_set_sensitive(wide_b, my_display_size == 1);
   gtk_widget_set_sensitive(height_b, my_display_size == 1);
   gtk_container_add(GTK_CONTAINER(content), grid);

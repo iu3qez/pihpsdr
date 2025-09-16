@@ -167,15 +167,12 @@ int audio_open_output(RECEIVER *rx) {
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
   char stream_id[16];
   snprintf(stream_id, sizeof(stream_id), "RX-%d", rx->id);
-
   pa_buffer_attr attr;
   attr.maxlength = (uint32_t) -1;
   attr.tlength   = (uint32_t) -1;
   attr.prebuf    = (uint32_t) -1;
   attr.minreq    = (uint32_t) -1;
   attr.fragsize  = (uint32_t) -1;
-
-
   rx->playstream = pa_simple_new(NULL, // Use the default server.
                                  "piHPSDR",          // Our application's name.
                                  PA_STREAM_PLAYBACK,
@@ -390,7 +387,7 @@ float audio_get_next_mic_sample() {
 
 int cw_audio_write(RECEIVER *rx, float sample) {
   int result = 0;
-  int err, rc;
+  int err;
   g_mutex_lock(&rx->local_audio_mutex);
 
   if (rx->playstream != NULL && rx->local_audio_buffer != NULL) {
@@ -399,7 +396,6 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     // and rx->local_audio_buffer will not be destroyed until we
     // are finished here.
     //
-
     rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = sample;
     rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = sample;
     rx->local_audio_buffer_offset++;
@@ -412,9 +408,9 @@ int cw_audio_write(RECEIVER *rx, float sample) {
         // If the radio is running a a slightly too high clock rate, or if
         // the audio hardware clocks slightly below 48 kHz, then the PA audio
         // buffer will fill up. We suppress further writing of audio data until
-	// the latency get below AUDIO_LAT_LOW.
+        // the latency get below AUDIO_LAT_LOW.
         //
-	rx->cwcount = 1;
+        rx->cwcount = 1;
         t_print("%s: suppressing audio\n", __FUNCTION__);
       }
 
@@ -423,7 +419,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
       }
 
       if (rx->cwcount == 0) {
-        rc = pa_simple_write(rx->playstream,
+        int rc = pa_simple_write(rx->playstream,
                                  rx->local_audio_buffer,
                                  out_buffer_size * sizeof(float) * 2,
                                  &err);
@@ -463,13 +459,11 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
     // and rx->local_audio_buffer will not be destroyes until we
     // are finished here.
     //
-
     rx->local_audio_buffer[rx->local_audio_buffer_offset * 2] = left_sample;
     rx->local_audio_buffer[(rx->local_audio_buffer_offset * 2) + 1] = right_sample;
     rx->local_audio_buffer_offset++;
 
     if (rx->local_audio_buffer_offset >= out_buffer_size) {
-      int rc;
       pa_usec_t latency = pa_simple_get_latency(rx->playstream, &err);
 
       if (latency > AUDIO_LAT_HIGH && rx->cwcount == 0) {
@@ -477,22 +471,22 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
         // If the radio is running a a slightly too high clock rate, or if
         // the audio hardware clocks slightly below 48 kHz, then the PA audio
         // buffer will fill up. We audio data until the latency is below
-	// AUDIO_LAT_LOW, but 24 blocks (128 msec) at maximum.
+        // AUDIO_LAT_LOW, but 24 blocks (128 msec) at maximum.
         //
-	rx->cwcount = 25;
+        rx->cwcount = 25;
         t_print("%s: suppressing audio block\n", __FUNCTION__);
       }
 
       if (rx->cwcount > 0) {
         rx->cwcount--;
-	//t_print("LAT=%ld CNT=%d\n", (long) latency, rx->cwcount);
+        //t_print("LAT=%ld CNT=%d\n", (long) latency, rx->cwcount);
       }
 
       if (rx->cwcount == 0 || latency < AUDIO_LAT_LOW) {
-        rc = pa_simple_write(rx->playstream,
-                             rx->local_audio_buffer,
-                             out_buffer_size * sizeof(float) * 2,
-                             &err);
+        int rc = pa_simple_write(rx->playstream,
+                                 rx->local_audio_buffer,
+                                 out_buffer_size * sizeof(float) * 2,
+                                 &err);
 
         if (rc != 0) {
           t_print("%s: write failed err=%s\n", __FUNCTION__, pa_strerror(err));

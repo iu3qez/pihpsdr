@@ -639,7 +639,6 @@ void radio_reconfigure_screen() {
   //
   int my_width  = display_width[display_size];
   int my_height = display_height[display_size];
-
   choose_vfo_layout();
 
   //
@@ -729,7 +728,6 @@ void radio_reconfigure() {
 
   rx_height -= SLIDERS_HEIGHT * slider_rows;
   rx_height -= TOOLBAR_HEIGHT * toolbar_rows;
-
   y = VFO_HEIGHT;
 
   // if there is only one receiver, both cases here do the same.
@@ -786,7 +784,7 @@ void radio_reconfigure() {
     toolbar_show(y);
   } else {
     toolbar_destroy();
-  }  
+  }
 
   if (can_transmit && !duplex) {
     tx_reconfigure(transmitter, my_width, my_width, rx_height);
@@ -868,7 +866,6 @@ static void radio_create_visual() {
   gtk_fixed_put(GTK_FIXED(fixed), menu_b, VFO_WIDTH + METER_WIDTH, y);
   y += VFO_HEIGHT / 2;
   rx_height = my_height - VFO_HEIGHT;
-
   rx_height -= SLIDERS_HEIGHT * slider_rows;
   rx_height -= TOOLBAR_HEIGHT * toolbar_rows;
 
@@ -1007,7 +1004,7 @@ static void radio_create_visual() {
   if (toolbar_rows > 0) {
     toolbar_create(my_width, TOOLBAR_HEIGHT, toolbar_rows);
     toolbar_show(y);
-  }  
+  }
 
   //
   // Now, if there should only one receiver be displayed
@@ -1066,10 +1063,10 @@ void radio_shutdown() {
   // The following call may fail (e.g. missing admin privileges),
   // in this case the program simply exits.
   //
-#ifdef __APPLE__        
-      (void) system("shutdown -h now");         
+#ifdef __APPLE__
+  (void) system("shutdown -h now");
 #else
-      (void) system("sudo shutdown -h -P now"); 
+  (void) system("sudo shutdown -h -P now");
 #endif
   _exit(0);
 }
@@ -1702,7 +1699,7 @@ void radio_start_radio() {
     // Apply RX setting to the SOAPY receivers
     //
     for (int id = 0; id < RECEIVERS; id++) {
-      RECEIVER *rx = receiver[id];
+      const RECEIVER *rx = receiver[id];
       soapy_protocol_set_automatic_gain(id, adc[id].agc);
       soapy_protocol_set_rx_antenna(id, adc[id].antenna);
       soapy_protocol_set_rx_frequency(id);
@@ -2199,7 +2196,6 @@ void radio_set_pan(int id, int value) {
   if (value > 100) { value = 100; }
 
   rx->pan = value;
-
   rx_update_pan(rx);
   g_idle_add(sliders_pan, GINT_TO_POINTER(100 + id));
 }
@@ -2426,7 +2422,6 @@ void radio_set_diversity(int state) {
   if (radio_is_remote) {
     send_diversity(client_socket, state, div_gain, div_phase);
   } else {
-
     //
     // If we have only one receiver, then changing diversity
     // changes the number of HPSR receivers so we restart the
@@ -2444,7 +2439,6 @@ void radio_set_diversity(int state) {
 
     schedule_high_priority();
     schedule_receive_specific();
-
     radio_calc_div_params();
   }
 
@@ -2959,7 +2953,7 @@ void radio_set_c25_att(int id, int val) {
     }
   }
 
-  g_idle_add(sliders_c25_att, GINT_TO_POINTER(100+id));
+  g_idle_add(sliders_c25_att, GINT_TO_POINTER(100 + id));
 }
 
 void radio_set_dither(int id, int value) {
@@ -3002,6 +2996,7 @@ void radio_set_preamp(int id, int value) {
     send_rxmenu(client_socket, id);
     return;
   }
+
   //
   // If this is RX1, store value "by the band"
   //
@@ -3029,6 +3024,7 @@ void radio_set_panlow(int id, int value) {
   if (id < receivers) {
     receiver[id]->panadapter_low = value;
   }
+
   //
   // If this is RX1, store value "by the band"
   //
@@ -3042,6 +3038,7 @@ void radio_set_panstep(int id, int value) {
   if (id < receivers) {
     receiver[id]->panadapter_step = value;
   }
+
   //
   // If this is RX1, store value "by the band"
   //
@@ -3629,7 +3626,6 @@ int radio_remote_start(void *data) {
   radio_is_remote = TRUE;
   optimize_for_touchscreen = 1;
   cw_keyer_internal = 0;
-
   //
   // Read "local" data from the props file.
   //

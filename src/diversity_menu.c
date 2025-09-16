@@ -81,7 +81,7 @@ static void gain_fine_changed_cb(GtkWidget *widget, gpointer data) {
 }
 
 static void phase_coarse_changed_cb(GtkWidget *widget, gpointer data) {
-  div_phase = gtk_range_get_value(GTK_RANGE(widget))+ phase_fine;
+  div_phase = gtk_range_get_value(GTK_RANGE(widget)) + phase_fine;
 
   if (radio_is_remote) {
     send_diversity(client_socket, diversity_enabled, div_gain, div_phase);

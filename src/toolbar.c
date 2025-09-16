@@ -28,12 +28,12 @@
 
 int tb_function[MAX_TB_ROWS] = {0, 1, 2};
 enum ACTION tb_actions[MAX_TB_FUNCTIONS][MAX_TB_BUTTONS] = {
- { MOX,   TUNE,           TWO_TONE,       MENU_NOISE, MENU_BAND,   MENU_MODE,  MENU_FILTER, FUNCTION },
- { SPLIT, MENU_BANDSTACK, CTUN,           RIT_PLUS,   RIT_MINUS,   XIT_PLUS,   XIT_MINUS,   FUNCTION },
- { MOX,   LOCK,           DUPLEX,         A_TO_B,     B_TO_A,      A_SWAP_B,   SPLIT,       FUNCTION },
- { MOX,   MENU_FREQUENCY, SPLIT,          DUPLEX,     SAT,         RSAT,       MENU_BAND,   FUNCTION },
- { MOX,   MENU_FREQUENCY, MENU_MEMORY,    RIT_ENABLE, RIT_PLUS,    RIT_MINUS,  RIT_CLEAR,   FUNCTION },
- { MOX,   MENU_FREQUENCY, MENU_MEMORY,    XIT_ENABLE, XIT_PLUS,    XIT_MINUS,  XIT_CLEAR,   FUNCTION } 
+  { MOX,   TUNE,           TWO_TONE,       MENU_NOISE, MENU_BAND,   MENU_MODE,  MENU_FILTER, FUNCTION },
+  { SPLIT, MENU_BANDSTACK, CTUN,           RIT_PLUS,   RIT_MINUS,   XIT_PLUS,   XIT_MINUS,   FUNCTION },
+  { MOX,   LOCK,           DUPLEX,         A_TO_B,     B_TO_A,      A_SWAP_B,   SPLIT,       FUNCTION },
+  { MOX,   MENU_FREQUENCY, SPLIT,          DUPLEX,     SAT,         RSAT,       MENU_BAND,   FUNCTION },
+  { MOX,   MENU_FREQUENCY, MENU_MEMORY,    RIT_ENABLE, RIT_PLUS,    RIT_MINUS,  RIT_CLEAR,   FUNCTION },
+  { MOX,   MENU_FREQUENCY, MENU_MEMORY,    XIT_ENABLE, XIT_PLUS,    XIT_MINUS,  XIT_CLEAR,   FUNCTION }
 };
 
 static GtkWidget *toolbar_grid = NULL;
@@ -41,10 +41,9 @@ static GtkWidget *toolbar_grid = NULL;
 static GtkWidget *tbbtn[8][3] = { { NULL }};
 
 void toolbar_save_state() {
-
   for (int i = 0; i < MAX_TB_ROWS; i++) {
     SetPropI1("toolbar.row[%d]", i, tb_function[i]);
-  } 
+  }
 
   for (int f = 0; f < MAX_TB_FUNCTIONS; f++) {
     for (int i = 0; i < MAX_TB_BUTTONS; i++) {
@@ -56,7 +55,7 @@ void toolbar_save_state() {
 void toolbar_restore_state() {
   for (int i = 0; i < MAX_TB_ROWS; i++) {
     GetPropI1("toolbar.row[%d]", i, tb_function[i]);
-  } 
+  }
 
   for (int f = 0; f < MAX_TB_FUNCTIONS; f++) {
     for (int i = 0; i < MAX_TB_BUTTONS; i++) {
@@ -68,8 +67,10 @@ void toolbar_restore_state() {
 void update_toolbar_labels() {
   for (int i = 0; i < MAX_TB_ROWS; i++) {
     int func = tb_function[i];
+
     for (int j = 0; j < MAX_TB_BUTTONS; j++) {
       GtkWidget *btn = tbbtn[j][i];
+
       if (btn) {
         if (j == MAX_TB_BUTTONS - 1) {
           char lbl[16];
@@ -105,12 +106,15 @@ static void toolbar_button_press_cb(GtkWidget *widget, GdkEventButton *event, gp
     // cycles backwards.
     //
     if (event->button == GDK_BUTTON_SECONDARY) {
-     tb_function[row]--;
-     if (tb_function[row] < 0) { tb_function[row] = MAX_TB_FUNCTIONS - 1; }
+      tb_function[row]--;
+
+      if (tb_function[row] < 0) { tb_function[row] = MAX_TB_FUNCTIONS - 1; }
     } else {
-     tb_function[row]++;
-     if (tb_function[row] >= MAX_TB_FUNCTIONS) { tb_function[row] = 0; }
+      tb_function[row]++;
+
+      if (tb_function[row] >= MAX_TB_FUNCTIONS) { tb_function[row] = 0; }
     }
+
     update_toolbar_labels();
   } else {
     schedule_action(tb_actions[tb_function[row]][btn], PRESSED, 0);
@@ -121,9 +125,9 @@ static void toolbar_button_press_cb(GtkWidget *widget, GdkEventButton *event, gp
 static void toolbar_button_released_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
   int val = GPOINTER_TO_INT(data);
   int btn = val % 100;
-  int row = val / 100;
 
   if (btn != MAX_TB_BUTTONS - 1) {
+    int row = val / 100;
     schedule_action(tb_actions[tb_function[row]][btn], RELEASED, 0);
   }
 }
@@ -132,13 +136,14 @@ void toolbar_show(int ypos) {
   if (toolbar_grid) {
     gtk_fixed_put(GTK_FIXED(fixed),  toolbar_grid, 0, ypos);
     gtk_widget_show_all(toolbar_grid);
-  }   
+  }
 }
 
 void toolbar_destroy() {
   if (toolbar_grid) {
     gtk_container_remove(GTK_CONTAINER(fixed), toolbar_grid);
     toolbar_grid = NULL;
+
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 8; j++) {
         tbbtn[j][i] = NULL;
@@ -161,7 +166,6 @@ void toolbar_create(int width, int height, int rows) {
   }
 
   toolbar_destroy();
-
   toolbar_grid = gtk_grid_new();
   gtk_widget_set_size_request (toolbar_grid, width, rows * height);
   gtk_grid_set_column_homogeneous(GTK_GRID(toolbar_grid), TRUE);
@@ -175,9 +179,10 @@ void toolbar_create(int width, int height, int rows) {
       gtk_widget_set_size_request (w, button_width, height);
       g_signal_connect(G_OBJECT(w), "button-press-event", G_CALLBACK(toolbar_button_press_cb), code);
       g_signal_connect(G_OBJECT(w), "button-release-event", G_CALLBACK(toolbar_button_released_cb), code);
-      gtk_grid_attach(GTK_GRID(toolbar_grid), w, 4*j, rows - i - 1, 4, 1);
+      gtk_grid_attach(GTK_GRID(toolbar_grid), w, 4 * j, rows - i - 1, 4, 1);
       tbbtn[j][i] = w;
     }
   }
+
   update_toolbar_labels();
 }

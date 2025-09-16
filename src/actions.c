@@ -884,6 +884,7 @@ int process_action(void *data) {
     break;
 
   case FILTER_MINUS:
+
     //
     // since the widest filters start at f=0, FILTER_MINUS actually
     // cycles upwards
@@ -899,6 +900,7 @@ int process_action(void *data) {
     break;
 
   case FILTER_PLUS:
+
     //
     // since the widest filters start at f=0, FILTER_PLUS actually
     // cycles downwards
@@ -1625,19 +1627,19 @@ int process_action(void *data) {
   case TOOLBAR5:
   case TOOLBAR6:
   case TOOLBAR7: {
-      //
-      // The TOOLBARn actions simply schedule the action currently associated
-      // with the n-th toolbar button
-      // NOTE: this gives a circular dependency if any of the toolbar buttons
-      // is TOOLBARn, so filter this out!
-      //
-      int tbaction = tb_actions[tb_function[0]][action-TOOLBAR1];
+    //
+    // The TOOLBARn actions simply schedule the action currently associated
+    // with the n-th toolbar button
+    // NOTE: this gives a circular dependency if any of the toolbar buttons
+    // is TOOLBARn, so filter this out!
+    //
+    int tbaction = tb_actions[tb_function[0]][action - TOOLBAR1];
 
-      if (tbaction < TOOLBAR1 || tbaction > TOOLBAR7) {
-        schedule_action(tbaction, a->mode, a->val);
-      }
+    if (tbaction < TOOLBAR1 || tbaction > TOOLBAR7) {
+      schedule_action(tbaction, a->mode, a->val);
     }
-    break;
+  }
+  break;
 
   case TUNE:
     if (a->mode == PRESSED) {

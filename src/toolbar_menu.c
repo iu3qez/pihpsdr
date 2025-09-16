@@ -78,7 +78,6 @@ void toolbar_menu(GtkWidget *parent) {
   int lfunction = 0;
 
   for (lfunction = 0; lfunction < MAX_TB_FUNCTIONS; lfunction++) {
-
     for (int i = 0; i < MAX_TB_BUTTONS; i++) {
       if (i == MAX_TB_BUTTONS - 1) {
         // Rightmost switch is hardwired to FUNCTION
