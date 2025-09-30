@@ -8,9 +8,9 @@ It runs on Linux (Raspberry Pi but also Desktop or Laptop computers running LINU
 
 **piHPSDR Manual (PDF file) for release versions:**
 
-**v2.3:** https://github.com/dl1ycf/pihpsdr/releases/download/v2.3/piHPSDR-Manual-v2.3.pdf
+**v2.3:** https://github.com/dl1ycf/pihpsdr/releases/download/v2.5/piHPSDR-Manual-v2.3.pdf
 
-**v2.4:** https://github.com/dl1ycf/pihpsdr/releases/download/v2.4/piHPSDR-Manual-v2.4.pdf
+**v2.4:** https://github.com/dl1ycf/pihpsdr/releases/download/v2.5/piHPSDR-Manual-v2.4.pdf
 
 **v2.5:** https://github.com/dl1ycf/pihpsdr/releases/download/v2.5/piHPSDR-Manual-v2.5.pdf
 
