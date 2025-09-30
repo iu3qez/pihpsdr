@@ -873,11 +873,13 @@ int main(int argc, char *argv[]) {
 
     // respond to an incoming Metis detection request
     case 0x0002feef:
+
       // processing an invalid packet is too dangerous -- skip it!
       if (bytes_read != 63) {
         t_print("InvalidLength: RvcMsg Code=0x%08x Len=%d\n", code, (int)bytes_read);
         break;
       }
+
       if (oldnew == 2) {
         t_print("OldProtocol detection request from %s IGNORED.\n", inet_ntoa(addr_from.sin_addr));
         break;  // Swallow P1 detection requests
@@ -885,7 +887,6 @@ int main(int argc, char *argv[]) {
 
       t_print( "Respond to an incoming Metis detection request from %s / code: 0x%08x\n", inet_ntoa(addr_from.sin_addr),
                code);
-
       memset(buffer, 0, 60);
       buffer[0] = 0xEF;
       buffer[1] = 0xFE;
@@ -934,13 +935,14 @@ int main(int argc, char *argv[]) {
 
     // stop the SDR to PC transmission via handler_ep6
     case 0x0004feef:
+
       // processing an invalid packet is too dangerous -- skip it!
       if (bytes_read != 64) {
         t_print("InvalidLength: RvcMsg Code=0x%08x Len=%d\n", code, bytes_read);
         break;
       }
-      t_print( "STOP the transmission via handler_ep6 / code: 0x%08x\n", code);
 
+      t_print( "STOP the transmission via handler_ep6 / code: 0x%08x\n", code);
       enable_thread = 0;
 
       while (active_thread) { usleep(1000); }
@@ -957,6 +959,7 @@ int main(int argc, char *argv[]) {
     case 0x0104feef:
     case 0x0204feef:
     case 0x0304feef:
+
       // processing an invalid packet is too dangerous -- skip it!
       if (bytes_read != 64) {
         t_print("InvalidLength: RvcMsg Code=0x%08x Len=%d\n", code, bytes_read);
@@ -1221,9 +1224,11 @@ int main(int argc, char *argv[]) {
       t_print("Invalid packet (len=%d) detected: ", bytes_read);
 
       if (bytes_read > 16) { bytes_read = 16; }
+
       for (i = 0; i < bytes_read; i++) {
         printf("%02x ", buffer[i]);
       }
+
       printf("\n");
       break;
     }

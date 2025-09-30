@@ -119,6 +119,7 @@ static void p1_discover(struct ifaddrs* iface, int discflag) {
     //          | (ntohl(interface_netmask.sin_addr.s_addr) ^ 0xFFFFFFFF));
     //
 #ifdef __APPLE__
+
     //
     // MacOS fails for broadcasts to the loopback interface(s).
     // so if this is a loopback, simply use the loopback addr
@@ -130,6 +131,7 @@ static void p1_discover(struct ifaddrs* iface, int discflag) {
       //
       to_addr.sin_addr = interface_addr.sin_addr;
     }
+
 #endif
     break;
 

@@ -157,6 +157,7 @@ static void p2_discover(struct ifaddrs* iface, int discflag) {
     //          | (ntohl(interface_netmask.sin_addr.s_addr) ^ 0xFFFFFFFF));
     //
 #ifdef __APPLE__
+
     //
     // MacOS fails for broadcasts to the loopback interface(s).
     // so if this is a loopback, simply use the loopback addr
@@ -169,6 +170,7 @@ static void p2_discover(struct ifaddrs* iface, int discflag) {
       //
       to_addr.sin_addr = interface_addr.sin_addr;
     }
+
 #endif
     break;
 
@@ -399,18 +401,18 @@ static gpointer p2_discover_receive_thread(gpointer data) {
                     discovered[devices].software_version,
                     buffer[23] & 0xFF,
                     discovered[devices].status);
-          t_print("%s: address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s min=%0.3f MHz max=%0.3f MHz\n",
-                  __FUNCTION__,
-                  inet_ntoa(discovered[devices].network.address.sin_addr),
-                  discovered[devices].network.mac_address[0],
-                  discovered[devices].network.mac_address[1],
-                  discovered[devices].network.mac_address[2],
-                  discovered[devices].network.mac_address[3],
-                  discovered[devices].network.mac_address[4],
-                  discovered[devices].network.mac_address[5],
-                  discovered[devices].network.interface_name,
-                  discovered[devices].frequency_min * 1E-6,
-                  discovered[devices].frequency_max * 1E-6);
+            t_print("%s: address=%s (%02X:%02X:%02X:%02X:%02X:%02X) on %s min=%0.3f MHz max=%0.3f MHz\n",
+                    __FUNCTION__,
+                    inet_ntoa(discovered[devices].network.address.sin_addr),
+                    discovered[devices].network.mac_address[0],
+                    discovered[devices].network.mac_address[1],
+                    discovered[devices].network.mac_address[2],
+                    discovered[devices].network.mac_address[3],
+                    discovered[devices].network.mac_address[4],
+                    discovered[devices].network.mac_address[5],
+                    discovered[devices].network.interface_name,
+                    discovered[devices].frequency_min * 1E-6,
+                    discovered[devices].frequency_max * 1E-6);
             devices++;
           }
         }
