@@ -204,7 +204,6 @@ HANDLE _beginthread( void( __cdecl *start_address )( void * ), unsigned stack_si
       snprintf(tname, sizeof(tname), "Wflush%d", (int)(uintptr_t)arglist);
     } else if (start_address == &syncb_main) {
       snprintf(tname, sizeof(tname), "WSync");
-    } else if (start_address == &syncb_main) {
     } else  if (start_address == &doPSCalcCorrection
              || start_address == &doPSTurnoff
 	     || start_address == &PSSaveCorrection
