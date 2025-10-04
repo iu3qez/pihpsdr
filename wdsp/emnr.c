@@ -27,11 +27,12 @@ warren@wpratt.com
 #include "comm.h"
 #include "calculus.h"
 #include "zetaHat.h"
+#include "FDnoiseIQ.h"
 
 /********************************************************************************************************
-*																										*
-*											Special Functions											*
-*																										*
+*                                                                                                       * 
+*                                           Special Functions                                           *
+*                                                                                                       *
 ********************************************************************************************************/
 
 // MODIFIED BESSEL FUNCTIONS OF THE 0TH AND 1ST ORDERS, Polynomial Approximations
@@ -294,7 +295,7 @@ void CwriteZetaHat(const char* cfile, int zetaHat_rows, int zetaHat_cols,
 		fclose(pcfile);
 	}
 }
-
+void post2_calc_w(EMNR a);
 
 void calc_emnr(EMNR a)
 {
@@ -557,11 +558,28 @@ void calc_emnr(EMNR a)
 	a->ae.t2 = 0.20;
 	a->ae.nmask = (double *)malloc0(a->ae.msize * sizeof(double));
 	//
+        // post2
+        a->post2.run = 0;
+        a->post2.factor = 0.15;
+        a->post2.nlevel = 0.15;
+        a->post2.tc_decay = 5.0;
+        a->post2.rate_decay = exp(-a->fsize / (a->post2.tc_decay * a->rate * a->ovrlp));
+        a->post2.taper = 0.12;
+        a->post2.w = (double*)malloc0(a->msize * sizeof(double));
+        a->post2.noise_frames = FDnoise_frames;
+        a->post2.noise_frame_index = 0;
+        a->post2.noise_frame = (double*)malloc0(2 * a->msize * sizeof(double));
+        a->post2.olddmag = 0.0;
+        post2_calc_w(a);
 }
 
 void decalc_emnr(EMNR a)
 {
 	int i;
+        // post2
+        _aligned_free(a->post2.noise_frame);
+        _aligned_free(a->post2.w);
+        // ae
 	_aligned_free(a->ae.nmask);
 	// npl
 	_aligned_free(a->npl.D);
@@ -824,6 +842,10 @@ void LambdaDl (EMNR a)
 	memcpy (a->npl.lambda_d, a->npl.D, a->npl.msize * sizeof(double));
 }
 
+/********************************************************************************************************
+*                         Begin Post-Processing Functions                                               *
+********************************************************************************************************/
+
 void aepf(EMNR a)
 {
 	int k, m;
@@ -872,6 +894,109 @@ void aepf(EMNR a)
 		for (k = 0; k < a->ae.msize; k++)
 			a->mask[k] *= 0.05;
 }
+
+void post2_calc_w(EMNR a)
+{                                                                               
+        int i;
+        int ilim = (int)(a->post2.taper * a->msize);
+        memset(a->post2.w, a->msize, sizeof(double));
+        for (i = 0; i < ilim; i++)
+        {
+                a->post2.w[i] = 0.75 - 0.25 * cos(PI * (ilim - 1 - i) / (ilim - 1));
+        }
+}       
+
+void post2(EMNR a)
+{
+        if (a->post2.run)
+        {
+                int i;
+                double Iwhite, Qwhite, Irem, Qrem, Inoise, Qnoise;
+                double factor = a->post2.factor;
+                double nlevel = a->post2.nlevel;
+                double rate_decay = a->post2.rate_decay;
+                double* w = a->post2.w;
+                int ilim = (int)(a->post2.taper * a->msize);
+                double tdmag = 0.0, dmag = 0.0, dmult = 0.0;
+                for (i = 1; i < ilim; i++)
+                {
+                        tdmag = a->gain * sqrt(a->forfftout[2 * i + 0] * a->forfftout[2 * i + 0] +
+                                a->forfftout[2 * i + 1] * a->forfftout[2 * i + 1]);
+                        if (tdmag > dmag) dmag = tdmag;
+                }
+                if (dmag > a->post2.olddmag) a->post2.olddmag = dmag;
+                else a->post2.olddmag *= rate_decay;
+                dmag = fmax(dmag, a->post2.olddmag);
+                dmult = dmag * 4.0 * a->gain;
+                memcpy(a->post2.noise_frame, FDnoise + 2 * a->msize * a->post2.noise_frame_index,
+                        2 * ilim * sizeof(double));
+                a->post2.noise_frame_index = (a->post2.noise_frame_index + 1) % a->post2.noise_frames;
+                for (i = 1; i < ilim; i++)
+                {
+                        Irem = a->gain * a->forfftout[2 * i + 0] - a->revfftin[2 * i + 0];
+                        Qrem = a->gain * a->forfftout[2 * i + 1] - a->revfftin[2 * i + 1];
+                        Iwhite = dmult * a->post2.noise_frame[2 * i + 0];
+                        Qwhite = dmult * a->post2.noise_frame[2 * i + 1];
+                        Inoise = (1.0 - factor) * Irem + factor * Iwhite;
+                        Qnoise = (1.0 - factor) * Qrem + factor * Qwhite;
+                        a->revfftin[2 * i + 0] = w[i] * (a->revfftin[2 * i + 0] + nlevel * Inoise);
+                        a->revfftin[2 * i + 1] = w[i] * (a->revfftin[2 * i + 1] + nlevel * Qnoise);
+                }
+                a->revfftin[0] = 0.0;
+                a->revfftin[1] = 0.0;
+                memset(a->revfftin + 2 * ilim, 0, 2 * (a->msize - ilim) * sizeof(double));
+        }
+}
+
+PORT
+void SetRXAEMNRpost2Run(int channel, int run)
+{
+        EnterCriticalSection(&ch[channel].csDSP);
+        rxa[channel].emnr.p->post2.run = run;
+        LeaveCriticalSection(&ch[channel].csDSP);
+}
+
+PORT
+void SetRXAEMNRpost2Factor(int channel, double factor)
+{
+        EnterCriticalSection(&ch[channel].csDSP);
+        rxa[channel].emnr.p->post2.factor = factor / 100.0;
+        LeaveCriticalSection(&ch[channel].csDSP);
+}
+
+PORT
+void SetRXAEMNRpost2Nlevel(int channel, double nlevel)
+{
+        EnterCriticalSection(&ch[channel].csDSP);
+        rxa[channel].emnr.p->post2.nlevel = nlevel / 100.0;
+        LeaveCriticalSection(&ch[channel].csDSP);
+}
+
+PORT
+void SetRXAEMNRpost2Taper(int channel, int taper)
+{
+        EMNR a = rxa[channel].emnr.p;
+        EnterCriticalSection(&ch[channel].csDSP);
+        a->post2.taper = (double)taper / 100.0;
+        post2_calc_w(a);
+        LeaveCriticalSection(&ch[channel].csDSP);
+}
+
+PORT
+void SetRXAEMNRpost2Rate(int channel, double tc)
+{
+        EMNR a = rxa[channel].emnr.p;
+        EnterCriticalSection(&ch[channel].csDSP);
+        if (tc < 0.2) tc = 0.2;
+        a->post2.tc_decay = tc;
+        a->post2.rate_decay = exp(-a->fsize / (a->post2.tc_decay * a->rate * a->ovrlp));
+        a->post2.olddmag = 0.0;
+        LeaveCriticalSection(&ch[channel].csDSP);
+}
+
+/********************************************************************************************************
+*                               End Post-Processing Functions                                           *
+********************************************************************************************************/
 
 double getKey(double* type, double gamma, double xi)
 {
@@ -1098,6 +1223,7 @@ void xemnr (EMNR a, int pos)
 				a->revfftin[2 * i + 0] = g1 * a->forfftout[2 * i + 0];
 				a->revfftin[2 * i + 1] = g1 * a->forfftout[2 * i + 1];
 			}
+                        post2(a);
 			fftw_execute (a->Rrev);
 			for (i = 0; i < a->fsize; i++)
 				a->save[a->saveidx][i] = a->window[i] * a->revfftout[i];
@@ -1192,14 +1318,17 @@ void SetRXAEMNRaeRun (int channel, int run)
 	LeaveCriticalSection (&ch[channel].csDSP);
 }
 
-PORT
-void SetRXAEMNRPosition (int channel, int position)
-{
-	EnterCriticalSection (&ch[channel].csDSP);
-	rxa[channel].emnr.p->position = position;
-	rxa[channel].bp1.p->position  = position;
-	LeaveCriticalSection (&ch[channel].csDSP);
-}
+PORT                            
+void SetRXAEMNRPosition (int channel, int position) 
+{                       
+        EMNR a = rxa[channel].emnr.p;
+        EnterCriticalSection (&ch[channel].csDSP);
+        a->position = position;
+        rxa[channel].bp1.p->position  = position;
+        flush_emnr(a);  
+        a->post2.olddmag = 0.0;
+        LeaveCriticalSection (&ch[channel].csDSP);
+}                               
 
 PORT
 void SetRXAEMNRaeZetaThresh (int channel, double zetathresh)
