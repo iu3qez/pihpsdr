@@ -1380,7 +1380,11 @@ static int server_command(void *data) {
       rx->nr_agc                 = command->nr_agc;
       rx->nr2_gain_method        = command->nr2_gain_method;
       rx->nr2_npe_method         = command->nr2_npe_method;
-      rx->nr2_ae                 = command->nr2_ae;
+      rx->nr2_post               = command->nr2_post;
+      rx->nr2_post_taper         = command->nr2_post_taper;
+      rx->nr2_post_nlevel        = command->nr2_post_nlevel;
+      rx->nr2_post_factor        = command->nr2_post_factor;
+      rx->nr2_post_rate          = command->nr2_post_rate;
       rx->nb_tau                 = from_double(command->nb_tau);
       rx->nb_hang                = from_double(command->nb_hang);
       rx->nb_advtime             = from_double(command->nb_advtime);

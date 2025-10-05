@@ -791,9 +791,13 @@ static void *client_thread(void* arg) {
       rx->nb2_mode              = data.nb2_mode;
       rx->nr                    = data.nr;
       rx->nr_agc                = data.nr_agc;
-      rx->nr2_ae                = data.nr2_ae;
       rx->nr2_gain_method       = data.nr2_gain_method;
       rx->nr2_npe_method        = data.nr2_npe_method;
+      rx->nr2_post              = data.nr2_post;
+      rx->nr2_post_taper        = data.nr2_post_taper;
+      rx->nr2_post_nlevel       = data.nr2_post_nlevel;
+      rx->nr2_post_factor       = data.nr2_post_factor;
+      rx->nr2_post_rate         = data.nr2_post_rate;
       rx->anf                   = data.anf;
       rx->snb                   = data.snb;
       rx->display_detector_mode = data.display_detector_mode;

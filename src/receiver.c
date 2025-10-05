@@ -290,9 +290,13 @@ void rx_save_state(const RECEIVER *rx) {
     SetPropI1("receiver.%d.nr_agc", rx->id,                     rx->nr_agc);
     SetPropI1("receiver.%d.nr2_gain_method", rx->id,            rx->nr2_gain_method);
     SetPropI1("receiver.%d.nr2_npe_method", rx->id,             rx->nr2_npe_method);
-    SetPropI1("receiver.%d.nr2_ae", rx->id,                     rx->nr2_ae);
     SetPropF1("receiver.%d.nr2_trained_threshold", rx->id,      rx->nr2_trained_threshold);
     SetPropF1("receiver.%d.nr2_trained_t2", rx->id,             rx->nr2_trained_t2);
+    SetPropI1("receiver.%d.nr2_post", rx->id,                   rx->nr2_post);
+    SetPropI1("receiver.%d.nr2_post_taper", rx->id,             rx->nr2_post_taper);
+    SetPropI1("receiver.%d.nr2_post_nlevel", rx->id,            rx->nr2_post_nlevel);
+    SetPropI1("receiver.%d.nr2_post_factor", rx->id,            rx->nr2_post_factor);
+    SetPropI1("receiver.%d.nr2_post_rate", rx->id,              rx->nr2_post_rate);
     SetPropI1("receiver.%d.nb2_mode", rx->id,                   rx->nb2_mode);
     SetPropF1("receiver.%d.nb_tau", rx->id,                     rx->nb_tau);
     SetPropF1("receiver.%d.nb_advtime", rx->id,                 rx->nb_advtime);
@@ -388,9 +392,13 @@ void rx_restore_state(RECEIVER *rx) {
     GetPropI1("receiver.%d.nr_agc", rx->id,                     rx->nr_agc);
     GetPropI1("receiver.%d.nr2_gain_method", rx->id,            rx->nr2_gain_method);
     GetPropI1("receiver.%d.nr2_npe_method", rx->id,             rx->nr2_npe_method);
-    GetPropI1("receiver.%d.nr2_ae", rx->id,                     rx->nr2_ae);
     GetPropF1("receiver.%d.nr2_trained_threshold", rx->id,      rx->nr2_trained_threshold);
     GetPropF1("receiver.%d.nr2_trained_t2", rx->id,             rx->nr2_trained_t2);
+    GetPropI1("receiver.%d.nr2_post", rx->id,                   rx->nr2_post);
+    GetPropI1("receiver.%d.nr2_post_taper", rx->id,             rx->nr2_post_taper);
+    GetPropI1("receiver.%d.nr2_post_nlevel", rx->id,            rx->nr2_post_nlevel);
+    GetPropI1("receiver.%d.nr2_post_factor", rx->id,            rx->nr2_post_factor);
+    GetPropI1("receiver.%d.nr2_post_rate", rx->id,              rx->nr2_post_rate);
     GetPropI1("receiver.%d.nb2_mode", rx->id,                   rx->nb2_mode);
     GetPropF1("receiver.%d.nb_tau", rx->id,                     rx->nb_tau);
     GetPropF1("receiver.%d.nb_advtime", rx->id,                 rx->nb_advtime);
@@ -778,7 +786,11 @@ RECEIVER *rx_create_receiver(int id, int width, int height) {
   rx->nr_agc = 0;                   // NR/NR2/ANF before AGC
   rx->nr2_gain_method = 2;          // Gamma
   rx->nr2_npe_method = 0;           // OSMS
-  rx->nr2_ae = 1;                   // Artifact Elimination is "on"
+  rx->nr2_post = 0;
+  rx->nr2_post_taper = 12;
+  rx->nr2_post_nlevel = 15;
+  rx->nr2_post_factor = 15;
+  rx->nr2_post_rate = 5;
   rx->nr2_trained_threshold = -0.5; // Threshold if gain method is "Trained"
   rx->nr2_trained_t2 = 0.2;         // t2 value for trained threshold
   //
@@ -1924,13 +1936,17 @@ void rx_set_noise(const RECEIVER *rx) {
     mode_settings[mode].nb = rx->nb;
     mode_settings[mode].anf = rx->anf;
     mode_settings[mode].snb = rx->snb;
-    mode_settings[mode].nr2_ae = rx->nr2_ae;
     mode_settings[mode].nr_agc = rx->nr_agc;
     mode_settings[mode].nb2_mode = rx->nb2_mode;
     mode_settings[mode].nr2_gain_method = rx->nr2_gain_method;
     mode_settings[mode].nr2_npe_method = rx->nr2_npe_method;
     mode_settings[mode].nr2_trained_threshold = rx->nr2_trained_threshold;
     mode_settings[mode].nr2_trained_t2 = rx->nr2_trained_t2;
+    mode_settings[mode].nr2_post = rx->nr2_post;
+    mode_settings[mode].nr2_post_taper = rx->nr2_post_taper;
+    mode_settings[mode].nr2_post_nlevel = rx->nr2_post_nlevel;
+    mode_settings[mode].nr2_post_factor = rx->nr2_post_factor;
+    mode_settings[mode].nr2_post_rate = rx->nr2_post_rate;
     mode_settings[mode].nb_tau = rx->nb_tau;
     mode_settings[mode].nb_advtime = rx->nb_advtime;
     mode_settings[mode].nb_hang = rx->nb_hang;
@@ -1980,7 +1996,12 @@ void rx_set_noise(const RECEIVER *rx) {
   SetRXAEMNRnpeMethod(rx->id, rx->nr2_npe_method);
   SetRXAEMNRtrainZetaThresh(rx->id, rx->nr2_trained_threshold);
   SetRXAEMNRtrainT2(rx->id, rx->nr2_trained_t2);
-  SetRXAEMNRaeRun(rx->id, rx->nr2_ae);
+  SetRXAEMNRpost2Taper (rx->id, rx->nr2_post_taper);
+  SetRXAEMNRpost2Nlevel(rx->id, (double) rx->nr2_post_nlevel);
+  SetRXAEMNRpost2Factor(rx->id, (double) rx->nr2_post_factor);
+  SetRXAEMNRpost2Rate(rx->id, (double) rx->nr2_post_rate);
+  SetRXAEMNRaeRun(rx->id, 1);                  // ArtifactElminiation ON
+  SetRXAEMNRpost2Run(rx->id, rx->nr2_post);
   SetRXAEMNRRun(rx->id, (rx->nr == 2));
   //
   // e) ANF

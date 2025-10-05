@@ -141,7 +141,7 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01250002 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01250003 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
 #define AUDIO_DATA_SIZE 512              // 512 stereo samples
 
@@ -553,9 +553,13 @@ typedef struct __attribute__((__packed__)) _receiver_data {
   uint8_t nb2_mode;
   uint8_t nr;
   uint8_t nr_agc;
-  uint8_t nr2_ae;
   uint8_t nr2_gain_method;
   uint8_t nr2_npe_method;
+  uint8_t nr2_post;
+  uint8_t nr2_post_taper;  // 0 ... 100
+  uint8_t nr2_post_nlevel; // 0 ... 100
+  uint8_t nr2_post_factor; // 0 ... 100
+  uint8_t nr2_post_rate;   // 0 ... 100
   uint8_t anf;
   uint8_t snb;
   uint8_t display_detector_mode;
@@ -790,7 +794,11 @@ typedef struct __attribute__((__packed__)) _noise_command {
   uint8_t  nr_agc;
   uint8_t  nr2_gain_method;
   uint8_t  nr2_npe_method;
-  uint8_t  nr2_ae;
+  uint8_t  nr2_post;
+  uint8_t  nr2_post_taper;
+  uint8_t  nr2_post_nlevel;
+  uint8_t  nr2_post_factor;
+  uint8_t  nr2_post_rate;
   mydouble nb_tau;
   mydouble nb_hang;
   mydouble nb_advtime;
