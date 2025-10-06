@@ -171,6 +171,8 @@ capability if compiled on MacOS.}
 \item{User-configurable Slider and Toolbar areas, with 0--3 slider rows and 0--3 toolbars.}
 \item{Added local replay of captured audio data (\bltt{Replay} command) -- useful to check
 captured audio data before transmitting it.}
+\item{Added the NR2 noise reduction post processing introduced with WDSP 1.27 (\bltt{Noise} menu)}
+
 \end{itemize}
 
 \medskip
@@ -357,7 +359,7 @@ is not attempted, so you can simply connect faster specifying the IP address.
 
 In rare cases (the RedPitaya STEMlab and RadioBerry cases are the only one I know of)
 it is  possible to use the TCP protocol
-rather than the standard UDP one for communicating with the radio. 
+rather than the standard UDP one for communicating with the radio.
 If the \rett{Enable TCP} box is checked, a discovery packet will be sent via TCP to the specified
 IP address, and then \pH waits up to three seconds for a response. For radios that are not
 TCP-enabled, it is thus best \textit{not} to enable TCP, to avoid this three-second delay.
@@ -2358,7 +2360,12 @@ and 5000 Hz.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The \texttt{Noise} Menu}
 
-
+\begin{figure}[ht]
+\center
+\includegraphics[scale=0.45]{NoiseMenu1.png}
+\caption{The \bltt{Noise} menu (with NR settings).}
+\label{fig:NoiseMenu1}
+\end{figure}
 
 With the \bltt{Noise} menu you can select a variety of noise reduction and/or
 noise blanker capabilities (Fig. \ref{fig:NoiseMenu1}). The upper part of the
@@ -2373,21 +2380,23 @@ very good at eliminating a single-tone QRM carrier in SSB modes. It goes without
 saying that activating the ANF in CW is detrimental rather than beneficial, because
 here the signal is of the type the ANF tries to eliminate.
 
-\rett{Noise Reduction}. With this pop-down menu, you can choose the type of noise reduction
+\rett{NR/NR2/ANF Position}. In the RX chain, the noise reduction can be placed before or after
+the automatic gain control (AGC). The choice made here refers to \textit{all} noise reduction
+capabilities (ANF, NR1, NR2). Having the noise reduction before AGC normally works better,
+but with sudden noise changes, having noise reduction after AGC may be preferred.
+
+\rett{Reduction}. With this pop-down menu, you can choose the type of noise reduction
 namely no noise reduction, LMS noise reduction (NR1) or spectral noise reduction (NR2).
 
-\rett{Noise Blanker}. With this pop-down menu, you can choose the type of noise blanker
+\rett{Blanker}. With this pop-down menu, you can choose the type of noise blanker
 (no noise blanker, the preemptive wide band blanker NB or the interpolating wide band
 blanker NB2 ).
 
-\begin{figure}[ht]
-\center
-\includegraphics[scale=0.45]{NoiseMenu1.png}
-\caption{The \bltt{Noise} menu (with NR settings).}
-\label{fig:NoiseMenu1}
-\end{figure}
 
-\rett{NR Settings} and \rett{NB Settings}. Choosing one of the two buttons determines whether the
+
+\rett{NR Settings} and \rett{NB Settings}.
+You see a thin horizontal line in Fig. \ref{fig:NoiseMenu1}.
+Choosing one of the two buttons just below the horizontal line determines whether the
 lower part of the menu offers fine-tuning of the noise reduction or noise blanker settings.
 The set up for changing the noise reduction settings is shown in Fig. \ref{fig:NoiseMenu1},
 below (Fig \ref{fig:NoiseMenu2}) you find the set up for changing the noise blanker settings.
@@ -2402,23 +2411,15 @@ suits your needs.
 
 \rett{NR2 Gain Method}. The available choices for the NR2 gain-per-bin calculation
 are \rett{Linear},
-\rett{Log}, \rett{Gamma}, and \rett{Trained} (\rett{Gamma} is the default). The new method
-\rett{Trained} has recently been introduced (since WDSP, version 1.25).
+\rett{Log}, \rett{Gamma}, and \rett{Trained} (\rett{Gamma} is the default).
 
 \rett{NR2 NPE Method}. The available choices for the NR2 noise power estimation
 are OSMS
 (Optimal Smoothing Minimum Statistics), MMSE (Minimum Mean-Square Error), and
 NSTAT (Non-stationary Noise Method),
-where OSMS is the default.
-
-\rett{NR/NR2/ANF Position}. In the RX chain, the noise reduction can be placed before or after
-the automatic gain control (AGC). The choice here refers to \textit{all} noise reduction
-capabilities (SNB, ANF, NR1, NR2).
-
-\rett{NR2 Artefact Elimination} The NR2 noise reduction algorithm is prone to producing
-artefacts, so there is an option to reduce such artefacts.
-Although \pH allows you to play with it, this option should nearly always be
-checked (artefact elimination ,,enabled'').
+where OSMS is the default and normally preferred. MMSE and especially NSTAT are
+better adapted to cases where the noise changes fast. With rapidly changing noise, NSTAT
+is recommended especially with the ,,trained'' gain method.
 
 \rett{NR2 Trained Thresh}. This spin-box sets a threshold (between $-5$ and $5$)
 that is only used in the NR2 \rett{Trained} method. The default value, $-0.5$, should be
@@ -2429,6 +2430,27 @@ suitable in most cases.
 very weak signals are eliminated (that is, treated as noise). In this case one can try to \textit{reduce} the
 T2 value.
 
+\rett{NR2 Post-Processing}. \textbf{New in WDSP 1.27!}
+After noise reduction, processed speech often sounds harsh to listeners, and
+this can be alleviated by mixing in a little bit of white noise at the end, and tapering the frequency
+response of the signal. All of these post-processing features can be enabled/disabled by this check box,
+while the settings (level, factor, rate, and taper) can be specified with the spin buttons below
+this check box. For details, consult the WDSP manual.
+
+\rett{Post Level}. This controls the amount of ,,white noise injection''. The range is from 0 to 100,
+the default being 15.
+
+\rett{Post Factor}. This controls the level of the white noise injected. The range is from 0 to 100,
+the default being 15.
+
+\rett{Post Rate}. This is a time constant (in seconds) and controls how fast injected white noise
+fades out. The range is from 0 to 100 secondes, and the default is 5 seconds.
+With a setting of 0, white noise is only injected during the syllables of the speech.
+
+\rett{Post Taper}. This can be used to suppress high-frequency audio that may be generated
+by the noise reduction. The range is from 0 to 100, a value of 100 corresponds to ,,tapering''
+beyond 24 kHz. The default value is 12 (taper beyond 2800 Hz) which is good for normal SSB.
+For ,,wider'' modes (ESSB or AM), this value need be increased.
 
 \textbf{Noise blankers.} A noise blanker works very different from  noise reduction, since noise blanking
 is applied to the original RX IQ samples before any frequency shifts and down-sampling take place.
