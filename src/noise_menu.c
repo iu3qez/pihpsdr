@@ -161,7 +161,7 @@ static void nr_sel_changed(GtkWidget *widget, gpointer data) {
   }
 }
 
-static void btn_changed(GtkWidget *widget, gpointer data) {
+static void nb_sel_changed(GtkWidget *widget, gpointer data) {
   // show or hide all controls for NB settings
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     gtk_widget_show(nb_container);
@@ -171,7 +171,7 @@ static void btn_changed(GtkWidget *widget, gpointer data) {
 }
 
 #ifdef EXTNR
-static void btn_changed(GtkWidget *widget, gpointer data) {
+static void nr4_sel_changed(GtkWidget *widget, gpointer data) {
   // show or hide all controls for NR4 settings
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
     gtk_widget_show(nr4_container);
@@ -310,14 +310,14 @@ void noise_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), 0);
   gtk_widget_show(btn);
   gtk_grid_attach(GTK_GRID(grid), btn, 1, 4, 1, 1);
-  g_signal_connect(btn, "toggled", G_CALLBACK(btn_changed), NULL);
+  g_signal_connect(btn, "toggled", G_CALLBACK(nb_sel_changed), NULL);
 #ifdef EXTNR
   btn = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(nr_sel), "NR4 Settings");
   gtk_widget_set_name(btn, "boldlabel");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), 0);
   gtk_widget_show(btn);
   gtk_grid_attach(GTK_GRID(grid), btn, 2, 4, 1, 1);
-  g_signal_connect(btn, "toggled", G_CALLBACK(btn_changed), NULL);
+  g_signal_connect(btn, "toggled", G_CALLBACK(nr4_sel_changed), NULL);
 #endif
   //
   // Hiding/Showing ComboBoxes optimized for Touch-Screens does not
@@ -423,7 +423,7 @@ void noise_menu(GtkWidget *parent) {
   gtk_widget_set_halign(lbl, GTK_ALIGN_END);
   gtk_widget_show(lbl);
   gtk_grid_attach(GTK_GRID(nr_grid), lbl, 2, 5, 1, 1);
-  btn = gtk_spin_button_new_with_range(0, 15.0, 1.0);
+  btn = gtk_spin_button_new_with_range(0, 100.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(btn), myrx->nr2_post_taper);
   gtk_grid_attach(GTK_GRID(nr_grid), btn, 3, 5, 1, 1);
   g_signal_connect(btn, "changed", G_CALLBACK(post_taper_cb), NULL);
