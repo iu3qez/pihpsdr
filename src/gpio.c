@@ -59,6 +59,16 @@
 #include "toolbar.h"
 #include "vfo.h"
 
+///////////////////////////////////////////////////////////////////////////
+//
+// ATTENTION: this code is intended to work both with the V1 and V2
+// API of the libgpiod library. V1-specific code is encapsulated
+// with "ifdef GPIOV1" and V2-specific code with "ifdef GPIOV2".
+// "ifdef GPIO" is a synonym for "if defined(GPIOV1) || defined(GPIOV2)"
+//
+// As of now, the code is not yet instrumented to work with GPIOV2
+//
+///////////////////////////////////////////////////////////////////////////
 //
 // for controllers which have spare GPIO lines,
 // these lines can be associated to certain
@@ -77,6 +87,7 @@
 // by some GPIO-connected audio output "hats"
 //
 //
+///////////////////////////////////////////////////////////////////////////
 
 static int CWL_LINE = -1;
 static int CWR_LINE = -1;
@@ -85,13 +96,13 @@ static int PTTIN_LINE = -1;
 static int PTTOUT_LINE = -1;
 static int CWOUT_LINE = -1;
 
-#ifdef GPIO
+#ifdef GPIOV1
   static struct gpiod_line *pttout_line = NULL;
   static struct gpiod_line *cwout_line = NULL;
 #endif
 
 void gpio_set_ptt(int state) {
-#ifdef GPIO
+#ifdef GPIOV1
 
   if (pttout_line) {
     if (gpiod_line_set_value(pttout_line, NOT(state)) < 0) {
@@ -103,7 +114,7 @@ void gpio_set_ptt(int state) {
 }
 
 void gpio_set_cw(int state) {
-#ifdef GPIO
+#ifdef GPIOV1
 
   if (cwout_line) {
     if (gpiod_line_set_value(cwout_line, NOT(state)) < 0) {
@@ -669,7 +680,9 @@ static void process_edge(int offset, int value) {
 
   t_print("%s: could not find %d\n", __FUNCTION__, offset);
 }
+#endif
 
+#ifdef GPIOV1
 // cppcheck-suppress constParameterCallback
 static int interrupt_cb(int event_type, unsigned int line, const struct timespec *timeout, void* data) {
   switch (event_type) {
@@ -996,7 +1009,7 @@ void gpioSaveActions() {
   }
 }
 
-#ifdef GPIO
+#ifdef GPIOV1
 static gpointer monitor_thread(gpointer arg) {
   struct timespec t;
   // thread to monitor gpio events
@@ -1094,7 +1107,7 @@ static struct gpiod_line *setup_output_line(struct gpiod_chip *chip, int offset,
 // since no special lines are defined (have_button is not set)
 //
 int gpio_init() {
-#ifdef GPIO
+#ifdef GPIOV1
   int ret = 0;
   initialiseEpoch();
   g_mutex_init(&encoder_mutex);
@@ -1241,7 +1254,7 @@ int gpio_init() {
 
 #endif
   return 0;
-#ifdef GPIO
+#ifdef GPIOV1
 err:
   t_print("%s: err\n", __FUNCTION__);
 
@@ -1256,7 +1269,7 @@ err:
 }
 
 void gpio_close() {
-#ifdef GPIO
+#ifdef GPIOV1
 
   if (chip != NULL) { gpiod_chip_close(chip); }
 

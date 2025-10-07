@@ -32,8 +32,6 @@
 #include "actions.h"
 #include "channel.h"
 #include "discovered.h"
-#include "gpio.h"
-#include "i2c.h"
 #include "main.h"
 #include "message.h"
 #include "radio.h"
