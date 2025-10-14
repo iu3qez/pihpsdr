@@ -121,15 +121,15 @@ void i2c_interrupt() {
 
     unsigned int ints = read_word_data(0x10);
 
-    //t_print("%s: flags=%04X ints=%04X\n",__FUNCTION__,flags,ints);
     // only those bits in "ints" matter where the corresponding position
     // in "flags" is set. We have a PRESSED or RELEASED event depending on
     // whether the bit in "ints" is set or clear.
+
     for (i = 0; i < 16 && flags; i++) { // leave loop if no bits left in "flags"
       if (i2c_sw[i] & flags) {
         //t_print("%s: switches=%p sw=%d action=%d\n",__FUNCTION__,switches,i,switches[i].switch_function);
         // The input line associated with switch #i has triggered an interrupt
-        // clear *this* bit in flags
+        // clear *this* bit in flags to make it zero when all events have been processed
         flags &= ~i2c_sw[i];
         schedule_action(switches[i].function, (ints & i2c_sw[i]) ? PRESSED : RELEASED, 0);
       }
@@ -141,7 +141,6 @@ void i2c_interrupt() {
 
 void i2c_init() {
   int flags;
-  t_print("%s: open i2c device %s\n", __FUNCTION__, i2c_device);
   i2cfd = open(i2c_device, O_RDWR);
 
   if (i2cfd < 0) {
@@ -149,7 +148,7 @@ void i2c_init() {
     return;
   }
 
-  t_print("%s: open i2c device %s fd=%d\n", __FUNCTION__, i2c_device, i2cfd);
+  t_print("%s: i2c device %s fd=%d\n", __FUNCTION__, i2c_device, i2cfd);
 
   if (ioctl(i2cfd, I2C_SLAVE, i2c_address_1) < 0) {
     t_print("%s: ioctl i2c slave %ud failed: %s\n", __FUNCTION__, i2c_address_1, g_strerror(errno));
