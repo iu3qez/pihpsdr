@@ -20,48 +20,50 @@
 #ifndef _GPIO_H_
 #define _GPIO_H_
 
+#ifdef GPIO
 #include <gtk/gtk.h>
+
+enum _controller_enum {
+  NO_CONTROLLER = 0,
+  CONTROLLER1,
+  CONTROLLER2_V1,
+  CONTROLLER2_V2,
+  G2_FRONTPANEL
+};
+
+extern int controller;
 
 #define MAX_ENCODERS 5
 #define MAX_SWITCHES 16
 
-typedef struct _encoder {
-  gboolean bottom_encoder_enabled;
-  gboolean bottom_encoder_pullup;
-  int bottom_encoder_address_a;
-  int bottom_encoder_a_value;
-  int bottom_encoder_address_b;
-  int bottom_encoder_b_value;
-  int bottom_encoder_pos;
-  int bottom_encoder_function;
-  guchar bottom_encoder_state;
-  int top_encoder_enabled;
-  gboolean top_encoder_pullup;
-  int top_encoder_address_a;
-  int top_encoder_a_value;
-  int top_encoder_address_b;
-  int top_encoder_b_value;
-  int top_encoder_pos;
-  int top_encoder_function;
-  guchar top_encoder_state;
-  gboolean switch_enabled;
-  gboolean switch_pullup;
-  int switch_address;
-  int switch_function;
-  gulong switch_debounce;
-} ENCODER;
-
-extern ENCODER *encoders;
-
 typedef struct _switch {
-  gboolean switch_enabled;
-  gboolean switch_pullup;
-  int switch_address;
-  int switch_function;
-  gulong switch_debounce;
+  int enabled;
+  int pullup;
+  int address;
+  int function;
+  uint32_t debounce;
 } SWITCH;
 
-extern SWITCH *switches;
+typedef struct _singleencoder {
+  int enabled;
+  int pullup;
+  int address_a;
+  int a_value;
+  int address_b;
+  int b_value;
+  int pos;
+  int function;
+  int state;
+} SINGLEENCODER;
+
+typedef struct _encoder {
+  SINGLEENCODER bottom;
+  SINGLEENCODER top;
+  SWITCH button;
+} ENCODER;
+  
+extern ENCODER encoders[MAX_ENCODERS];
+extern SWITCH switches[MAX_SWITCHES];
 
 extern void gpio_default_encoder_actions(int ctrlr);
 extern void gpio_default_switch_actions(int ctrlr);
@@ -70,9 +72,10 @@ extern void gpioRestoreActions(void);
 extern void gpioRestoreState(void);
 extern void gpioSaveState(void);
 extern void gpioSaveActions(void);
-extern int gpio_init(void);
+extern void gpio_init(void);
 extern void gpio_close(void);
 extern void gpio_set_ptt(int state);
 extern void gpio_set_cw(int state);
 
+#endif
 #endif
