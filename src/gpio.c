@@ -850,32 +850,47 @@ void gpio_set_defaults(int ctrlr) {
     PTTOUT_LINE = 22;
     CWOUT_LINE = 23;
 
-    if (have_radioberry1) {
-      CWL_LINE = 14;
-      CWR_LINE = 15;
-      CWKEY_LINE = -1;
-      PTTIN_LINE = -1;
-      PTTOUT_LINE = -1;
-      CWOUT_LINE = -1;
-    }
-
-    if (have_radioberry2) {
-      CWL_LINE = 17;
-      CWR_LINE = 21;
-      CWKEY_LINE = -1;
-      PTTIN_LINE = -1;
-      PTTOUT_LINE = -1;
-      CWOUT_LINE = -1;
-    }
-
     memcpy(encoders, encoders_no_controller, sizeof(encoders));
     memcpy(switches, switches_no_controller, sizeof(switches));
     break;
   }
+  //
+  // On some specific hardware, we may not use any of the optional GPIO lines
+  //
+  if (have_radioberry1) {
+    CWL_LINE = 14;
+    CWR_LINE = 15;
+    CWKEY_LINE = -1;
+    PTTIN_LINE = -1;
+    PTTOUT_LINE = -1;
+    CWOUT_LINE = -1;
+  }
+
+  if (have_radioberry2) {
+    CWL_LINE = 17;
+    CWR_LINE = 21;
+    CWKEY_LINE = -1;
+    PTTIN_LINE = -1;
+    PTTOUT_LINE = -1;
+    CWOUT_LINE = -1;
+  }
+
+  if (have_saturn_xdma) {
+    CWL_LINE = -1;
+    CWR_LINE = -1;
+    CWKEY_LINE = -1;
+    PTTIN_LINE = -1;
+    PTTOUT_LINE = -1;
+    CWOUT_LINE = -1;
+  }
 }
 
 void gpioRestoreState() {
+  //
+  // This is ONLY called when the discovery screen initializes
+  //
   loadProperties("gpio.props");
+  controller = NO_CONTROLLER;
   GetPropI0("controller",                                         controller);
   gpio_set_defaults(controller);
 
@@ -894,13 +909,16 @@ void gpioRestoreState() {
   }
 
   for (int i = 0; i < MAX_SWITCHES; i++) {
-    GetPropI1("switches[%d].switch_enabled", i,                 switches[i].enabled);
-    GetPropI1("switches[%d].switch_pullup", i,                  switches[i].pullup);
-    GetPropI1("switches[%d].switch_address", i,                 switches[i].address);
+    GetPropI1("switches[%d].switch_enabled", i,                   switches[i].enabled);
+    GetPropI1("switches[%d].switch_pullup", i,                    switches[i].pullup);
+    GetPropI1("switches[%d].switch_address", i,                   switches[i].address);
   }
 }
 
 void gpioSaveState() {
+  //
+  // This is ONLY called from the discovery "Controller" callback
+  //
   clearProperties();
   SetPropI0("controller",                                         controller);
 
@@ -928,14 +946,25 @@ void gpioSaveState() {
 }
 
 void gpioRestoreActions() {
+  //
+  // This is called when restoring the radio state. It does not *set* controller
+  // but simply checks whether the controller value in the radio props file
+  // matches the current one.
+  //
   int props_controller = NO_CONTROLLER;
-  gpio_set_defaults(controller);
   GetPropI0("controller",                                        props_controller);
 
   //
   // If the props file refers to another controller, skip props data
   //
   if (controller != props_controller) { return; }
+
+  //
+  // Init encoders/switches with default actions, then read modifications
+  // from (radio) props file
+  //
+  gpio_default_encoder_actions(controller);
+  gpio_default_switch_actions(controller);
 
   for (int i = 0; i < MAX_ENCODERS; i++) {
     GetPropA1("encoders[%d].bottom_encoder_function", i,         encoders[i].bottom.function);
@@ -951,6 +980,13 @@ void gpioRestoreActions() {
 }
 
 void gpioSaveActions() {
+  //
+  // This is called when saving the radio state.
+  //
+  // Put the actual controller into the radio props file as well,
+  // so we can check upon restore whether the controller chosen in the
+  // startup screen corresponds to the controller actions saved here
+  //
   SetPropI0("controller",                                        controller);
 
   //
@@ -998,7 +1034,7 @@ static gpointer monitor_thread(gpointer arg) {
   return NULL;
 }
 
-static int setup_input_line(struct gpiod_chip *chip, int offset, gboolean pullup) {
+static void setup_input_line(struct gpiod_chip *chip, int offset, gboolean pullup) {
   //
   // Set up an input line. If this succeeds, record offset in monitor[]
   // and release line (it will be requested again later in the monitor thread).
@@ -1010,7 +1046,7 @@ static int setup_input_line(struct gpiod_chip *chip, int offset, gboolean pullup
 
   if (!line) {
     t_print("%s: get line %d failed: %s\n", __FUNCTION__, offset, g_strerror(errno));
-    return -1;
+    return;
   }
 
   config.consumer = consumer;
@@ -1024,13 +1060,13 @@ static int setup_input_line(struct gpiod_chip *chip, int offset, gboolean pullup
 
   if (ret < 0) {
     t_print("%s: line %d gpiod_line_request failed: %s\n", __FUNCTION__, offset, g_strerror(errno));
-    return ret;
+    return;
   }
 
   gpiod_line_release(line);  // release line since the event monitor will request it later
   monitor_lines[lines] = offset;
   lines++;
-  return 0;
+  return;
 }
 
 static struct gpiod_line *setup_output_line(struct gpiod_chip *chip, int offset, int initialValue)  {
@@ -1062,16 +1098,10 @@ static struct gpiod_line *setup_output_line(struct gpiod_chip *chip, int offset,
 
 #endif
 
-//
-// With a G2_V2 controller gpio_init() is essentially a no-op,
-// since no special lines are defined (have_button is not set)
-//
 void gpio_init() {
 #ifdef GPIOV1
-  int ret = 0;
   initialiseEpoch();
   g_mutex_init(&encoder_mutex);
-  gpio_set_defaults(controller);
   chip = NULL;
 
   //
@@ -1093,8 +1123,8 @@ void gpio_init() {
   //
   if (chip == NULL) {
     t_print("%s: open chip failed: %s\n", __FUNCTION__, g_strerror(errno));
-    ret = -1;
-    goto err;
+    gpio_device = NULL;
+    return;
   }
 
   t_print("%s: GPIO device=%s\n", __FUNCTION__, gpio_device);
@@ -1106,29 +1136,17 @@ void gpio_init() {
 
     for (int i = 0; i < MAX_ENCODERS; i++) {
       if (encoders[i].bottom.enabled) {
-        if (setup_input_line(chip, encoders[i].bottom.address_a, encoders[i].bottom.pullup) < 0) {
-          continue;
-        }
-
-        if (setup_input_line(chip, encoders[i].bottom.address_b, encoders[i].bottom.pullup) < 0) {
-          continue;
-        }
+        setup_input_line(chip, encoders[i].bottom.address_a, encoders[i].bottom.pullup);
+        setup_input_line(chip, encoders[i].bottom.address_b, encoders[i].bottom.pullup);
       }
 
       if (encoders[i].top.enabled) {
-        if (setup_input_line(chip, encoders[i].top.address_a, encoders[i].top.pullup) < 0) {
-          continue;
-        }
-
-        if (setup_input_line(chip, encoders[i].top.address_b, encoders[i].top.pullup) < 0) {
-          continue;
-        }
+        setup_input_line(chip, encoders[i].top.address_a, encoders[i].top.pullup);
+        setup_input_line(chip, encoders[i].top.address_b, encoders[i].top.pullup);
       }
 
       if (encoders[i].button.enabled) {
-        if (setup_input_line(chip, encoders[i].button.address, encoders[i].button.pullup) < 0) {
-          continue;
-        }
+        setup_input_line(chip, encoders[i].button.address, encoders[i].button.pullup);
       }
     }
 
@@ -1137,9 +1155,7 @@ void gpio_init() {
 
     for (int i = 0; i < MAX_SWITCHES; i++) {
       if (switches[i].enabled) {
-        if (setup_input_line(chip, switches[i].address, switches[i].pullup) < 0) {
-          continue;
-        }
+        setup_input_line(chip, switches[i].address, switches[i].pullup);
       }
     }
   }
@@ -1147,10 +1163,7 @@ void gpio_init() {
   if (controller == CONTROLLER2_V1 || controller == CONTROLLER2_V2 || controller == G2_FRONTPANEL) {
     i2c_init();
     t_print("%s: setup i2c interrupt %d\n", __FUNCTION__, I2C_INTERRUPT);
-
-    if ((ret = setup_input_line(chip, I2C_INTERRUPT, TRUE)) < 0) {
-      goto err;
-    }
+    setup_input_line(chip, I2C_INTERRUPT, TRUE);
   }
 
   //
@@ -1158,38 +1171,21 @@ void gpio_init() {
   // but we simply continue without the functionality and can continue
   // to use the controller
   //
-  int have_button = 0;
 
   if (CWL_LINE >= 0) {
-    if (setup_input_line(chip, CWL_LINE, TRUE) < 0) {
-      t_print("%s: CWL line setup failed\n", __FUNCTION__);
-    } else {
-      have_button = 1;
-    }
+    setup_input_line(chip, CWL_LINE, TRUE);
   }
 
   if (CWR_LINE >= 0) {
-    if (setup_input_line(chip, CWR_LINE, TRUE) < 0) {
-      t_print("%s: CWR line setup failed\n", __FUNCTION__);
-    } else {
-      have_button = 1;
-    }
+    setup_input_line(chip, CWR_LINE, TRUE);
   }
 
   if (CWKEY_LINE >= 0) {
-    if (setup_input_line(chip, CWKEY_LINE, TRUE) < 0) {
-      t_print("%s: CWKEY line setup failed\n", __FUNCTION__);
-    } else {
-      have_button = 1;
-    }
+    setup_input_line(chip, CWKEY_LINE, TRUE);
   }
 
   if (PTTIN_LINE >= 0) {
-    if (setup_input_line(chip, PTTIN_LINE, TRUE) < 0) {
-      t_print("%s: CWKEY line setup failed\n", __FUNCTION__);
-    } else {
-      have_button = 1;
-    }
+    setup_input_line(chip, PTTIN_LINE, TRUE);
   }
 
   if (PTTOUT_LINE >= 0) {
@@ -1202,7 +1198,7 @@ void gpio_init() {
     cwout_line = setup_output_line(chip, CWOUT_LINE, 1);
   }
 
-  if (have_button || (controller != NO_CONTROLLER)) {
+  if (lines > 0) {
     monitor_thread_id = g_thread_new( "gpiod monitor", monitor_thread, NULL);
     t_print("%s: monitor_thread: id=%p\n", __FUNCTION__, monitor_thread_id);
   }
@@ -1214,18 +1210,6 @@ void gpio_init() {
 
 #endif
   return;
-#ifdef GPIOV1
-err:
-  t_print("%s: err\n", __FUNCTION__);
-
-  if (chip != NULL) {
-    gpiod_chip_close(chip);
-  }
-
-  chip = NULL;
-  gpio_device = NULL;
-  return;
-#endif
 }
 
 void gpio_close() {
