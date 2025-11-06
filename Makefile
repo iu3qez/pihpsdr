@@ -50,6 +50,18 @@ TTS=ON
 UNAME_S := $(shell uname -s)
 UNAME_R := $(shell uname -r)
 
+# Detect Windows (MSYS2/MinGW environment)
+# MSYS2 sets OS=Windows_NT, and uname -s returns MINGW64_NT or MSYS_NT
+ifeq ($(OS),Windows_NT)
+  UNAME_S := Windows
+endif
+ifneq (,$(findstring MINGW,$(UNAME_S)))
+  UNAME_S := Windows
+endif
+ifneq (,$(findstring MSYS,$(UNAME_S)))
+  UNAME_S := Windows
+endif
+
 # Get git commit version and date
 GIT_DATE := $(firstword $(shell git --no-pager show --date=short --format="%ai" --name-only))
 GIT_VERSION := $(shell git describe --abbrev=0 --tags --always --dirty)
@@ -111,13 +123,20 @@ CPP_INCLUDE +=$(WDSP_INCLUDE)
 
 ##############################################################################
 #
-# disable GPIO and SATURN for MacOS, simply because it is not there
+# Disable GPIO and SATURN for MacOS and Windows (not available on these platforms)
 #
 ##############################################################################
 
 ifeq ($(UNAME_S), Darwin)
 GPIO=
 SATURN=
+endif
+
+ifeq ($(UNAME_S), Windows)
+# Disable hardware-specific features for Windows
+GPIO=
+SATURN=
+TTS=        # Defer Windows TTS (SAPI) to post-MVP
 endif
 
 ##############################################################################
@@ -139,6 +158,11 @@ ifeq ($(UNAME_S), Linux)
 MIDI_SOURCES= src/alsa_midi.c src/midi2.c src/midi3.c src/midi_menu.c
 MIDI_OBJS= src/alsa_midi.o src/midi2.o src/midi3.o src/midi_menu.o
 MIDI_LIBS= -lasound
+endif
+ifeq ($(UNAME_S), Windows)
+# Disable MIDI on Windows for MVP (implement later with Windows MIDI API)
+MIDI=OFF
+# TODO: Implement src/windows_midi.c using Windows Multimedia API (mmsystem.h, -lwinmm)
 endif
 endif
 CPP_DEFINES += -DMIDI
@@ -292,7 +316,7 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libcurl`
 ##############################################################################
 #
 # Options for audio module
-#  - MacOS: only PORTAUDIO
+#  - MacOS and Windows: only PORTAUDIO
 #  - Linux: either PULSEAUDIO (default) or ALSA (upon request)
 #
 ##############################################################################
@@ -300,6 +324,11 @@ CPP_INCLUDE += `$(PKG_CONFIG) --cflags libcurl`
 ifeq ($(UNAME_S), Darwin)
   AUDIO=PORTAUDIO
 endif
+
+ifeq ($(UNAME_S), Windows)
+  AUDIO=PORTAUDIO
+endif
+
 ifeq ($(UNAME_S), Linux)
   ifneq ($(AUDIO) , ALSA)
     AUDIO=PULSE
@@ -401,6 +430,11 @@ endif
 
 ifeq ($(UNAME_S), Darwin)
 SYSLIBS=-framework IOKit
+endif
+
+ifeq ($(UNAME_S), Windows)
+# Winsock2 for network sockets, iphlpapi for network interface info
+SYSLIBS=-lws2_32 -liphlpapi
 endif
 
 ##############################################################################
