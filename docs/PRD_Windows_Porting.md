@@ -201,7 +201,7 @@ Windows porting will:
 - **Priority:** P0 (Critical)
 - **Description:** Use existing `src/portaudio.c` implementation
 - **Testing:**
-  - Test with various Windows audio devices (Realtek, USB, ASIO)
+  - Test with various Windows audio devices (Realtek, USB)
   - Verify 48kHz sample rate support
   - Test with WDM, WASAPI, and DirectSound backends
 
@@ -566,7 +566,6 @@ The Windows port is considered successful if:
 ### 9.2 Stretch Goals
 
 - ⭐ MIDI controller support via Windows MIDI API
-- ⭐ ASIO audio support for ultra-low latency
 - ⭐ Windows 11 native theme integration
 - ⭐ Code signing certificate for installer
 - ⭐ SoapySDR support on Windows
@@ -616,7 +615,6 @@ The Windows port is considered successful if:
 | **DirectSound** | Medium (~30ms) | Universal | Good compatibility |
 | **WASAPI Shared** | Medium (~20ms) | Win Vista+ | Recommended default |
 | **WASAPI Exclusive** | Low (~5-10ms) | Win Vista+ | Best for CW; requires exclusive device access |
-| **ASIO** | Very Low (~2-5ms) | Requires driver | For audiophile cards; optional |
 
 **Recommendation:** Default to WASAPI Shared, allow user to select WASAPI Exclusive for CW.
 
