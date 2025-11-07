@@ -322,56 +322,56 @@ void andromeda_execute_encoder(int p, int v) {
   if (!locked) switch (p) {
     // Enc1/2: "RX1 AF/RF"
     case 1:
-      schedule_action(AF_GAIN_RX1, RELATIVE, v);
+      schedule_action(AF_GAIN_RX1, ACTION_RELATIVE, v);
       break;
 
     case 2:
-      schedule_action(AGC_GAIN_RX1, RELATIVE, v);
+      schedule_action(AGC_GAIN_RX1, ACTION_RELATIVE, v);
       break;
 
     // Enc3/4: "RX2 AF/RF"
     case 3:
-      schedule_action(AF_GAIN_RX2, RELATIVE, v);
+      schedule_action(AF_GAIN_RX2, ACTION_RELATIVE, v);
       break;
 
     case 4:
-      schedule_action(AGC_GAIN_RX2, RELATIVE, v);
+      schedule_action(AGC_GAIN_RX2, ACTION_RELATIVE, v);
       break;
 
     // Enc5/6: "IF FILTER HIGH/LOW CUT"
     case 5:
-      schedule_action(FILTER_CUT_HIGH, RELATIVE, v);
+      schedule_action(FILTER_CUT_HIGH, ACTION_RELATIVE, v);
       break;
 
     case 6:
-      schedule_action(FILTER_CUT_LOW, RELATIVE, v);
+      schedule_action(FILTER_CUT_LOW, ACTION_RELATIVE, v);
       break;
 
     // Enc7/8: "DIVERSITY GAIN/PHASE"
     case 7:
-      schedule_action(DIV_GAIN, RELATIVE, v);
+      schedule_action(DIV_GAIN, ACTION_RELATIVE, v);
       break;
 
     case 8:
-      schedule_action(DIV_PHASE, RELATIVE, v);
+      schedule_action(DIV_PHASE, ACTION_RELATIVE, v);
       break;
 
     // Enc9/10: "RIT/XIT"
     case 9: // RIT of the VFO of the active receiver
-      schedule_action(RIT, RELATIVE, v);
+      schedule_action(RIT, ACTION_RELATIVE, v);
       break;
 
     case 10:
-      schedule_action(XIT, RELATIVE, v);
+      schedule_action(XIT, ACTION_RELATIVE, v);
       break;
 
     //Enc11/12: "MULTI/DRIVE", but here implemented as "MIC/DRIVE"
     case 11:
-      schedule_action(MIC_GAIN, RELATIVE, v);
+      schedule_action(MIC_GAIN, ACTION_RELATIVE, v);
       break;
 
     case 12:
-      schedule_action(DRIVE, RELATIVE, v);
+      schedule_action(DRIVE, ACTION_RELATIVE, v);
       break;
     }
 }

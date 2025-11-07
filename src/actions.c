@@ -326,7 +326,7 @@ static inline double KnobOrWheel(const PROCESS_ACTION *a, double oldval, double 
   //  - rounded to a multiple of inc
   //
   switch (a->mode) {
-  case RELATIVE:
+  case ACTION_RELATIVE:
     oldval += a->val * inc;
     break;
 
@@ -1458,7 +1458,7 @@ int process_action(void *data) {
     break;
 
   case RIT:
-    if (a->mode == RELATIVE) {
+    if (a->mode == ACTION_RELATIVE) {
       int id = active_receiver->id;
       vfo_id_rit_incr(id, vfo[id].rit_step * a->val);
     }
@@ -1536,7 +1536,7 @@ int process_action(void *data) {
     // a RITXIT encoder automatically switches between RIT or XIT. It does XIT
     // if (and only if) RIT is disabled and XIT is enabled, otherwise it does RIT
     //
-    if (a->mode == RELATIVE) {
+    if (a->mode == ACTION_RELATIVE) {
       int id = active_receiver->id;
 
       if ((vfo[id].rit_enabled == 0) && (vfo[vfo_get_tx_vfo()].xit_enabled == 1)) {
@@ -1729,7 +1729,7 @@ int process_action(void *data) {
     break;
 
   case VFO:
-    if (a->mode == RELATIVE && !locked) {
+    if (a->mode == ACTION_RELATIVE && !locked) {
       static int acc = 0;
       acc += (int) a->val;
       int new = acc / vfo_encoder_divisor;
@@ -1761,7 +1761,7 @@ int process_action(void *data) {
     break;
 
   case VFOA:
-    if (a->mode == RELATIVE && !locked) {
+    if (a->mode == ACTION_RELATIVE && !locked) {
       static int acc = 0;
       acc += (int) a->val;
       int new = acc / vfo_encoder_divisor;
@@ -1775,7 +1775,7 @@ int process_action(void *data) {
     break;
 
   case VFOB:
-    if (a->mode == RELATIVE && !locked) {
+    if (a->mode == ACTION_RELATIVE && !locked) {
       static int acc = 0;
       acc += (int) a->val;
       int new = acc / vfo_encoder_divisor;

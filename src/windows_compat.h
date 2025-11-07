@@ -61,7 +61,8 @@
 #include <windows.h>
 #include <iphlpapi.h>
 #include <string.h>
-#include <io.h>     // For _close(), _open(), etc.
+#include <io.h>        // For _close(), _open(), etc.
+#include <stdarg.h>    // For va_list, va_start, va_end
 
 /*
  * Socket type compatibility
@@ -190,6 +191,49 @@ static inline void usleep_compat(unsigned int microseconds) {
 #endif
 
 /*
+ * Socket options compatibility
+ */
+// SO_REUSEPORT doesn't exist on Windows, map to SO_REUSEADDR
+#ifndef SO_REUSEPORT
+#define SO_REUSEPORT SO_REUSEADDR
+#endif
+
+/*
+ * fcntl() compatibility
+ * Windows doesn't have fcntl, provide minimal implementation for socket flags
+ */
+#define F_GETFL 3
+#define F_SETFL 4
+static inline int fcntl(int fd, int cmd, ...) {
+    // Only support getting/setting socket flags for O_NONBLOCK
+    // For F_GETFL, return 0 (assume blocking by default)
+    // For F_SETFL with O_NONBLOCK, use ioctlsocket
+    if (cmd == F_GETFL) {
+        return 0;  // Return 0, actual flags unknown
+    }
+    else if (cmd == F_SETFL) {
+        // Extract flags from varargs
+        va_list args;
+        va_start(args, cmd);
+        int flags = va_arg(args, int);
+        va_end(args);
+
+        // If O_NONBLOCK is set, make socket non-blocking
+        if (flags & O_NONBLOCK) {
+            u_long mode = 1;
+            return ioctlsocket((SOCKET)fd, FIONBIO, &mode);
+        }
+    }
+    return 0;
+}
+
+/*
+ * BSD compatibility functions
+ */
+// bcopy is obsolete, use memmove
+#define bcopy(src, dst, len) memmove(dst, src, len)
+
+/*
  * Other Windows-specific compatibility
  */
 #define strcasecmp  _stricmp
@@ -197,7 +241,7 @@ static inline void usleep_compat(unsigned int microseconds) {
 
 // Windows doesn't have these POSIX file flags
 #ifndef O_NONBLOCK
-#define O_NONBLOCK 0
+#define O_NONBLOCK 0x0800
 #endif
 
 /*
