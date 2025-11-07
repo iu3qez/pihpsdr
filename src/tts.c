@@ -53,10 +53,7 @@
 #include "windows_compat.h"
 #include <gtk/gtk.h>
 
-#include <unistd.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 #include "message.h"
 #include "radio.h"
