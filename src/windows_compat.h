@@ -212,6 +212,98 @@ static inline void usleep_compat(unsigned int microseconds) {
 #endif
 
 /*
+ * POSIX headers not available on Windows - provide minimal compatibility
+ */
+// poll.h - not actually used in code, just included
+// Provide minimal stub
+#define poll(fds, nfds, timeout) 0
+struct pollfd {
+    int fd;
+    short events;
+    short revents;
+};
+
+// sched.h - scheduling, not used on Windows
+// Provide no-op stubs
+#define sched_yield() Sleep(0)
+
+// sys/mman.h - memory mapping, not critical for Windows
+// Provide no-ops
+#define mlock(addr, len) 0
+#define munlock(addr, len) 0
+#define mlockall(flags) 0
+#define munlockall() 0
+#define MCL_CURRENT 1
+#define MCL_FUTURE 2
+
+// semaphore.h - POSIX semaphores, map to Windows Event objects
+typedef struct {
+    HANDLE handle;
+} sem_t;
+
+static inline int sem_init(sem_t *sem, int pshared, unsigned int value) {
+    // Create a Windows semaphore (not an Event, despite the comment above)
+    // Windows semaphores are counting semaphores like POSIX
+    sem->handle = CreateSemaphore(NULL, value, LONG_MAX, NULL);
+    return (sem->handle != NULL) ? 0 : -1;
+}
+
+static inline int sem_destroy(sem_t *sem) {
+    if (sem->handle) {
+        CloseHandle(sem->handle);
+        sem->handle = NULL;
+    }
+    return 0;
+}
+
+static inline int sem_post(sem_t *sem) {
+    return ReleaseSemaphore(sem->handle, 1, NULL) ? 0 : -1;
+}
+
+static inline int sem_wait(sem_t *sem) {
+    return (WaitForSingleObject(sem->handle, INFINITE) == WAIT_OBJECT_0) ? 0 : -1;
+}
+
+static inline int sem_trywait(sem_t *sem) {
+    DWORD result = WaitForSingleObject(sem->handle, 0);
+    if (result == WAIT_OBJECT_0) return 0;
+    if (result == WAIT_TIMEOUT) {
+        errno = EAGAIN;
+        return -1;
+    }
+    return -1;
+}
+
+static inline int sem_timedwait(sem_t *sem, const struct timespec *abs_timeout) {
+    // Simplified: just use regular wait for now
+    // Proper implementation would calculate timeout from abs_timeout
+    return sem_wait(sem);
+}
+
+// Named semaphores (used in iambic.c)
+static inline sem_t* sem_open(const char *name, int oflag, ...) {
+    // Simplified implementation - create unnamed semaphore
+    sem_t *sem = (sem_t*)malloc(sizeof(sem_t));
+    if (sem) {
+        sem_init(sem, 0, 0);
+    }
+    return sem;
+}
+
+static inline int sem_close(sem_t *sem) {
+    if (sem) {
+        sem_destroy(sem);
+        free(sem);
+    }
+    return 0;
+}
+
+static inline int sem_unlink(const char *name) {
+    // No-op for Windows
+    return 0;
+}
+
+/*
  * fcntl() compatibility
  * Windows doesn't have fcntl, provide minimal implementation for socket flags
  */
