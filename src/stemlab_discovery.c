@@ -21,17 +21,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <arpa/inet.h>
 #include <string.h>
-#include <unistd.h>
 #include <curl/curl.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include <glib.h>
 #include <stdint.h>
-#include <string.h>
+#ifndef _WIN32
+#include <net/if.h>
+#endif
 
 #include "discovered.h"
 #include "discovery.h"

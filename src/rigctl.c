@@ -27,17 +27,15 @@
 #include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
-#include <fcntl.h>
 #include <math.h>
 #include <string.h>
-#include <termios.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <sys/socket.h>
-#include <arpa/inet.h> //inet_addr
+#ifndef _WIN32
+#include <termios.h>
 #include <netinet/tcp.h>
+#endif
 
 #include "actions.h"
 #include "agc.h"

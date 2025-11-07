@@ -576,4 +576,195 @@ static inline int set_socket_blocking(SOCKET sockfd) {
 #endif
 }
 
+/*
+ * =============================================================================
+ * NETWORK INTERFACE ENUMERATION (ifaddrs compatibility)
+ * =============================================================================
+ */
+
+#if PLATFORM_WINDOWS
+
+/**
+ * @brief POSIX-compatible ifaddrs structure for Windows
+ *
+ * This struct provides a Windows implementation of the POSIX ifaddrs structure
+ * used for network interface enumeration. On Windows, we use GetAdaptersAddresses()
+ * to populate this structure.
+ */
+struct ifaddrs {
+    struct ifaddrs  *ifa_next;       /* Next item in list */
+    char            *ifa_name;       /* Name of interface */
+    unsigned int     ifa_flags;      /* Flags from SIOCGIFFLAGS */
+    struct sockaddr *ifa_addr;       /* Address of interface */
+    struct sockaddr *ifa_netmask;    /* Netmask of interface */
+    struct sockaddr *ifa_broadaddr;  /* Broadcast address (or dstaddr for P2P) */
+    void            *ifa_data;       /* Address-specific data */
+};
+
+/* Interface flags - map to Windows equivalents */
+#ifndef IFF_UP
+#define IFF_UP          0x1     /* Interface is up */
+#endif
+#ifndef IFF_BROADCAST
+#define IFF_BROADCAST   0x2     /* Broadcast address valid */
+#endif
+#ifndef IFF_LOOPBACK
+#define IFF_LOOPBACK    0x8     /* Is a loopback net */
+#endif
+#ifndef IFF_RUNNING
+#define IFF_RUNNING     0x40    /* Resources allocated */
+#endif
+#ifndef IFF_MULTICAST
+#define IFF_MULTICAST   0x1000  /* Supports multicast */
+#endif
+
+/**
+ * @brief Get network interface addresses (Windows implementation)
+ * @param ifap Pointer to store the linked list of interfaces
+ * @return 0 on success, -1 on error
+ */
+static inline int getifaddrs(struct ifaddrs **ifap) {
+    DWORD rv, size;
+    IP_ADAPTER_ADDRESSES *adapter_addresses = NULL, *aa;
+    struct ifaddrs *ifa_head = NULL, *ifa_tail = NULL;
+
+    if (!ifap) return -1;
+    *ifap = NULL;
+
+    /* Get adapter addresses - first call to get size */
+    size = 16384; /* Initial buffer size */
+    adapter_addresses = (IP_ADAPTER_ADDRESSES*)malloc(size);
+    if (!adapter_addresses) return -1;
+
+    rv = GetAdaptersAddresses(AF_INET,
+                             GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST,
+                             NULL, adapter_addresses, &size);
+
+    if (rv == ERROR_BUFFER_OVERFLOW) {
+        free(adapter_addresses);
+        adapter_addresses = (IP_ADAPTER_ADDRESSES*)malloc(size);
+        if (!adapter_addresses) return -1;
+        rv = GetAdaptersAddresses(AF_INET,
+                                 GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST,
+                                 NULL, adapter_addresses, &size);
+    }
+
+    if (rv != NO_ERROR) {
+        free(adapter_addresses);
+        return -1;
+    }
+
+    /* Convert Windows adapter list to ifaddrs linked list */
+    for (aa = adapter_addresses; aa != NULL; aa = aa->Next) {
+        IP_ADAPTER_UNICAST_ADDRESS *ua;
+
+        /* Process each unicast address for this adapter */
+        for (ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
+            struct ifaddrs *ifa;
+            struct sockaddr_in *addr4, *mask4;
+
+            /* Only handle IPv4 for now */
+            if (ua->Address.lpSockaddr->sa_family != AF_INET) continue;
+
+            /* Allocate ifaddrs structure */
+            ifa = (struct ifaddrs*)calloc(1, sizeof(struct ifaddrs));
+            if (!ifa) goto error_cleanup;
+
+            /* Convert adapter name from wide string to ASCII */
+            size_t name_len = wcslen(aa->FriendlyName) + 1;
+            ifa->ifa_name = (char*)malloc(name_len);
+            if (!ifa->ifa_name) {
+                free(ifa);
+                goto error_cleanup;
+            }
+            wcstombs(ifa->ifa_name, aa->FriendlyName, name_len);
+
+            /* Set interface flags */
+            ifa->ifa_flags = 0;
+            if (aa->OperStatus == IfOperStatusUp) ifa->ifa_flags |= IFF_UP | IFF_RUNNING;
+            if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) ifa->ifa_flags |= IFF_LOOPBACK;
+            if (aa->Flags & IP_ADAPTER_NO_MULTICAST) ; else ifa->ifa_flags |= IFF_MULTICAST;
+
+            /* Copy address */
+            ifa->ifa_addr = (struct sockaddr*)malloc(sizeof(struct sockaddr_in));
+            if (!ifa->ifa_addr) {
+                free(ifa->ifa_name);
+                free(ifa);
+                goto error_cleanup;
+            }
+            memcpy(ifa->ifa_addr, ua->Address.lpSockaddr, sizeof(struct sockaddr_in));
+
+            /* Calculate netmask from prefix length */
+            ifa->ifa_netmask = (struct sockaddr*)calloc(1, sizeof(struct sockaddr_in));
+            if (!ifa->ifa_netmask) {
+                free(ifa->ifa_addr);
+                free(ifa->ifa_name);
+                free(ifa);
+                goto error_cleanup;
+            }
+            mask4 = (struct sockaddr_in*)ifa->ifa_netmask;
+            mask4->sin_family = AF_INET;
+            if (ua->OnLinkPrefixLength > 0 && ua->OnLinkPrefixLength <= 32) {
+                mask4->sin_addr.s_addr = htonl(~((1 << (32 - ua->OnLinkPrefixLength)) - 1));
+            }
+
+            /* Calculate broadcast address */
+            ifa->ifa_broadaddr = (struct sockaddr*)calloc(1, sizeof(struct sockaddr_in));
+            if (ifa->ifa_broadaddr) {
+                struct sockaddr_in *bcast4 = (struct sockaddr_in*)ifa->ifa_broadaddr;
+                addr4 = (struct sockaddr_in*)ifa->ifa_addr;
+                bcast4->sin_family = AF_INET;
+                bcast4->sin_addr.s_addr = addr4->sin_addr.s_addr | ~mask4->sin_addr.s_addr;
+            }
+
+            /* Add to linked list */
+            ifa->ifa_next = NULL;
+            if (ifa_tail) {
+                ifa_tail->ifa_next = ifa;
+            } else {
+                ifa_head = ifa;
+            }
+            ifa_tail = ifa;
+        }
+    }
+
+    free(adapter_addresses);
+    *ifap = ifa_head;
+    return 0;
+
+error_cleanup:
+    free(adapter_addresses);
+    if (ifa_head) {
+        struct ifaddrs *ifa = ifa_head;
+        while (ifa) {
+            struct ifaddrs *next = ifa->ifa_next;
+            free(ifa->ifa_name);
+            free(ifa->ifa_addr);
+            free(ifa->ifa_netmask);
+            free(ifa->ifa_broadaddr);
+            free(ifa);
+            ifa = next;
+        }
+    }
+    return -1;
+}
+
+/**
+ * @brief Free ifaddrs structure
+ * @param ifa Pointer to ifaddrs linked list
+ */
+static inline void freeifaddrs(struct ifaddrs *ifa) {
+    while (ifa) {
+        struct ifaddrs *next = ifa->ifa_next;
+        free(ifa->ifa_name);
+        free(ifa->ifa_addr);
+        free(ifa->ifa_netmask);
+        free(ifa->ifa_broadaddr);
+        free(ifa);
+        ifa = next;
+    }
+}
+
+#endif /* PLATFORM_WINDOWS */
+
 #endif /* WINDOWS_COMPAT_H */
