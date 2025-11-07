@@ -37,6 +37,7 @@ install_package() {
 
 # Core packages to install (order matters - dependencies first)
 PACKAGES=(
+    # Base runtime libraries
     "mingw-w64-x86_64-gcc-libs"
     "mingw-w64-x86_64-gmp"
     "mingw-w64-x86_64-expat"
@@ -45,8 +46,28 @@ PACKAGES=(
     "mingw-w64-x86_64-zlib"
     "mingw-w64-x86_64-libffi"
     "mingw-w64-x86_64-pcre2"
-    "mingw-w64-x86_64-glib2"
     "mingw-w64-x86_64-bzip2"
+
+    # Crypto and network dependencies (for curl)
+    "mingw-w64-x86_64-openssl"
+    "mingw-w64-x86_64-libssh2"
+    "mingw-w64-x86_64-libidn2"
+    "mingw-w64-x86_64-brotli"
+    "mingw-w64-x86_64-zstd"
+    "mingw-w64-x86_64-nghttp2"
+    "mingw-w64-x86_64-nghttp3"
+    "mingw-w64-x86_64-ngtcp2"
+    "mingw-w64-x86_64-libpsl"
+
+    # Image format libraries (for gdk-pixbuf)
+    "mingw-w64-x86_64-libjpeg-turbo"
+    "mingw-w64-x86_64-libtiff"
+
+    # Font rendering dependencies
+    "mingw-w64-x86_64-graphite2"
+
+    # GLib and Cairo stack
+    "mingw-w64-x86_64-glib2"
     "mingw-w64-x86_64-cairo"
     "mingw-w64-x86_64-fontconfig"
     "mingw-w64-x86_64-freetype"
@@ -57,6 +78,8 @@ PACKAGES=(
     "mingw-w64-x86_64-pixman"
     "mingw-w64-x86_64-gdk-pixbuf2"
     "mingw-w64-x86_64-atk"
+
+    # GTK3 and application dependencies
     "mingw-w64-x86_64-gtk3"
     "mingw-w64-x86_64-fftw"
     "mingw-w64-x86_64-libusb"
