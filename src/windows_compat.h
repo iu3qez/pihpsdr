@@ -61,6 +61,7 @@
 #include <windows.h>
 #include <iphlpapi.h>
 #include <string.h>
+#include <io.h>     // For _close(), _open(), etc.
 
 /*
  * Socket type compatibility
@@ -71,10 +72,25 @@
 // SOCKET is already defined by winsock2.h on Windows
 
 /*
- * Socket function compatibility macros
+ * Socket function compatibility
+ * Provide wrapper functions instead of macros to avoid conflicts
  */
-#define close(s)        closesocket(s)
 #define ioctl(s, cmd, arg) ioctlsocket(s, cmd, arg)
+
+// Wrapper for close() - handles both sockets (positive values) and files
+// On Windows, socket() returns SOCKET (unsigned), but code uses int
+// We'll try closesocket first, if it fails try _close for file descriptors
+static inline int close_compat(int fd) {
+    // Attempt socket close first (most common in this codebase)
+    int result = closesocket((SOCKET)fd);
+    if (result == SOCKET_ERROR) {
+        // If that failed, might be a file descriptor
+        // Try _close (but this might also fail if it was actually a bad socket)
+        return _close(fd);
+    }
+    return result;
+}
+#define close(fd) close_compat(fd)
 
 /*
  * Error code compatibility
@@ -129,14 +145,49 @@ typedef int socklen_t;
  * Windows: Sleep(milliseconds)
  * POSIX: sleep(seconds), usleep(microseconds)
  */
-#define sleep(seconds)      Sleep((seconds) * 1000)
-#define usleep(microseconds) Sleep((microseconds) / 1000)
+static inline void sleep_compat(unsigned int seconds) {
+    Sleep(seconds * 1000);
+}
+static inline void usleep_compat(unsigned int microseconds) {
+    Sleep(microseconds / 1000);
+}
+// Only define macros if not already defined
+#ifndef sleep
+#define sleep(seconds)      sleep_compat(seconds)
+#endif
+#ifndef usleep
+#define usleep(microseconds) usleep_compat(microseconds)
+#endif
 
 /*
  * Directory separator for paths
  * Windows accepts both / and \ but native is \
  * GLib's G_DIR_SEPARATOR should be used in GTK code
  */
+
+/*
+ * Byte-order conversion functions
+ * Windows doesn't have htobe64/be64toh, provide equivalents
+ */
+#include <stdlib.h>
+#ifndef htobe64
+#define htobe64(x) _byteswap_uint64(x)
+#endif
+#ifndef be64toh
+#define be64toh(x) _byteswap_uint64(x)
+#endif
+#ifndef htobe32
+#define htobe32(x) _byteswap_ulong(x)
+#endif
+#ifndef be32toh
+#define be32toh(x) _byteswap_ulong(x)
+#endif
+#ifndef htobe16
+#define htobe16(x) _byteswap_ushort(x)
+#endif
+#ifndef be16toh
+#define be16toh(x) _byteswap_ushort(x)
+#endif
 
 /*
  * Other Windows-specific compatibility
