@@ -1,0 +1,22 @@
+{
+  "name": "piHPSDR Windows Cross-Compile",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.makefile-tools"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "postCreateCommand": "echo 'Devcontainer ready! Run ./devcontainer/build-windows.sh to build for Windows'",
+  "remoteUser": "root"
+}
