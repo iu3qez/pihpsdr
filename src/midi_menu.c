@@ -21,8 +21,10 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#ifndef _WIN32
 #include <unistd.h>
 #include <termios.h>
+#endif
 
 #include "action_dialog.h"
 #include "actions.h"
