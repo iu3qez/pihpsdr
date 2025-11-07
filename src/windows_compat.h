@@ -334,6 +334,17 @@ static inline int setpriority(int which, int who, int prio) {
  */
 
 /*
+ * termios baud rate constants - not defined on Windows
+ * These are defined for compatibility but serial port functions are not implemented
+ */
+#ifndef B9600
+#define B9600   9600
+#endif
+#ifndef B115200
+#define B115200 115200
+#endif
+
+/*
  * inet_aton() compatibility - BSD function not in Windows
  */
 static inline int inet_aton(const char *cp, struct in_addr *inp) {
