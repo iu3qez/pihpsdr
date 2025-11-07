@@ -129,6 +129,13 @@ static inline int close_compat(int fd) {
 #endif
 
 /*
+ * SOL_TCP is not defined on Windows - use IPPROTO_TCP instead
+ */
+#ifndef SOL_TCP
+#define SOL_TCP IPPROTO_TCP
+#endif
+
+/*
  * socklen_t type (not defined in older Windows headers)
  */
 #ifndef socklen_t
