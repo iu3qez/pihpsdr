@@ -199,6 +199,13 @@ static inline void usleep_compat(unsigned int microseconds) {
 #endif
 
 /*
+ * File flags - define before fcntl
+ */
+#ifndef O_NONBLOCK
+#define O_NONBLOCK 0x0800
+#endif
+
+/*
  * fcntl() compatibility
  * Windows doesn't have fcntl, provide minimal implementation for socket flags
  */
@@ -238,11 +245,6 @@ static inline int fcntl(int fd, int cmd, ...) {
  */
 #define strcasecmp  _stricmp
 #define strncasecmp _strnicmp
-
-// Windows doesn't have these POSIX file flags
-#ifndef O_NONBLOCK
-#define O_NONBLOCK 0x0800
-#endif
 
 /*
  * Windows Winsock initialization
