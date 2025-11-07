@@ -330,7 +330,7 @@ void g2panel_execute_encoder(int type, const int *vec, int encoder, int val) {
 
   if (action == NO_ACTION) { return; }
 
-  schedule_action(action, RELATIVE, val);
+  schedule_action(action, ACTION_RELATIVE, val);
 }
 
 //
