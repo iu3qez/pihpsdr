@@ -75,8 +75,12 @@
 #include "vox.h"
 #include "waterfall.h"
 
+#ifndef min
 #define min(x,y) (x<y?x:y)
+#endif
+#ifndef max
 #define max(x,y) (x<y?y:x)
+#endif
 
 const int MIN_METER_WIDTH = 200;  // nowhere changed
 const int MENU_WIDTH = 65;        // nowhere changed

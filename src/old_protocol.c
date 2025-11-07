@@ -24,6 +24,8 @@
 #include <string.h>
 #include <math.h>
 #include <signal.h>
+#include <pthread.h>
+#include <semaphore.h>
 #ifndef _WIN32
 #include <net/if_arp.h>
 #include <net/if.h>
@@ -47,7 +49,9 @@
 #include "transmitter.h"
 #include "vfo.h"
 
+#ifndef min
 #define min(x,y) (x<y?x:y)
+#endif
 
 #define SYNC0 0
 #define SYNC1 1
