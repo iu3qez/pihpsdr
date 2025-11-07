@@ -1,0 +1,22 @@
+# Windows cross-compilation configuration for piHPSDR
+# This file configures the Makefile for building Windows executables
+
+# Cross-compilation toolchain
+CC=x86_64-w64-mingw32-gcc
+LINK=x86_64-w64-mingw32-gcc
+PKG_CONFIG=x86_64-w64-mingw32-pkg-config
+
+# Disable Linux-specific features
+GPIO=OFF
+SATURN=OFF
+USBOZY=OFF
+SOAPYSDR=OFF
+STEMLAB=OFF
+
+# Windows-compatible features
+AUDIO=PORTAUDIO
+MIDI=OFF
+TTS=OFF
+
+# Additional Windows-specific flags
+CFLAGS+=-DWINDOWS

@@ -6,7 +6,7 @@ GNUmakefile
 *.a
 *.diff
 *.orig
-make.config.pihpsdr
+/make.config.pihpsdr
 /pihpsdr
 pihpsdr.app
 hpsdrsim
