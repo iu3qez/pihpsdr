@@ -3342,7 +3342,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           steps *= andromeda_vfo_speedup[31];
         }
 
-        schedule_action(VFO, RELATIVE, -steps);
+        schedule_action(VFO, ACTION_RELATIVE, -steps);
       } else {
         // unexpected command format
         implemented = FALSE;
@@ -3556,7 +3556,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           steps *= andromeda_vfo_speedup[31];
         }
 
-        schedule_action(VFO, RELATIVE, steps);
+        schedule_action(VFO, ACTION_RELATIVE, steps);
       }
 
       break;

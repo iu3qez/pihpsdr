@@ -66,11 +66,11 @@ static gboolean repeat_cb(gpointer data) {
     break;
 
   case 2:
-    schedule_action(test_action, RELATIVE, -1);
+    schedule_action(test_action, ACTION_RELATIVE, -1);
     break;
 
   case 3:
-    schedule_action(test_action, RELATIVE, 1);
+    schedule_action(test_action, ACTION_RELATIVE, 1);
     break;
   }
 
@@ -130,7 +130,7 @@ static void test_ccw_cb(GtkWidget *widget, GdkEventButton *event, gpointer data)
   if (event->type != GDK_BUTTON_PRESS) { return; }
 
   repeat_state = 2;
-  schedule_action(test_action, RELATIVE, -1);
+  schedule_action(test_action, ACTION_RELATIVE, -1);
 
   if (repeat_timer != 0) {
     g_source_remove(repeat_timer);
@@ -144,7 +144,7 @@ static void test_cw_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) 
   if (event->type != GDK_BUTTON_PRESS) { return; }
 
   repeat_state = 3;
-  schedule_action(test_action, RELATIVE, 1);
+  schedule_action(test_action, ACTION_RELATIVE, 1);
 
   if (repeat_timer != 0) {
     g_source_remove(repeat_timer);
