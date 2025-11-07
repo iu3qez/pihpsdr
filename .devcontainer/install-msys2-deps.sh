@@ -84,6 +84,7 @@ PACKAGES=(
     "mingw-w64-x86_64-pixman"
     "mingw-w64-x86_64-gdk-pixbuf2"
     "mingw-w64-x86_64-atk"
+    "mingw-w64-x86_64-libepoxy"     # required by gdk-3.0
 
     # GTK3 and application dependencies
     "mingw-w64-x86_64-gtk3"
@@ -107,5 +108,10 @@ EOF
 
 chmod +x /usr/local/bin/x86_64-w64-mingw32-pkg-config
 
+# Create symlink for MSYS2 hardcoded paths
+# MSYS2 .pc files reference /mingw64, but we install to /usr/x86_64-w64-mingw32
+ln -sf /usr/x86_64-w64-mingw32 /mingw64
+
 echo "MSYS2 packages installed successfully"
 echo "Installed to: ${INSTALL_PREFIX}"
+echo "Created symlink: /mingw64 -> ${INSTALL_PREFIX}"
