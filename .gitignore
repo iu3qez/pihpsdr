@@ -20,3 +20,10 @@ LINUX/SoapyPlutoSDR
 LINUX/SoapyRTLSDR
 release/LatexManual/piHPSDR-Manual.pdf
 wdsp/WDSP_Guide.pdf
+
+# Windows build artifacts
+*.exe
+dist/
+
+# Devcontainer
+.devcontainer/.tmp/
