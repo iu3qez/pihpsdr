@@ -223,6 +223,93 @@ static inline void usleep_compat(unsigned int microseconds) {
 // sched.h - MinGW provides sched_yield in pthread.h
 // Don't redefine if pthread.h is included
 
+// pthread.h - MinGW provides pthread, but ensure pthread_t is available
+// (should be included by source files that need it)
+
+// sys/utsname.h - system information
+struct utsname {
+    char sysname[65];
+    char nodename[65];
+    char release[65];
+    char version[65];
+    char machine[65];
+};
+
+static inline int uname(struct utsname *buf) {
+    if (!buf) return -1;
+
+    // Fill in Windows system information
+    strcpy(buf->sysname, "Windows");
+
+    // Get computer name
+    DWORD size = sizeof(buf->nodename);
+    if (!GetComputerNameA(buf->nodename, &size)) {
+        strcpy(buf->nodename, "unknown");
+    }
+
+    // Get Windows version (simplified)
+    OSVERSIONINFOA osvi;
+    ZeroMemory(&osvi, sizeof(OSVERSIONINFOA));
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    GetVersionExA(&osvi);
+    #pragma GCC diagnostic pop
+    snprintf(buf->release, sizeof(buf->release), "%lu.%lu",
+             osvi.dwMajorVersion, osvi.dwMinorVersion);
+    snprintf(buf->version, sizeof(buf->version), "%lu", osvi.dwBuildNumber);
+
+    // Machine architecture
+    #if defined(_WIN64)
+    strcpy(buf->machine, "x86_64");
+    #else
+    strcpy(buf->machine, "i686");
+    #endif
+
+    return 0;
+}
+
+// sys/resource.h - process priority
+#define PRIO_PROCESS 0
+#define PRIO_PGRP    1
+#define PRIO_USER    2
+
+static inline int getpriority(int which, int who) {
+    // Windows priority is inverted: higher number = higher priority
+    // POSIX: lower number = higher priority
+    // Return a value compatible with POSIX semantics
+    HANDLE hProcess = GetCurrentProcess();
+    int priority = GetPriorityClass(hProcess);
+
+    // Map Windows priority to POSIX-like range
+    switch (priority) {
+        case REALTIME_PRIORITY_CLASS: return -20;
+        case HIGH_PRIORITY_CLASS: return -10;
+        case ABOVE_NORMAL_PRIORITY_CLASS: return -5;
+        case NORMAL_PRIORITY_CLASS: return 0;
+        case BELOW_NORMAL_PRIORITY_CLASS: return 5;
+        case IDLE_PRIORITY_CLASS: return 19;
+        default: return 0;
+    }
+}
+
+static inline int setpriority(int which, int who, int prio) {
+    // Map POSIX priority to Windows priority class
+    DWORD priority_class;
+    if (prio <= -15) priority_class = REALTIME_PRIORITY_CLASS;
+    else if (prio <= -10) priority_class = HIGH_PRIORITY_CLASS;
+    else if (prio <= -5) priority_class = ABOVE_NORMAL_PRIORITY_CLASS;
+    else if (prio <= 5) priority_class = NORMAL_PRIORITY_CLASS;
+    else if (prio <= 10) priority_class = BELOW_NORMAL_PRIORITY_CLASS;
+    else priority_class = IDLE_PRIORITY_CLASS;
+
+    HANDLE hProcess = GetCurrentProcess();
+    return SetPriorityClass(hProcess, priority_class) ? 0 : -1;
+}
+
+// unistd.h - getpid
+#define getpid() GetCurrentProcessId()
+
 // sys/mman.h - memory mapping, not critical for Windows
 // Provide no-ops
 #define mlock(addr, len) 0

@@ -19,6 +19,7 @@
 #include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <math.h>
+#include <pthread.h>
 
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 
