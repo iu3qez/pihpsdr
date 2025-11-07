@@ -335,6 +335,57 @@ static inline int inet_aton(const char *cp, struct in_addr *inp) {
 }
 
 /*
+ * realpath() compatibility - POSIX function not in Windows
+ * Windows equivalent is _fullpath()
+ */
+static inline char* realpath(const char *path, char *resolved_path) {
+    if (!path) return NULL;
+
+    // If resolved_path is NULL, we need to allocate
+    if (!resolved_path) {
+        resolved_path = (char*)malloc(_MAX_PATH);
+        if (!resolved_path) return NULL;
+    }
+
+    // Use _fullpath to resolve the path
+    char* result = _fullpath(resolved_path, path, _MAX_PATH);
+
+    // Check if file exists using _access
+    if (result && _access(result, 0) != 0) {
+        // File doesn't exist
+        if (!resolved_path) free(result);
+        return NULL;
+    }
+
+    return result;
+}
+
+/*
+ * gettimeofday() compatibility - POSIX function not in Windows
+ * Windows uses GetSystemTimeAsFileTime or similar
+ * Note: struct timeval is already defined in winsock2.h
+ */
+static inline int gettimeofday(struct timeval *tv, void *tz) {
+    FILETIME ft;
+    ULARGE_INTEGER uli;
+
+    if (!tv) return -1;
+
+    GetSystemTimeAsFileTime(&ft);
+    uli.LowPart = ft.dwLowDateTime;
+    uli.HighPart = ft.dwHighDateTime;
+
+    // Convert from 100-nanosecond intervals since 1601 to Unix epoch
+    // Windows epoch (1601-01-01) to Unix epoch (1970-01-01) is 11644473600 seconds
+    uli.QuadPart -= 116444736000000000ULL;
+
+    tv->tv_sec = (long)(uli.QuadPart / 10000000UL);
+    tv->tv_usec = (long)((uli.QuadPart % 10000000UL) / 10);
+
+    return 0;
+}
+
+/*
  * fcntl() compatibility
  * Windows doesn't have fcntl, provide minimal implementation for socket flags
  */
