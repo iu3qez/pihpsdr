@@ -93,6 +93,12 @@ static inline int close_compat(int fd) {
 }
 #define close(fd) close_compat(fd)
 
+// Wrappers for setsockopt/getsockopt - Windows expects char* instead of void*
+#define setsockopt(s, level, optname, optval, optlen) \
+    setsockopt(s, level, optname, (const char*)(optval), optlen)
+#define getsockopt(s, level, optname, optval, optlen) \
+    getsockopt(s, level, optname, (char*)(optval), optlen)
+
 /*
  * Error code compatibility
  * Windows uses WSAGetLastError() instead of errno
