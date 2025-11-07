@@ -214,18 +214,14 @@ static inline void usleep_compat(unsigned int microseconds) {
 /*
  * POSIX headers not available on Windows - provide minimal compatibility
  */
-// poll.h - not actually used in code, just included
-// Provide minimal stub
-#define poll(fds, nfds, timeout) 0
-struct pollfd {
-    int fd;
-    short events;
-    short revents;
-};
+// poll.h - MinGW provides pollfd in winsock2.h, no need to redefine
+// Just provide poll() function if not available
+#ifndef HAVE_POLL
+#define poll(fds, nfds, timeout) WSAPoll(fds, nfds, timeout)
+#endif
 
-// sched.h - scheduling, not used on Windows
-// Provide no-op stubs
-#define sched_yield() Sleep(0)
+// sched.h - MinGW provides sched_yield in pthread.h
+// Don't redefine if pthread.h is included
 
 // sys/mman.h - memory mapping, not critical for Windows
 // Provide no-ops
