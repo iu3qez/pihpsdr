@@ -19,12 +19,6 @@
 #include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <math.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/resource.h>
-#include <sys/utsname.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include <wdsp.h>    // only needed for WDSPwisdom() and wisdom_get_status()
 
