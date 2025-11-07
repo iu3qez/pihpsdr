@@ -59,12 +59,17 @@ PACKAGES=(
     "mingw-w64-x86_64-ngtcp2"
     "mingw-w64-x86_64-libpsl"
 
-    # Image format libraries (for gdk-pixbuf)
+    # Image format libraries (for gdk-pixbuf and libtiff)
     "mingw-w64-x86_64-libjpeg-turbo"
+    "mingw-w64-x86_64-xz"           # provides liblzma
+    "mingw-w64-x86_64-libwebp"
+    "mingw-w64-x86_64-lerc"
+    "mingw-w64-x86_64-libdeflate"
     "mingw-w64-x86_64-libtiff"
 
-    # Font rendering dependencies
+    # Font and text rendering dependencies
     "mingw-w64-x86_64-graphite2"
+    "mingw-w64-x86_64-libthai"
 
     # GLib and Cairo stack
     "mingw-w64-x86_64-glib2"
