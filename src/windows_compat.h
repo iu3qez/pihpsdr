@@ -337,8 +337,17 @@ static inline int setpriority(int which, int who, int prio) {
  * termios baud rate constants - not defined on Windows
  * These are defined for compatibility but serial port functions are not implemented
  */
+#ifndef B4800
+#define B4800   4800
+#endif
 #ifndef B9600
 #define B9600   9600
+#endif
+#ifndef B19200
+#define B19200  19200
+#endif
+#ifndef B38400
+#define B38400  38400
 #endif
 #ifndef B115200
 #define B115200 115200
