@@ -20,13 +20,9 @@
 #include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <math.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#ifndef _WIN32
 #include <termios.h>
+#endif
 
 #include "actions.h"
 #include "adc.h"
