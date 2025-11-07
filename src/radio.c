@@ -256,6 +256,7 @@ int have_g2_v2 = 0;
 int have_lime = 0;
 int have_radioberry1 = 0;
 int have_radioberry2 = 0;
+int have_radioberry3 = 0;
 int rx_gain_calibration = 0;
 
 int split = 0;
@@ -1120,11 +1121,9 @@ void radio_start_radio() {
       //
       // This is a RadioBerry.
       //
-      if (radio->software_version < 732) {
-        have_radioberry1 = 1;
-      } else {
-        have_radioberry2 = 1;
-      }
+      if (radio->software_version < 732) 		have_radioberry1 = 1; 
+	  else if (radio->software_version < 750) 	have_radioberry2 = 1;
+      else have_radioberry3 = 1;                     
     }
   }
 
