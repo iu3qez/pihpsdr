@@ -1121,9 +1121,13 @@ void radio_start_radio() {
       //
       // This is a RadioBerry.
       //
-      if (radio->software_version < 732) 		have_radioberry1 = 1; 
-	  else if (radio->software_version < 750) 	have_radioberry2 = 1;
-      else have_radioberry3 = 1;                     
+      if (radio->software_version < 732) {
+        have_radioberry1 = 1;
+      } else if (radio->software_version < 750) {
+        have_radioberry2 = 1;
+      } else {
+        have_radioberry3 = 1;
+      }
     }
   }
 

@@ -1233,8 +1233,8 @@ void gpio_init() {
       CWR_LINE = 21;
       t_print("Forced RadioBerry2 GPIO settings\n");
     }
-	
-	if (have_radioberry3) {
+
+    if (have_radioberry3) {
       CWL_LINE = 17;
       CWR_LINE = 13;
       t_print("Forced RadioBerry3 GPIO settings\n");
