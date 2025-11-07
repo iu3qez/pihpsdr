@@ -20,9 +20,9 @@
 #ifndef _CLIENT_SERVER_H_
 #define _CLIENT_SERVER_H_
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <stdint.h>
-#include <netinet/in.h>
 
 #include "mode.h"
 #include "receiver.h"

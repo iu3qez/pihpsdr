@@ -20,7 +20,7 @@
 #ifndef _DISCOVERED_H_
 #define _DISCOVERED_H_
 
-#include <netinet/in.h>
+#include "windows_compat.h"
 
 #define MAX_DEVICES 16
 

@@ -17,8 +17,8 @@
 *
 */
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
-#include <arpa/inet.h>
 
 #include <wdsp.h>             // only needed for GetWDSPVersion
 

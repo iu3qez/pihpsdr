@@ -21,6 +21,7 @@
 // and possibly PAs. This is built upon  a "light-weight" websocket server.
 //
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 
