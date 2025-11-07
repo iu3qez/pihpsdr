@@ -69,6 +69,7 @@ PACKAGES=(
 
     # Font and text rendering dependencies
     "mingw-w64-x86_64-graphite2"
+    "mingw-w64-x86_64-libdatrie"    # required by libthai
     "mingw-w64-x86_64-libthai"
 
     # GLib and Cairo stack
