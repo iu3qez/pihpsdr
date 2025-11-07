@@ -5514,6 +5514,9 @@ static int parse_cmd(void *data) {
 }
 
 // Serial Port Launch
+#ifndef _WIN32
+// Windows uses a completely different API for serial ports (CreateFile, SetCommState, DCB)
+// Disable POSIX serial port support for Windows builds
 static int set_interface_attribs (int fd, speed_t speed, int parity) {
   struct termios tty;
   memset (&tty, 0, sizeof tty);
@@ -5811,6 +5814,20 @@ void disable_serial_rigctl (int id) {
     serial_client[id].fd = -1;
   }
 }
+
+#else
+// Windows stubs for serial port functions
+// Serial ports on Windows use a completely different API (CreateFile, SetCommState, DCB structures)
+// For now, serial port support is disabled on Windows
+int launch_serial_rigctl (int id) {
+  t_print("%s: Serial port support not implemented on Windows\n", __FUNCTION__);
+  return 0;
+}
+
+void disable_serial_rigctl (int id) {
+  t_print("%s: Serial port support not implemented on Windows\n", __FUNCTION__);
+}
+#endif /* _WIN32 */
 
 void launch_tcp_rigctl () {
   t_print( "---- LAUNCHING RIGCTL SERVER ----\n");
