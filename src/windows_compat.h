@@ -320,71 +320,18 @@ static inline int setpriority(int which, int who, int prio) {
 #define MCL_CURRENT 1
 #define MCL_FUTURE 2
 
-// semaphore.h - POSIX semaphores, map to Windows Event objects
-typedef struct {
-    HANDLE handle;
-} sem_t;
+/*
+ * Note: MinGW provides semaphore.h via pthreads-win32, so we don't need to
+ * redefine sem_t and related functions. Simply include <semaphore.h> in files
+ * that need it.
+ */
 
-static inline int sem_init(sem_t *sem, int pshared, unsigned int value) {
-    // Create a Windows semaphore (not an Event, despite the comment above)
-    // Windows semaphores are counting semaphores like POSIX
-    sem->handle = CreateSemaphore(NULL, value, LONG_MAX, NULL);
-    return (sem->handle != NULL) ? 0 : -1;
-}
-
-static inline int sem_destroy(sem_t *sem) {
-    if (sem->handle) {
-        CloseHandle(sem->handle);
-        sem->handle = NULL;
-    }
-    return 0;
-}
-
-static inline int sem_post(sem_t *sem) {
-    return ReleaseSemaphore(sem->handle, 1, NULL) ? 0 : -1;
-}
-
-static inline int sem_wait(sem_t *sem) {
-    return (WaitForSingleObject(sem->handle, INFINITE) == WAIT_OBJECT_0) ? 0 : -1;
-}
-
-static inline int sem_trywait(sem_t *sem) {
-    DWORD result = WaitForSingleObject(sem->handle, 0);
-    if (result == WAIT_OBJECT_0) return 0;
-    if (result == WAIT_TIMEOUT) {
-        errno = EAGAIN;
-        return -1;
-    }
-    return -1;
-}
-
-static inline int sem_timedwait(sem_t *sem, const struct timespec *abs_timeout) {
-    // Simplified: just use regular wait for now
-    // Proper implementation would calculate timeout from abs_timeout
-    return sem_wait(sem);
-}
-
-// Named semaphores (used in iambic.c)
-static inline sem_t* sem_open(const char *name, int oflag, ...) {
-    // Simplified implementation - create unnamed semaphore
-    sem_t *sem = (sem_t*)malloc(sizeof(sem_t));
-    if (sem) {
-        sem_init(sem, 0, 0);
-    }
-    return sem;
-}
-
-static inline int sem_close(sem_t *sem) {
-    if (sem) {
-        sem_destroy(sem);
-        free(sem);
-    }
-    return 0;
-}
-
-static inline int sem_unlink(const char *name) {
-    // No-op for Windows
-    return 0;
+/*
+ * inet_aton() compatibility - BSD function not in Windows
+ */
+static inline int inet_aton(const char *cp, struct in_addr *inp) {
+    inp->s_addr = inet_addr(cp);
+    return (inp->s_addr == INADDR_NONE) ? 0 : 1;
 }
 
 /*
