@@ -21,13 +21,8 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include <math.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <semaphore.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "property.h"
 #include "protocols.h"

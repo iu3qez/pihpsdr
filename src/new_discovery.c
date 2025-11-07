@@ -21,18 +21,12 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <string.h>
+#ifndef _WIN32
 #include <net/if_arp.h>
 #include <net/if.h>
-#include <netinet/in.h>
 #include <ifaddrs.h>
-#include <string.h>
-#include <errno.h>
+#endif
 
 #include "discovered.h"
 #include "discovery.h"

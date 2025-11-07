@@ -20,26 +20,17 @@
 #include "windows_compat.h"
 #include <gtk/gtk.h>
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <math.h>
+#include <signal.h>
+#ifndef _WIN32
 #include <net/if_arp.h>
 #include <net/if.h>
 #include <netinet/ip.h>
 #include <ifaddrs.h>
-#include <semaphore.h>
-#include <math.h>
-#include <sys/select.h>
-#include <signal.h>
+#endif
 
 #include "alex.h"
 #include "audio.h"

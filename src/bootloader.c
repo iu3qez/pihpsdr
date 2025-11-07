@@ -75,21 +75,17 @@
 #include "windows_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 #include <pcap.h>
-#include <errno.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netinet/if_ether.h>
-#include <fcntl.h>
-#ifdef __APPLE__
+#ifdef _WIN32
+  // Windows pcap support (WinPcap/npcap)
+#elif defined(__APPLE__)
   #include <net/if_dl.h>
 #else
   #include <sys/ioctl.h>
   #include <net/if.h>
+  #include <netinet/if_ether.h>
 #endif
-#include <string.h>
 
 //
 // Forward declaration for the two functions that send something to the radio
