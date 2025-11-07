@@ -25,10 +25,10 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
 #include <ctype.h>
+#ifndef _WIN32
+#include <netinet/tcp.h>
+#endif
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>
