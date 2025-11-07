@@ -239,7 +239,7 @@ typedef struct _multi_table {
 
 enum ACTION_MODE {
   ACTION_RELATIVE,  // Renamed from RELATIVE to avoid Windows winbase.h collision
-  ABSOLUTE,
+  ACTION_ABSOLUTE,  // Renamed from ABSOLUTE to avoid Windows wingdi.h collision
   PRESSED,
   RELEASED
 };

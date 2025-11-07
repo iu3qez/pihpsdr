@@ -330,7 +330,7 @@ static inline double KnobOrWheel(const PROCESS_ACTION *a, double oldval, double 
     oldval += a->val * inc;
     break;
 
-  case ABSOLUTE:
+  case ACTION_ABSOLUTE:
     // The magic floating point  constant is 1/127
     oldval = minval + a->val * (maxval - minval) * 0.00787401574803150;
     break;

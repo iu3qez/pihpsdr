@@ -60,7 +60,7 @@ void DoTheMidi(int action, enum ACTIONtype type, int val) {
     break;
 
   case AT_KNB:
-    schedule_action(action, ABSOLUTE, val);
+    schedule_action(action, ACTION_ABSOLUTE, val);
     break;
 
   case AT_ENC:
