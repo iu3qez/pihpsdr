@@ -61,6 +61,7 @@
 #include <windows.h>
 #include <iphlpapi.h>
 #include <string.h>
+#include <stdio.h>     // For snprintf()
 #include <io.h>        // For _close(), _open(), etc.
 #include <stdarg.h>    // For va_list, va_start, va_end
 
@@ -308,7 +309,7 @@ static inline int setpriority(int which, int who, int prio) {
 }
 
 // unistd.h - getpid
-#define getpid() GetCurrentProcessId()
+// MinGW provides getpid() declaration in process.h, no need to redefine
 
 // sys/mman.h - memory mapping, not critical for Windows
 // Provide no-ops
