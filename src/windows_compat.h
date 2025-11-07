@@ -79,15 +79,30 @@
 /*
  * Error code compatibility
  * Windows uses WSAGetLastError() instead of errno
+ * Note: MinGW already defines some of these in errno.h, so use #ifndef guards
  */
 #define ERRNO           WSAGetLastError()
+#ifndef EWOULDBLOCK
 #define EWOULDBLOCK     WSAEWOULDBLOCK
+#endif
+#ifndef EINPROGRESS
 #define EINPROGRESS     WSAEINPROGRESS
+#endif
+#ifndef ECONNREFUSED
 #define ECONNREFUSED    WSAECONNREFUSED
+#endif
+#ifndef ETIMEDOUT
 #define ETIMEDOUT       WSAETIMEDOUT
+#endif
+#ifndef ECONNRESET
 #define ECONNRESET      WSAECONNRESET
+#endif
+#ifndef EHOSTUNREACH
 #define EHOSTUNREACH    WSAEHOSTUNREACH
+#endif
+#ifndef ENETUNREACH
 #define ENETUNREACH     WSAENETUNREACH
+#endif
 
 /*
  * socklen_t type (not defined in older Windows headers)
