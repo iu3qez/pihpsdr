@@ -17,21 +17,15 @@
 *
 */
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <unistd.h>
 #include <stdint.h>
-#include <fcntl.h>
-#include <poll.h>
-#include <sched.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include <time.h>
-#include <sys/mman.h>
 
 #include "ext.h"
 #include "gpio.h"
