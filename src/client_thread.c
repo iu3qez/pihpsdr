@@ -21,6 +21,7 @@
  * This file contains stuff exectued only on the client side
  */
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <stdint.h>
 #include <netinet/in.h>

@@ -60,6 +60,7 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <iphlpapi.h>
+#include <string.h>
 
 /*
  * Socket type compatibility
@@ -169,6 +170,8 @@ static inline void winsock_cleanup(void) {
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
+#include <sys/ioctl.h>
 
 /*
  * SOCKET type compatibility (define SOCKET as int on POSIX)

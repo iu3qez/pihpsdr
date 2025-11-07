@@ -17,6 +17,7 @@
 *
 */
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <math.h>
 #include <sys/time.h>

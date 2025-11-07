@@ -43,6 +43,7 @@
 #define SAY       "/usr/bin/say"
 #define ESPEAK    "/usr/bin/espeak-ng"
 
+#include "windows_compat.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>

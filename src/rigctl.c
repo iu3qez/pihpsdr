@@ -24,6 +24,7 @@
  * greatly with hamlib integration!
  */
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include <fcntl.h>
