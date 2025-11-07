@@ -320,6 +320,7 @@ int rx_height;
 const int tx_dialog_width = 240;
 const int tx_dialog_height = 400;
 
+#ifdef SATURN
 typedef struct {
   char *port;
   speed_t speed;
@@ -334,6 +335,7 @@ static SaturnSerialPort SaturnSerialPortsList[] = {
   {"/dev/ttyS7", B115200, 115200},
   {NULL, 0, 0}
 };
+#endif
 
 static void radio_restore_state();
 
@@ -1166,6 +1168,7 @@ void radio_start_radio() {
   //
   // Note any serial setting set by this mechanism now is read-only
   //
+#ifdef SATURN
   if (have_saturn_xdma) {
     for (SaturnSerialPort *ChkSerial = SaturnSerialPortsList; ChkSerial->port != NULL; ChkSerial++) {
       const char *cp = realpath(ChkSerial->port, NULL);
@@ -1185,6 +1188,7 @@ void radio_start_radio() {
       }
     }
   }
+#endif
 
   if (device == DEVICE_METIS || device == DEVICE_OZY || device == NEW_DEVICE_ATLAS) {
     //
