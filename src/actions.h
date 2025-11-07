@@ -176,7 +176,7 @@ enum ACTION {
   RX2,
   SAT,
   SHUTDOWN,
-  SNB,
+  ACTION_SNB,  // Renamed from SNB to avoid Windows objidl.h typedef collision
   SPLIT,
   SQUELCH,
   SQUELCH_RX1,

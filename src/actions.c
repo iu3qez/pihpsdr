@@ -205,7 +205,7 @@ ACTION_TABLE ActionTable[] = {
   {RX2,                 "RX2",                  "RX2",          AT_BTN},
   {SAT,                 "SAT",                  "SAT",          AT_BTN},
   {SHUTDOWN,            "Shutdown\nOS",         "SDWN",         AT_BTN},
-  {SNB,                 "SNB",                  "SNB",          AT_BTN},
+  {ACTION_SNB,          "SNB",                  "SNB",          AT_BTN},
   {SPLIT,               "Split",                "SPLIT",        AT_BTN},
   {SQUELCH,             "Squelch",              "SQUELCH",      AT_KNB | AT_ENC | AT_SLD},
   {SQUELCH_RX1,         "Squelch\nRX1",         "SQUELCH1",     AT_KNB | AT_ENC},
@@ -1614,7 +1614,7 @@ int process_action(void *data) {
 
     break;
 
-  case SNB:
+  case ACTION_SNB:
     if (a->mode == PRESSED) {
       TOGGLE(active_receiver->snb);
       rx_set_noise(active_receiver);

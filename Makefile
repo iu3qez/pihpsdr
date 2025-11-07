@@ -50,7 +50,7 @@ TTS=ON
 UNAME_S := $(shell uname -s)
 UNAME_R := $(shell uname -r)
 
-# Detect Windows (MSYS2/MinGW environment)
+# Detect Windows (MSYS2/MinGW environment or cross-compilation)
 # MSYS2 sets OS=Windows_NT, and uname -s returns MINGW64_NT or MSYS_NT
 ifeq ($(OS),Windows_NT)
   UNAME_S := Windows
@@ -59,6 +59,13 @@ ifneq (,$(findstring MINGW,$(UNAME_S)))
   UNAME_S := Windows
 endif
 ifneq (,$(findstring MSYS,$(UNAME_S)))
+  UNAME_S := Windows
+endif
+# Detect cross-compilation from Linux to Windows (MinGW compiler)
+ifneq (,$(findstring mingw,$(CC)))
+  UNAME_S := Windows
+endif
+ifneq (,$(findstring mingw,$(shell $(CC) -dumpmachine 2>/dev/null)))
   UNAME_S := Windows
 endif
 
