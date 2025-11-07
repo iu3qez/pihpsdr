@@ -22,8 +22,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#ifndef _WIN32
 #include <termios.h>
 #include <unistd.h>
+#endif
 
 #include "client_server.h"
 #include "message.h"
