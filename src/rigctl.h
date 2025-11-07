@@ -21,14 +21,20 @@
 #define _RIGCTL_H_
 
 #include <gtk/gtk.h>
-#include <termios.h>
+
+#ifdef _WIN32
+  /* Windows doesn't have termios.h - define speed_t for compatibility */
+  typedef unsigned int speed_t;
+#else
+  #include <termios.h>
+#endif
 
 struct _SERIALPORT {
   //
   // parity and bits are not included, since we
   // always use 8 bits and "no parity"
   //
-  char port[64];    // e.g. "/dev/ttyACM0"
+  char port[64];    // e.g. "/dev/ttyACM0" or "COM1" on Windows
   speed_t  speed;   // baud rate (encoded as a speed_t)
   int  enable;      // is it enabled?
   int  andromeda;   // flag for handling ANDROMEDA console
