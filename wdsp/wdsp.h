@@ -1,4 +1,8 @@
 
+#ifdef _WIN32
+/* On Windows, include windows.h to get DWORD, LPCRITICAL_SECTION, etc. */
+#include <windows.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
