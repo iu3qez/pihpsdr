@@ -35,6 +35,7 @@
 #include "receiver.h"
 #include "rx_menu.h"
 #include "sliders.h"
+#include "vfo.h"
 
 static GtkWidget *dialog = NULL;
 static GtkWidget *local_audio_b = NULL;
@@ -138,7 +139,17 @@ static void local_audio_cb(GtkWidget *widget, gpointer data) {
     }
   }
 
-  t_print("local_audio_cb: local_audio=%d\n", myrx->local_audio);
+  //
+  // Update ModeSettings data base,
+  // but only if local audio has been successfully switched on for RX1
+  //
+  if ((myid == 0) && myrx->local_audio) {
+    int mode = vfo[myid].mode;
+    mode_settings[mode].rx_local_audio = myrx->local_audio;
+    snprintf(mode_settings[mode].rx_audio_name, sizeof(mode_settings[mode].rx_audio_name), "%s", myrx->audio_name);
+    copy_mode_settings(mode);
+  }
+
 }
 
 static void mute_audio_cb(GtkWidget *widget, gpointer data) {
@@ -167,9 +178,11 @@ static void adc_filter_bypass_cb(GtkWidget *widget, gpointer data) {
 //
 static void local_output_changed_cb(GtkWidget *widget, gpointer data) {
   int i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+  int local_audio = myrx->local_audio;
 
-  if (myrx->local_audio) {
-    audio_close_output(myrx);                     // audio_close with OLD device
+  if (local_audio) {
+    myrx->local_audio = 0;     // stop writing audio to OLD device
+    audio_close_output(myrx);  // audio_close with OLD device
   }
 
   if (i >= 0) {
@@ -177,11 +190,23 @@ static void local_output_changed_cb(GtkWidget *widget, gpointer data) {
     snprintf(myrx->audio_name, sizeof(myrx->audio_name), "%s", output_devices[i].name);
   }
 
-  if (myrx->local_audio) {
-    if (audio_open_output(myrx) < 0) {           // audio_open with NEW device
-      myrx->local_audio = 0;
+  if (local_audio) {
+    if (audio_open_output(myrx) < 0) {  // audio_open with NEW device...
+      myrx->local_audio = 0;            // ... was not successful
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (local_audio_b), FALSE);
+    } else {
+      myrx->local_audio = 1;  // NEW device successfully opened
     }
+  }
+
+  //
+  // Update ModeSettings data base if this is RX1 and audio was successfully opened
+  //
+  if (myid == 0 && myrx->local_audio) {
+    int mode = vfo[myid].mode;
+    mode_settings[mode].rx_local_audio = myrx->local_audio;
+    snprintf(mode_settings[mode].rx_audio_name, sizeof(mode_settings[mode].rx_audio_name), "%s", myrx->audio_name);
+    copy_mode_settings(mode);
   }
 
   t_print("local_output_changed rx=%d local_audio=%d\n", myid, myrx->local_audio);
@@ -405,8 +430,6 @@ void rx_menu(GtkWidget *parent) {
     gtk_widget_show(local_audio_b);
     gtk_grid_attach(GTK_GRID(grid), local_audio_b, 2, 1, 1, 1);
     g_signal_connect(local_audio_b, "toggled", G_CALLBACK(local_audio_cb), NULL);
-
-    if (myrx->audio_device == -1) { myrx->audio_device = 0; }
 
     output = gtk_combo_box_text_new();
 

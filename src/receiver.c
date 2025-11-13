@@ -246,7 +246,6 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.audio_channel", rx->id,                rx->audio_channel);
   SetPropI1("receiver.%d.local_audio", rx->id,                  rx->local_audio);
   SetPropS1("receiver.%d.audio_name", rx->id,                   rx->audio_name);
-  SetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   SetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   SetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
   SetPropI1("receiver.%d.panadapter_low", rx->id,               rx->panadapter_low);
@@ -340,7 +339,6 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.audio_channel", rx->id,                rx->audio_channel);
   GetPropI1("receiver.%d.local_audio", rx->id,                  rx->local_audio);
   GetPropS1("receiver.%d.audio_name", rx->id,                   rx->audio_name);
-  GetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   GetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   GetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
   GetPropI1("receiver.%d.panadapter_low", rx->id,               rx->panadapter_low);
@@ -568,6 +566,13 @@ void rx_set_displaying(RECEIVER *rx) {
 }
 
 static void rx_create_visual(RECEIVER *rx) {
+  //
+  // TODO: I do not see why we are using g_object_weak_ref() here, and put
+  //       a strong reference in radio_create_visual() and in each RX/TX
+  //       transition (before removing the RX panel from FIXED)
+  //       One g_object_ref() here should be enough. This is
+  //       the way it is done for the transmitter panel.
+  //
   int y = 0;
   rx->panel = gtk_fixed_new();
   t_print("%s: RXid=%d width=%d height=%d %p\n", __FUNCTION__, rx->id, rx->width, rx->height, rx->panel);
@@ -826,7 +831,6 @@ RECEIVER *rx_create_receiver(int id, int width, int height) {
   snprintf(rx->audio_name, sizeof(rx->audio_name), "NO AUDIO");
   rx->mute_when_not_active = 0;
   rx->audio_channel = STEREO;
-  rx->audio_device = -1;
   rx->squelch_enable = 0;
   rx->squelch = 0;
   rx->binaural = 0;

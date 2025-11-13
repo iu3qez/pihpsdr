@@ -51,7 +51,7 @@ int n_output_devices;
 AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 
 //
-// Ring buffer for "local microphone" samples
+// Ring buffer for local audio samples
 // NOTE: need large buffer for some "loopback" devices which produce
 //       samples in large chunks if fed from digimode programs.
 //
@@ -64,9 +64,9 @@ static pa_glib_mainloop *main_loop;
 static pa_mainloop_api *main_loop_api;
 static pa_operation *op;
 static pa_context *pa_ctx;
-static pa_simple* microphone_stream;
-static int local_microphone_buffer_offset;
-static float *local_microphone_buffer = NULL;
+static pa_simple* audio_stream;
+static int local_audio_buffer_offset;
+static float *local_audio_buffer = NULL;
 static GThread *mic_read_thread_id = 0;
 static gboolean running;
 
@@ -110,31 +110,31 @@ static void state_cb(pa_context *c, void *userdata) {
   switch  (state) {
   // There are just here for reference
   case PA_CONTEXT_UNCONNECTED:
-    t_print("audio: state_cb: PA_CONTEXT_UNCONNECTED\n");
+    t_print("%s: PA_CONTEXT_UNCONNECTED\n", __FUNCTION__);
     break;
 
   case PA_CONTEXT_CONNECTING:
-    t_print("audio: state_cb: PA_CONTEXT_CONNECTING\n");
+    t_print("%s: PA_CONTEXT_CONNECTING\n", __FUNCTION__);
     break;
 
   case PA_CONTEXT_AUTHORIZING:
-    t_print("audio: state_cb: PA_CONTEXT_AUTHORIZING\n");
+    t_print("%s: PA_CONTEXT_AUTHORIZING\n", __FUNCTION__);
     break;
 
   case PA_CONTEXT_SETTING_NAME:
-    t_print("audio: state_cb: PA_CONTEXT_SETTING_NAME\n");
+    t_print("%s: PA_CONTEXT_SETTING_NAME\n", __FUNCTION__);
     break;
 
   case PA_CONTEXT_FAILED:
-    t_print("audio: state_cb: PA_CONTEXT_FAILED\n");
+    t_print("%s: PA_CONTEXT_FAILED\n", __FUNCTION__);
     break;
 
   case PA_CONTEXT_TERMINATED:
-    t_print("audio: state_cb: PA_CONTEXT_TERMINATED\n");
+    t_print("%s: PA_CONTEXT_TERMINATED\n", __FUNCTION__);
     break;
 
   case PA_CONTEXT_READY:
-    t_print("audio: state_cb: PA_CONTEXT_READY\n");
+    t_print("%s: PA_CONTEXT_READY\n", __FUNCTION__);
     // get a list of the output devices
     n_input_devices = 0;
     n_output_devices = 0;
@@ -142,7 +142,7 @@ static void state_cb(pa_context *c, void *userdata) {
     break;
 
   default:
-    t_print("audio: state_cb: unknown state %d\n", state);
+    t_print("%s: unknown state %d\n", __FUNCTION__, state);
     break;
   }
 }
@@ -161,6 +161,7 @@ int audio_open_output(RECEIVER *rx) {
   int result = 0;
   pa_sample_spec sample_spec;
   int err;
+  t_print("%s: RX%d:%s\n", __FUNCTION__, rx->id+1, rx->audio_name);
   g_mutex_lock(&rx->local_audio_mutex);
   sample_spec.rate = 48000;
   sample_spec.channels = 2;
@@ -189,11 +190,9 @@ int audio_open_output(RECEIVER *rx) {
     rx->cwcount = 0;
     rx->local_audio_buffer_offset = 0;
     rx->local_audio_buffer = g_new0(float, 2 * out_buffer_size);
-    t_print("%s: allocated local_audio_buffer %p size %ld bytes\n", __FUNCTION__, rx->local_audio_buffer,
-            (long)(2 * out_buffer_size * sizeof(float)));
   } else {
     result = -1;
-    t_print("%s: pa-simple_new failed: err=%d\n", __FUNCTION__, err);
+    t_print("%s: ERROR pa_simple_new: %s\n", __FUNCTION__, pa_strerror(err));
   }
 
   g_mutex_unlock(&rx->local_audio_mutex);
@@ -206,17 +205,17 @@ static void *mic_read_thread(gpointer arg) {
 
   while (running) {
     //
-    // It is guaranteed that local_microphone_buffer, mic_ring_buffer, and microphone_stream
+    // It is guaranteed that local_audio_buffer, mic_ring_buffer, and audio_stream
     // will not be destroyed until this thread has terminated (and waited for via thread joining)
     //
-    int rc = pa_simple_read(microphone_stream,
-                            local_microphone_buffer,
+    int rc = pa_simple_read(audio_stream,
+                            local_audio_buffer,
                             mic_buffer_size * sizeof(float),
                             &err);
 
     if (rc < 0) {
       running = FALSE;
-      t_print("%s: simple_read returned %d error=%d (%s)\n", __FUNCTION__, rc, err, pa_strerror(err));
+      t_print("%s: ERROR pa_simple_read: %s\n", __FUNCTION__, rc, pa_strerror(err));
     } else {
       for (int i = 0; i < mic_buffer_size; i++) {
         //
@@ -224,7 +223,7 @@ static void *mic_read_thread(gpointer arg) {
         // to the server without any buffering
         //
         if (radio_is_remote) {
-          short s = local_microphone_buffer[i] * 32767.0;
+          short s = local_audio_buffer[i] * 32767.0;
           server_tx_audio(s);
           continue;
         }
@@ -238,7 +237,7 @@ static void *mic_read_thread(gpointer arg) {
 
         if (newpt != mic_ring_read_pt) {
           // buffer space available, do the write
-          mic_ring_buffer[mic_ring_write_pt] = local_microphone_buffer[i];
+          mic_ring_buffer[mic_ring_write_pt] = local_audio_buffer[i];
           // atomic update of mic_ring_write_pt
           mic_ring_write_pt = newpt;
         }
@@ -252,12 +251,14 @@ static void *mic_read_thread(gpointer arg) {
 
 int audio_open_input() {
   pa_sample_spec sample_spec;
+  int err;
   int result = 0;
 
   if (!can_transmit) {
     return -1;
   }
 
+  t_print("%s: TX:%s\n", __FUNCTION__, transmitter->audio_name);
   g_mutex_lock(&audio_mutex);
   pa_buffer_attr attr;
   attr.maxlength = (uint32_t) -1;
@@ -268,20 +269,20 @@ int audio_open_input() {
   sample_spec.rate = 48000;
   sample_spec.channels = 1;
   sample_spec.format = PA_SAMPLE_FLOAT32NE;
-  microphone_stream = pa_simple_new(NULL,      // Use the default server.
-                                    "piHPSDR",                   // Our application's name.
-                                    PA_STREAM_RECORD,
-                                    transmitter->microphone_name,
-                                    "TX",                        // Description of our stream.
-                                    &sample_spec,                // Our sample format.
-                                    NULL,                        // Use default channel map
-                                    &attr,                       // Use default buffering attributes but set fragsize
-                                    NULL                         // Ignore error code.
-                                   );
+  audio_stream = pa_simple_new(NULL,      // Use the default server.
+                               "piHPSDR",                   // Our application's name.
+                               PA_STREAM_RECORD,
+                               transmitter->audio_name,
+                               "TX",                        // Description of our stream.
+                               &sample_spec,                // Our sample format.
+                               NULL,                        // Use default channel map
+                               &attr,                       // Use default buffering attributes but set fragsize
+                               &err                         // Ignore error code.
+                              );
 
-  if (microphone_stream != NULL) {
-    local_microphone_buffer_offset = 0;
-    local_microphone_buffer = g_new0(float, mic_buffer_size);
+  if (audio_stream != NULL) {
+    local_audio_buffer_offset = 0;
+    local_audio_buffer = g_new0(float, mic_buffer_size);
     t_print("%s: allocating ring buffer\n", __FUNCTION__);
     mic_ring_buffer = (float *) g_new(float, MICRINGLEN);
     mic_ring_read_pt = mic_ring_write_pt = 0;
@@ -298,12 +299,13 @@ int audio_open_input() {
 
     if (!mic_read_thread_id ) {
       t_print("%s: g_thread_new failed on mic_read_thread\n", __FUNCTION__);
-      g_free(local_microphone_buffer);
-      local_microphone_buffer = NULL;
+      g_free(local_audio_buffer);
+      local_audio_buffer = NULL;
       running = FALSE;
       result = -1;
     }
   } else {
+    t_print("%s: ERROR pa_simple_new: %s\n", __FUNCTION__, pa_strerror(err));
     result = -1;
   }
 
@@ -312,6 +314,7 @@ int audio_open_input() {
 }
 
 void audio_close_output(RECEIVER *rx) {
+  t_print("%s: RX%d:%s\n", __FUNCTION__, rx->id+1, rx->audio_name);
   g_mutex_lock(&rx->local_audio_mutex);
 
   if (rx->playstream != NULL) {
@@ -329,10 +332,10 @@ void audio_close_output(RECEIVER *rx) {
 
 void audio_close_input() {
   running = FALSE;
+  t_print("%s: TX:%s\n", __FUNCTION__, transmitter->audio_name);
   g_mutex_lock(&audio_mutex);
 
   if (mic_read_thread_id != NULL) {
-    t_print("%s: wait for mic thread to complete\n", __FUNCTION__);
     //
     // wait for the mic read thread to terminate,
     // then destroy the stream and the buffers
@@ -342,14 +345,14 @@ void audio_close_input() {
     mic_read_thread_id = NULL;
   }
 
-  if (microphone_stream != NULL) {
-    pa_simple_free(microphone_stream);
-    microphone_stream = NULL;
+  if (audio_stream != NULL) {
+    pa_simple_free(audio_stream);
+    audio_stream = NULL;
   }
 
-  if (local_microphone_buffer != NULL) {
-    g_free(local_microphone_buffer);
-    local_microphone_buffer = NULL;
+  if (local_audio_buffer != NULL) {
+    g_free(local_audio_buffer);
+    local_audio_buffer = NULL;
   }
 
   if (mic_ring_buffer != NULL) {
@@ -369,7 +372,6 @@ float audio_get_next_mic_sample() {
 
   if ((mic_ring_buffer == NULL) || (mic_ring_read_pt == mic_ring_write_pt)) {
     // no buffer, or nothing in buffer: insert silence
-    //t_print("%s: no samples\n",__FUNCTION__);
     sample = 0.0;
   } else {
     int newpt = mic_ring_read_pt + 1;
@@ -425,8 +427,8 @@ int cw_audio_write(RECEIVER *rx, float sample) {
                                  out_buffer_size * sizeof(float) * 2,
                                  &err);
 
-        if (rc != 0) {
-          t_print("%s: simple_write failed err=%d\n", __FUNCTION__, err);
+        if (rc < 0) {
+          t_print("%s: ERROR pa_simple_write: %s\n", __FUNCTION__, pa_strerror(err));
         }
       }
 
@@ -489,8 +491,8 @@ int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
                                  out_buffer_size * sizeof(float) * 2,
                                  &err);
 
-        if (rc != 0) {
-          t_print("%s: write failed err=%s\n", __FUNCTION__, pa_strerror(err));
+        if (rc < 0) {
+          t_print("%s: ERROR pa_simple_write: %s\n", __FUNCTION__, pa_strerror(err));
         }
       }
 

@@ -97,7 +97,7 @@ int n_output_devices = 0;
 #define MY_CW_HIGH_WATER      320
 
 //
-// Ring buffer for "local microphone" samples stored locally here.
+// Ring buffer for "local audio" samples stored locally here.
 // NOTE: lead large buffer for some "loopback" devices which produce
 //       samples in large chunks if fed from digimode programs.
 //
@@ -175,7 +175,7 @@ void audio_get_cards() {
 //
 // AUDIO_OPEN_INPUT
 //
-// open a PA stream that connects to the TX microphone
+// open a PA stream that connects to the TX audio input
 // The PA callback function then sends the data to the transmitter
 //
 
@@ -198,13 +198,13 @@ int audio_open_input() {
   padev = -1;
 
   for (i = 0; i < n_input_devices; i++) {
-    if (!strcmp(transmitter->microphone_name, input_devices[i].name)) {
+    if (!strcmp(transmitter->audio_name, input_devices[i].name)) {
       padev = input_devices[i].index;
       break;
     }
   }
 
-  t_print("%s: name=%s PADEV=%d\n", __FUNCTION__, transmitter->microphone_name, padev);
+  t_print("%s: TX:%s (dev=%d)\n", __FUNCTION__, transmitter->audio_name, padev);
 
   //
   // Device name possibly came from props file and device is no longer there
@@ -344,7 +344,7 @@ static int pa_mic_cb(const void *inputBuffer, void *outputBuffer, unsigned long 
     // mutex protected: ring buffer cannot vanish
     //
     // Normally there is a slight mis-match between the 48kHz sample
-    // rate of the "microphone device" and the 48kHz rate of the
+    // rate of the audio input device and the 48kHz rate of the
     // HPSDR device. Thus, the mic buffer tends to either slowly
     // drain or slowly become full (which leads to large TX delays).
     //
@@ -449,7 +449,7 @@ int audio_open_output(RECEIVER *rx) {
     }
   }
 
-  t_print("%s: name=%s PADEV=%d\n", __FUNCTION__, rx->audio_name, padev);
+  t_print("%s: RX%d:%s (dev=%d)\n", __FUNCTION__, rx->id + 1, rx->audio_name, padev);
 
   //
   // Device name possibly came from props file and device is no longer there
@@ -516,10 +516,10 @@ int audio_open_output(RECEIVER *rx) {
 //
 // AUDIO_CLOSE_INPUT
 //
-// close a TX microphone stream
+// close a TX audio stream
 //
 void audio_close_input() {
-  t_print("%s: micname=%s\n", __FUNCTION__, transmitter->microphone_name);
+  t_print("%s: TX:%s\n", __FUNCTION__, transmitter->audio_name);
   g_mutex_lock(&audio_mutex);
 
   if (record_handle != NULL) {
@@ -551,7 +551,7 @@ void audio_close_input() {
 // shut down the stream connected with audio from one of the RX
 //
 void audio_close_output(RECEIVER *rx) {
-  t_print("%s: device=%s\n", __FUNCTION__, rx->audio_name);
+  t_print("%s: RX%d:%s\n", __FUNCTION__, rx->id+1, rx->audio_name);
   g_mutex_lock(&rx->local_audio_mutex);
 
   if (rx->local_audio_buffer != NULL) {
@@ -658,7 +658,7 @@ int audio_write (RECEIVER *rx, float left, float right) {
       if (oldpt < 0) { oldpt += MY_RING_BUFFER_SIZE; }
 
       rx->local_audio_buffer_inpt = oldpt;
-      t_print("%s: buffer was nearly full, deleted audio\n", __FUNCTION__);
+      //t_print("%s: buffer was nearly full, deleted audio\n", __FUNCTION__);
     }
 
     //
