@@ -21,6 +21,7 @@
 #define _AUDIO_H_
 
 #include "receiver.h"
+#include "transmitter.h"
 
 #define MAX_AUDIO_DEVICES 64
 
@@ -34,10 +35,9 @@ extern int n_input_devices;
 extern AUDIO_DEVICE input_devices[MAX_AUDIO_DEVICES];
 extern int n_output_devices;
 extern AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
-extern GMutex audio_mutex;
 
-extern int audio_open_input(void);
-extern void audio_close_input(void);
+extern int audio_open_input(TRANSMITTER *tx);
+extern void audio_close_input(TRANSMITTER *tx);
 extern int audio_open_output(RECEIVER *rx);
 extern void audio_close_output(RECEIVER *rx);
 extern int audio_write(RECEIVER *rx, float left_sample, float right_sample);

@@ -1285,7 +1285,7 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   }
 
   if (tx->local_audio) {
-    if (audio_open_input() < 0) {
+    if (audio_open_input(tx) < 0) {
       t_print("%s: audio_open_input failed\n", __FUNCTION__);
       tx->local_audio = 0;
     }

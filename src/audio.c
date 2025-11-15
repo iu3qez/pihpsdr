@@ -179,7 +179,7 @@ int audio_open_output(RECEIVER *rx) {
   return 0;
 }
 
-int audio_open_input() {
+int audio_open_input(TRANSMITTER *tx) {
   int err;
   unsigned int rate = 48000;
   unsigned int channels = 1;
@@ -187,15 +187,11 @@ int audio_open_input() {
   char hw[64];
   int i;
 
-  if (!can_transmit) {
-    return -1;
-  }
-
-  t_print("%s: TX:%s\n", __FUNCTION__, transmitter->audio_name);
+  t_print("%s: TX:%s\n", __FUNCTION__, tx->audio_name);
   i = 0;
 
-  while (i < 63 && transmitter->audio_name[i] != ' ') {
-    hw[i] = transmitter->audio_name[i];
+  while (i < 63 && tx->audio_name[i] != ' ') {
+    hw[i] = tx->audio_name[i];
     i++;
   }
 
@@ -220,7 +216,7 @@ int audio_open_input() {
                                    inp_latency)) < 0) {
       t_print("%s: snd_pcm_set_params failed: %s\n", __FUNCTION__, snd_strerror(err));
       g_mutex_unlock(&audio_mutex);
-      audio_close_input();
+      audio_close_input(tx);
       continue;
     } else {
       t_print("%s: using format %s (%s)\n", __FUNCTION__, snd_pcm_format_name(formats[i]),
@@ -233,7 +229,7 @@ int audio_open_input() {
   if (i >= FORMATS) {
     t_print("%s: cannot find usable format\n", __FUNCTION__);
     g_mutex_unlock(&audio_mutex);
-    audio_close_input();
+    audio_close_input(tx);
     return err;
   }
 
@@ -264,7 +260,7 @@ int audio_open_input() {
 
   if (mic_ring_buffer == NULL) {
     g_mutex_unlock(&audio_mutex);
-    audio_close_input();
+    audio_close_input(tx);
     return -1;
   }
 
@@ -274,7 +270,7 @@ int audio_open_input() {
   if (!mic_read_thread_id ) {
     t_print("%s: g_thread_new failed on mic_read_thread: %s\n", __FUNCTION__, error->message);
     g_mutex_unlock(&audio_mutex);
-    audio_close_input();
+    audio_close_input(tx);
     return -1;
   }
 
@@ -299,8 +295,8 @@ void audio_close_output(RECEIVER *rx) {
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
-void audio_close_input() {
-  t_print("%s: TX:%s\n", __FUNCTION__, transmitter->audio_name);
+void audio_close_input(TRANSMITTER *tx) {
+  t_print("%s: TX:%s\n", __FUNCTION__, tx->audio_name);
   running = FALSE;
   g_mutex_lock(&audio_mutex);
 

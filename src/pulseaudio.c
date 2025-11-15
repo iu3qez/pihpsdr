@@ -249,16 +249,12 @@ static void *mic_read_thread(gpointer arg) {
   return NULL;
 }
 
-int audio_open_input() {
+int audio_open_input(TRANSMITTER *tx) {
   pa_sample_spec sample_spec;
   int err;
   int result = 0;
 
-  if (!can_transmit) {
-    return -1;
-  }
-
-  t_print("%s: TX:%s\n", __FUNCTION__, transmitter->audio_name);
+  t_print("%s: TX:%s\n", __FUNCTION__, tx->audio_name);
   g_mutex_lock(&audio_mutex);
   pa_buffer_attr attr;
   attr.maxlength = (uint32_t) -1;
@@ -272,7 +268,7 @@ int audio_open_input() {
   audio_stream = pa_simple_new(NULL,      // Use the default server.
                                "piHPSDR",                   // Our application's name.
                                PA_STREAM_RECORD,
-                               transmitter->audio_name,
+                               tx->audio_name,
                                "TX",                        // Description of our stream.
                                &sample_spec,                // Our sample format.
                                NULL,                        // Use default channel map
@@ -289,7 +285,7 @@ int audio_open_input() {
 
     if (mic_ring_buffer == NULL) {
       g_mutex_unlock(&audio_mutex);
-      audio_close_input();
+      audio_close_input(tx);
       return -1;
     }
 
@@ -330,9 +326,9 @@ void audio_close_output(RECEIVER *rx) {
   g_mutex_unlock(&rx->local_audio_mutex);
 }
 
-void audio_close_input() {
+void audio_close_input(TRANSMITTER *tx) {
   running = FALSE;
-  t_print("%s: TX:%s\n", __FUNCTION__, transmitter->audio_name);
+  t_print("%s: TX:%s\n", __FUNCTION__, tx->audio_name);
   g_mutex_lock(&audio_mutex);
 
   if (mic_read_thread_id != NULL) {

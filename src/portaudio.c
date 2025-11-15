@@ -182,15 +182,11 @@ void audio_get_cards() {
 static int pa_mic_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 static int pa_out_cb(const void*, void*, unsigned long, const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void*);
 
-int audio_open_input() {
+int audio_open_input(TRANSMITTER *tx) {
   PaError err;
   PaStreamParameters inputParameters;
   int i;
   int padev;
-
-  if (!can_transmit) {
-    return -1;
-  }
 
   //
   // Look up device name and determine device ID
@@ -198,13 +194,13 @@ int audio_open_input() {
   padev = -1;
 
   for (i = 0; i < n_input_devices; i++) {
-    if (!strcmp(transmitter->audio_name, input_devices[i].name)) {
+    if (!strcmp(tx->audio_name, input_devices[i].name)) {
       padev = input_devices[i].index;
       break;
     }
   }
 
-  t_print("%s: TX:%s (dev=%d)\n", __FUNCTION__, transmitter->audio_name, padev);
+  t_print("%s: TX:%s (dev=%d)\n", __FUNCTION__, tx->audio_name, padev);
 
   //
   // Device name possibly came from props file and device is no longer there
@@ -518,8 +514,8 @@ int audio_open_output(RECEIVER *rx) {
 //
 // close a TX audio stream
 //
-void audio_close_input() {
-  t_print("%s: TX:%s\n", __FUNCTION__, transmitter->audio_name);
+void audio_close_input(TRANSMITTER *tx) {
+  t_print("%s: TX:%s\n", __FUNCTION__, tx->audio_name);
   g_mutex_lock(&audio_mutex);
 
   if (record_handle != NULL) {
