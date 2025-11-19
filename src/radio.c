@@ -424,6 +424,20 @@ gboolean radio_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
     break;
 
   //
+  // pressing 'm' or 'M' can now be used to open the main menu.
+  // this was necessary since on some systems, going full-screen
+  // makes the HIDE and MENU buttons in the top right corner
+  // deaf.
+  //
+  case GDK_KEY_m:
+  case GDK_KEY_M:
+    // start the main menu
+    if (main_menu == NULL) {
+      new_menu();
+    }
+    break;
+
+  //
   // This is a contribution of Ron, it uses a keypad for
   // entering a frequency
   //
