@@ -169,7 +169,7 @@ void shutdown_tcp_rigctl() {
 
     if (tcp_client[id].fd != -1) {
       if (setsockopt(tcp_client[id].fd, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
-        t_perror("setsockopt(...,SO_LINGER,...) failed for client:");
+        t_perror("setsockopt(...,SO_LINGER,...) failed for client");
       }
 
       t_print("%s: closing client socket: %d\n", __FUNCTION__, tcp_client[id].fd);
@@ -188,7 +188,7 @@ void shutdown_tcp_rigctl() {
   //
   if (server_socket >= 0) {
     if (setsockopt(server_socket, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
-      t_perror("setsockopt(...,SO_LINGER,...) failed for server:");
+      t_perror("setsockopt(...,SO_LINGER,...) failed for server");
     }
 
     t_print("%s: closing server_socket: %d\n", __FUNCTION__, server_socket);
@@ -1271,7 +1271,7 @@ static gpointer rigctl_client (gpointer data) {
     linger.l_linger = 0;
 
     if (setsockopt(client->fd, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
-      t_perror("setsockopt(...,SO_LINGER,...) failed for client:");
+      t_perror("setsockopt(...,SO_LINGER,...) failed for client");
     }
 
     if (client->andromeda_timer != 0) {
@@ -3523,8 +3523,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
 
           client->buttonvec  = g2panel_default_buttons(client->andromeda_type);
           client->encodervec = g2panel_default_encoders(client->andromeda_type);
-          g2panelRestoreState(client->andromeda_type, client->buttonvec, client->encodervec);
-
+          g2panel_restore_state(client->andromeda_type, client->buttonvec, client->encodervec);
           //
           // This takes care the G2panel menu is shown in the main menu
           //
@@ -5520,7 +5519,7 @@ static int set_interface_attribs (int fd, speed_t speed, int parity) {
   memset (&tty, 0, sizeof tty);
 
   if (tcgetattr (fd, &tty) != 0) {
-    t_perror ("RIGCTL (tcgetattr):");
+    t_perror ("RIGCTL (tcgetattr)");
     return -1;
   }
 
@@ -5545,7 +5544,7 @@ static int set_interface_attribs (int fd, speed_t speed, int parity) {
   tty.c_cflag &= ~CRTSCTS;
 
   if (tcsetattr (fd, TCSANOW, &tty) != 0) {
-    t_perror( "RIGCTL (tcsetattr):");
+    t_perror( "RIGCTL (tcsetattr)");
     return -1;
   }
 
@@ -5566,7 +5565,7 @@ static void set_blocking (int fd, int should_block) {
   fcntl(fd, F_SETFL, flags);
 
   if (tcgetattr (fd, &tty) != 0) {
-    t_perror ("RIGCTL (tggetattr):");
+    t_perror ("RIGCTL (tggetattr)");
     return;
   }
 
@@ -5574,7 +5573,7 @@ static void set_blocking (int fd, int should_block) {
   tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
 
   if (tcsetattr (fd, TCSANOW, &tty) != 0) {
-    t_perror("RIGCTL (tcsetattr):");
+    t_perror("RIGCTL (tcsetattr)");
   }
 }
 
@@ -5697,7 +5696,7 @@ int launch_serial_rigctl (int id) {
   fd = open (SerialPorts[id].port, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
 
   if (fd < 0) {
-    t_perror("RIGCTL (open serial):");
+    t_perror("RIGCTL (open serial)");
     return 0 ;
   }
 
@@ -5830,7 +5829,7 @@ void launch_tcp_rigctl () {
   rigctl_server_thread_id = g_thread_new( "rigctl server", rigctl_server, GINT_TO_POINTER(rigctl_tcp_port));
 }
 
-void rigctlRestoreState() {
+void rigctl_restore_state() {
   GetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   GetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   GetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
@@ -5858,7 +5857,7 @@ void rigctlRestoreState() {
   //
 }
 
-void rigctlSaveState() {
+void rigctl_save_state() {
   SetPropI0("rigctl_tcp_enable",                             rigctl_tcp_enable);
   SetPropI0("rigctl_tcp_andromeda",                          rigctl_tcp_andromeda);
   SetPropI0("rigctl_tcp_autoreporting",                      rigctl_tcp_autoreporting);
@@ -5883,9 +5882,9 @@ void rigctlSaveState() {
         (serial_client[id].andromeda_type == 4 || serial_client[id].andromeda_type == 5) &&
         serial_client[id].buttonvec != NULL &&
         serial_client[id].encodervec != NULL) {
-      g2panelSaveState(serial_client[id].andromeda_type,
-                       serial_client[id].buttonvec,
-                       serial_client[id].encodervec);
+      g2panel_save_state(serial_client[id].andromeda_type,
+                         serial_client[id].buttonvec,
+                         serial_client[id].encodervec);
       return;
     }
   }
@@ -5895,9 +5894,9 @@ void rigctlSaveState() {
         (tcp_client[id].andromeda_type == 4 || tcp_client[id].andromeda_type == 5) &&
         tcp_client[id].buttonvec != NULL &&
         tcp_client[id].encodervec != NULL) {
-      g2panelSaveState(tcp_client[id].andromeda_type,
-                       tcp_client[id].buttonvec,
-                       tcp_client[id].encodervec);
+      g2panel_save_state(tcp_client[id].andromeda_type,
+                         tcp_client[id].buttonvec,
+                         tcp_client[id].encodervec);
       return;
     }
   }

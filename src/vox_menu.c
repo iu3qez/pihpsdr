@@ -155,7 +155,7 @@ void vox_menu(GtkWidget *parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(enable_b), vox_enabled);
   g_signal_connect (enable_b, "toggled", G_CALLBACK(enable_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), enable_b, 3, 0, 1, 1);
-  GtkWidget *level_label = gtk_label_new("Mic Level:");
+  GtkWidget *level_label = gtk_label_new("Mic Level");
   gtk_widget_set_name(level_label, "boldlabel");
   gtk_widget_set_halign(level_label, GTK_ALIGN_END);
   gtk_widget_show(level_label);
@@ -164,7 +164,7 @@ void vox_menu(GtkWidget *parent) {
   gtk_widget_show(level);
   gtk_grid_attach(GTK_GRID(grid), level, 1, 1, 3, 1);
   gtk_widget_set_valign(level, GTK_ALIGN_CENTER);
-  GtkWidget *threshold_label = gtk_label_new("VOX Threshold:");
+  GtkWidget *threshold_label = gtk_label_new("VOX Threshold");
   gtk_widget_set_name(threshold_label, "boldlabel");
   gtk_widget_set_halign(threshold_label, GTK_ALIGN_END);
   gtk_widget_show(threshold_label);
@@ -176,7 +176,7 @@ void vox_menu(GtkWidget *parent) {
   gtk_widget_show(vox_scale);
   gtk_grid_attach(GTK_GRID(grid), vox_scale, 1, 2, 3, 1);
   g_signal_connect(G_OBJECT(vox_scale), "value_changed", G_CALLBACK(vox_value_changed_cb), NULL);
-  GtkWidget *hang_label = gtk_label_new("VOX Hang (ms):");
+  GtkWidget *hang_label = gtk_label_new("VOX Hang (ms)");
   gtk_widget_set_name(hang_label, "boldlabel");
   gtk_widget_set_halign(hang_label, GTK_ALIGN_END);
   gtk_widget_show(hang_label);

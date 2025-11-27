@@ -62,17 +62,17 @@ typedef struct _encoder {
   SINGLEENCODER top;
   SWITCH button;
 } ENCODER;
-  
+
 extern ENCODER encoders[MAX_ENCODERS];
 extern SWITCH switches[MAX_SWITCHES];
 
 extern void gpio_default_encoder_actions(int ctrlr);
 extern void gpio_default_switch_actions(int ctrlr);
 extern void gpio_set_defaults(int ctrlr);
-extern void gpioRestoreActions(void);
-extern void gpioRestoreState(void);
-extern void gpioSaveState(void);
-extern void gpioSaveActions(void);
+extern void gpio_restore_actions(void);
+extern void gpio_restore_state(void);
+extern void gpio_save_state(void);
+extern void gpio_save_actions(void);
 extern void gpio_init(void);
 extern void gpio_close(void);
 extern void gpio_set_ptt(int state);

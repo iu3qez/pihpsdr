@@ -51,7 +51,7 @@ static void agc_hang_threshold_value_changed_cb(GtkWidget *widget, gpointer data
   myrx->agc_hang_threshold = (int)gtk_range_get_value(GTK_RANGE(widget));
 
   if (radio_is_remote) {
-    send_agc_gain(client_socket, myrx);
+    send_agc_gain(cl_sock_tcp, myrx);
   } else {
     rx_set_agc(myrx);
   }
@@ -62,7 +62,7 @@ static void agc_cb (GtkToggleButton *widget, gpointer data) {
   myrx->agc = val;
 
   if (radio_is_remote) {
-    send_agc(client_socket, myrx->id, myrx->agc);
+    send_agc(cl_sock_tcp, myrx->id, myrx->agc);
   } else {
     rx_set_agc(myrx);
   }

@@ -737,9 +737,9 @@ int process_action(void *data) {
         // Audio capture and playback is handled on the server side only
         //
         if (action == CAPTURE) {
-          send_capture(client_socket);
+          send_capture(cl_sock_tcp);
         } else {
-          send_replay(client_socket);
+          send_replay(cl_sock_tcp);
         }
       } else {
         switch (capture_state) {
@@ -1023,7 +1023,7 @@ int process_action(void *data) {
   case LOCK:
     if (a->mode == PRESSED) {
       if (radio_is_remote) {
-        send_lock(client_socket, NOT(locked));
+        send_lock(cl_sock_tcp, NOT(locked));
       } else {
         TOGGLE(locked);
         g_idle_add(ext_vfo_update, NULL);
@@ -1693,7 +1693,7 @@ int process_action(void *data) {
       transmitter->tune_use_drive = 0;
 
       if (radio_is_remote) {
-        send_txmenu(client_socket);
+        send_txmenu(cl_sock_tcp);
       }
 
       queue_popup_slider(TUNE_DRIVE, -1, 0.0, 100.0, 1.0, value, "TUNE DRIVE");
@@ -1902,7 +1902,7 @@ int process_action(void *data) {
       cw_key_hit = 1;                // this tells rigctl to abort CAT CW
 
       if (radio_is_remote) {
-        send_mox(client_socket, 1);
+        send_mox(cl_sock_tcp, 1);
       } else {
         schedule_transmit_specific();
         radio_set_mox(1);
@@ -1915,7 +1915,7 @@ int process_action(void *data) {
 
       if (radio_is_remote) {
         usleep(100000);              // since we delayed the start of the first CW, increase hang time
-        send_mox(client_socket, 0);
+        send_mox(cl_sock_tcp, 0);
       } else {
         schedule_transmit_specific();
 

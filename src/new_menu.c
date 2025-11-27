@@ -115,7 +115,7 @@ static gboolean restart_cb (GtkWidget *widget, GdkEventButton *event, gpointer d
   cleanup();
 
   if (radio_is_remote) {
-    send_restart(client_socket);
+    send_restart(cl_sock_tcp);
   } else {
     radio_protocol_restart();
   }

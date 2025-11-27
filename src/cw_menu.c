@@ -108,7 +108,7 @@ static void cw_keyer_sidetone_frequency_value_changed_cb(GtkWidget *widget, gpoi
   cw_changed();
 
   if (radio_is_remote) {
-    send_sidetone_freq(client_socket, cw_keyer_sidetone_frequency);
+    send_sidetone_freq(cl_sock_tcp, cw_keyer_sidetone_frequency);
   } else {
     rx_filter_changed(active_receiver);
     rx_set_offset(active_receiver);
@@ -167,7 +167,7 @@ void cw_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_speed_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_speed_b, "value_changed", G_CALLBACK(cw_keyer_speed_value_changed_cb), NULL);
   col++;
-  GtkWidget *cw_breakin_b = gtk_check_button_new_with_label("CW Break-In, Delay (ms):");
+  GtkWidget *cw_breakin_b = gtk_check_button_new_with_label("CW Break-In, Delay (ms)");
   gtk_widget_set_name(cw_breakin_b, "boldlabel");
   gtk_widget_set_halign(cw_breakin_b, GTK_ALIGN_END);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (cw_breakin_b), cw_breakin);
@@ -180,7 +180,7 @@ void cw_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), cw_keyer_hang_time_b, 1, col, 1, 1);
   g_signal_connect(cw_keyer_hang_time_b, "value_changed", G_CALLBACK(cw_keyer_hang_time_value_changed_cb), NULL);
   col++;
-  GtkWidget *cw_keyer_sidetone_level_label = gtk_label_new("Sidetone Level:");
+  GtkWidget *cw_keyer_sidetone_level_label = gtk_label_new("Sidetone Level");
   gtk_widget_set_name(cw_keyer_sidetone_level_label, "boldlabel");
   gtk_widget_set_halign(cw_keyer_sidetone_level_label, GTK_ALIGN_END);
   gtk_widget_show(cw_keyer_sidetone_level_label);
@@ -192,7 +192,7 @@ void cw_menu(GtkWidget *parent) {
   g_signal_connect(cw_keyer_sidetone_level_b, "value_changed", G_CALLBACK(cw_keyer_sidetone_level_value_changed_cb),
                    NULL);
   col++;
-  GtkWidget *cw_keyer_sidetone_frequency_label = gtk_label_new("Sidetone Freq:");
+  GtkWidget *cw_keyer_sidetone_frequency_label = gtk_label_new("Sidetone Freq");
   gtk_widget_set_name(cw_keyer_sidetone_frequency_label, "boldlabel");
   gtk_widget_set_halign(cw_keyer_sidetone_frequency_label, GTK_ALIGN_END);
   gtk_widget_show(cw_keyer_sidetone_frequency_label);
@@ -204,7 +204,7 @@ void cw_menu(GtkWidget *parent) {
   g_signal_connect(cw_keyer_sidetone_frequency_b, "value_changed",
                    G_CALLBACK(cw_keyer_sidetone_frequency_value_changed_cb), NULL);
   col++;
-  GtkWidget *cw_keyer_weight_label = gtk_label_new("Weight:");
+  GtkWidget *cw_keyer_weight_label = gtk_label_new("Weight");
   gtk_widget_set_name(cw_keyer_weight_label, "boldlabel");
   gtk_widget_set_halign(cw_keyer_weight_label, GTK_ALIGN_END);
   gtk_widget_show(cw_keyer_weight_label);
@@ -216,7 +216,7 @@ void cw_menu(GtkWidget *parent) {
   g_signal_connect(cw_keyer_weight_b, "value_changed", G_CALLBACK(cw_keyer_weight_value_changed_cb), NULL);
 #if 0
   col++;
-  GtkWidget *cw_ramp_width_label = gtk_label_new("CW ramp width (ms):");
+  GtkWidget *cw_ramp_width_label = gtk_label_new("CW ramp width (ms)");
   gtk_widget_set_name(cw_ramp_width_label, "boldlabel");
   gtk_widget_set_halign(cw_ramp_width_label, GTK_ALIGN_END);
   gtk_widget_show(cw_ramp_width_label);
@@ -228,7 +228,7 @@ void cw_menu(GtkWidget *parent) {
   g_signal_connect(cw_ramp_width_b, "value_changed", G_CALLBACK(cw_ramp_width_changed_cb), NULL);
 #endif
   col++;
-  GtkWidget *paddle_label = gtk_label_new("Paddle Mode:");
+  GtkWidget *paddle_label = gtk_label_new("Paddle Mode");
   gtk_widget_set_name(paddle_label, "boldlabel");
   gtk_widget_set_halign(paddle_label, GTK_ALIGN_END);
   gtk_widget_show(paddle_label);

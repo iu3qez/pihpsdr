@@ -1074,6 +1074,8 @@ TRANSMITTER *tx_create_transmitter(int id, int pixels, int width, int height) {
   tx->dexp_filter_low  =    1000;
   tx->dexp_filter_high =    2000;
   tx->local_audio = 0;
+  tx->audio_flag = 0;
+  g_mutex_init(&tx->audio_mutex);
   snprintf(tx->audio_name, sizeof(tx->audio_name), "%s", "NO AUDIO");
   tx->dialog_x = -1;
   tx->dialog_y = -1;
@@ -1569,7 +1571,7 @@ static void tx_full_buffer(TRANSMITTER *tx) {
 
 void tx_queue_cw_event(int down, int wait) {
   if (radio_is_remote) {
-    send_cw(client_socket, down, wait);
+    send_cw(cl_sock_tcp, down, wait);
     return;
   }
 
@@ -1615,7 +1617,7 @@ void tx_add_mic_sample(TRANSMITTER *tx, short next_mic_sample) {
   // the radio by those from the local audio input device.
   //
   if (tx->local_audio) {
-    mic_sample_double = audio_get_next_mic_sample();
+    mic_sample_double = audio_get_next_mic_sample(tx);
   }
 
   //
@@ -2000,28 +2002,6 @@ void tx_add_ps_iq_samples(const TRANSMITTER *tx, double i_sample_tx, double q_sa
   }
 }
 
-int tx_remote_update_display(gpointer data) {
-  TRANSMITTER *tx = (TRANSMITTER *) data;
-
-  if (tx->displaying) {
-    if (tx->pixels > 0) {
-      g_mutex_lock(&tx->display_mutex);
-
-      if (tx->display_panadapter) {
-        tx_panadapter_update(tx);
-      }
-
-      g_mutex_unlock(&tx->display_mutex);
-
-      if (!duplex) {
-        meter_update(active_receiver, POWER, tx->fwd, tx->alc, tx->swr);
-      }
-    }
-  }
-
-  return G_SOURCE_REMOVE;
-}
-
 void tx_create_remote(TRANSMITTER *tx) {
   //
   // transmitter structure already setup via INFO_TRANSMITTER packet.
@@ -2051,7 +2031,7 @@ void tx_set_displaying(TRANSMITTER *tx) {
 
 void tx_set_filter(TRANSMITTER *tx) {
   if (radio_is_remote) {
-    send_txfilter(client_socket);
+    send_txfilter(cl_sock_tcp);
     return;
   }
 
@@ -2407,7 +2387,7 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
   //
   if (radio_is_remote) {
     tx->puresignal = state;
-    send_psonoff(client_socket, state);
+    send_psonoff(cl_sock_tcp, state);
     g_idle_add(ext_vfo_update, NULL);
     return;
   }
@@ -2471,7 +2451,7 @@ void tx_ps_onoff(TRANSMITTER *tx, int state) {
 void tx_ps_reset(const TRANSMITTER *tx) {
   if (tx->puresignal) {
     if (radio_is_remote) {
-      send_psreset(client_socket);
+      send_psreset(cl_sock_tcp);
       return;
     }
 
@@ -2482,7 +2462,7 @@ void tx_ps_reset(const TRANSMITTER *tx) {
 void tx_ps_resume(const TRANSMITTER *tx) {
   if (tx->puresignal) {
     if (radio_is_remote) {
-      send_psresume(client_socket);
+      send_psresume(cl_sock_tcp);
       return;
     }
 
@@ -2501,7 +2481,7 @@ void tx_ps_set_sample_rate(const TRANSMITTER *tx, int rate) {
 
 void tx_ps_setparams(const TRANSMITTER *tx) {
   if (radio_is_remote) {
-    send_psparams(client_socket, tx);
+    send_psparams(cl_sock_tcp, tx);
     return;
   }
 
@@ -2573,7 +2553,7 @@ void tx_set_compressor(TRANSMITTER *tx) {
   g_idle_add(sliders_cmpr, GINT_TO_POINTER(100 * suppress_popup_sliders));
 
   if (radio_is_remote) {
-    send_tx_compressor(client_socket);
+    send_tx_compressor(cl_sock_tcp);
     return;
   }
 
@@ -2661,7 +2641,7 @@ void tx_set_deviation(const TRANSMITTER *tx) {
 
 void tx_set_dexp(const TRANSMITTER *tx) {
   if (radio_is_remote) {
-    send_dexp(client_socket);
+    send_dexp(cl_sock_tcp);
     return;
   }
 
@@ -2730,7 +2710,7 @@ void tx_xmit_captured_data_end(const TRANSMITTER *tx) {
 
 void tx_set_equalizer(TRANSMITTER *tx) {
   if (radio_is_remote) {
-    send_eq(client_socket, tx->id);
+    send_eq(cl_sock_tcp, tx->id);
     return;
   }
 
@@ -2750,7 +2730,7 @@ void tx_set_equalizer(TRANSMITTER *tx) {
 
 void tx_set_fft_size(const TRANSMITTER *tx) {
   if (radio_is_remote) {
-    send_tx_fft(client_socket, tx);
+    send_tx_fft(cl_sock_tcp, tx);
     return;
   }
 
@@ -2759,7 +2739,7 @@ void tx_set_fft_size(const TRANSMITTER *tx) {
 
 void tx_set_mic_gain(const TRANSMITTER *tx) {
   if (radio_is_remote) {
-    send_micgain(client_socket, tx->mic_gain);
+    send_micgain(cl_sock_tcp, tx->mic_gain);
     return;
   }
 

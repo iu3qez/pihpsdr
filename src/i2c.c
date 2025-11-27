@@ -115,6 +115,7 @@ void i2c_interrupt() {
 
   for (;;) {
     flags = read_word_data(0x0E);
+
     //
     // bits in "flags" indicate which input lines triggered an interrupt
     // Two interrupts occuring at about the same time can lead to multiple bits
@@ -133,7 +134,6 @@ void i2c_interrupt() {
     // whether the bit in "ints" is set or clear.
 
     for (i = 0; i < 16; i++) {
-
       if (flags == 0) { break; }  // leave loop if no bits left in "flags"
 
       if (i2c_sw[i] & flags) {

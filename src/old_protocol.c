@@ -345,6 +345,7 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
       ozy_send_buffer(ozy_buffer);
       pthread_mutex_unlock(&send_mutex);
     }
+
     MEMORY_BARRIER;
     txring_outptr = nptr;
   }
@@ -354,7 +355,6 @@ static gpointer old_protocol_txiq_thread(gpointer data) {
 
 void old_protocol_stop() {
   ASSERT_SERVER();
-
   t_print("%s\n", __FUNCTION__);
   P1running = 0;
 
@@ -566,7 +566,7 @@ static void open_udp_socket() {
   tmp = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   if (tmp < 0) {
-    t_perror("P1 create data socket:");
+    t_perror("P1 create data socket");
     g_idle_add(fatal_error, "FATAL: P1 could not create data socket");
     return;
   }
@@ -662,7 +662,7 @@ static void open_udp_socket() {
           ntohs(radio->network.interface_address.sin_port));
 
   if (bind(tmp, (struct sockaddr * )&radio->network.interface_address, radio->network.interface_length) < 0) {
-    t_perror("P1: bind socket:");
+    t_perror("P1: bind socket");
     g_idle_add(fatal_error, "FATAL: P1 could not bind data socket");
   }
 
@@ -694,7 +694,7 @@ static void open_tcp_socket() {
   tmp = socket(AF_INET, SOCK_STREAM, 0);
 
   if (tmp < 0) {
-    t_perror("P1: create TCP socket:");
+    t_perror("P1: create TCP socket");
     g_idle_add(fatal_error, "FATAL: P1 could not create TCP socket");
     return;
   }
@@ -816,8 +816,7 @@ static int metis_read(unsigned char *buffer, int len) {
   } else if (data_socket >= 0) {
     bytes_read = recvfrom(data_socket, buffer, len, 0, (struct sockaddr*)&addr, &length);
 
-    if (bytes_read < 0 && errno != EAGAIN) { t_perror("old_protocol recvfrom UDP:"); }
-
+    if (bytes_read < 0 && errno != EAGAIN) { t_perror("old_protocol recvfrom UDP"); }
   } else {
     //
     // This could happen in METIS start/stop sequences when using TCP, since
@@ -827,23 +826,24 @@ static int metis_read(unsigned char *buffer, int len) {
     bytes_read = 0;
   }
 
-  if (buffer[0] == 0xEF && buffer[1] == 0xFE && bytes_read == 1032 && buffer[3] == 6) {
-     //
-     // This is the data frame we are looking for
-     //
-     uint32_t sequence = ((buffer[4] & 0xFF) << 24) + ((buffer[5] & 0xFF) << 16) + ((buffer[6] & 0xFF) << 8) + (buffer[7] & 0xFF);
+  if (bytes_read == 1032 && buffer[0] == 0xEF && buffer[1] == 0xFE && buffer[3] == 6) {
+    //
+    // This is the data frame we are looking for
+    //
+    uint32_t sequence = ((buffer[4] & 0xFF) << 24) + ((buffer[5] & 0xFF) << 16) + ((buffer[6] & 0xFF) << 8) +
+                        (buffer[7] & 0xFF);
 
-     // A sequence error with a seqnum of zero usually indicates a METIS restart
-     // and is no error condition
-     if (sequence != 0 && sequence != last_seq_num + 1) {
-       t_print("SEQ ERROR: last %ld, recvd %ld\n", (long) last_seq_num, (long) sequence);
-       sequence_errors++;
-     }
+    // A sequence error with a seqnum of zero usually indicates a METIS restart
+    // and is no error condition
+    if (sequence != 0 && sequence != last_seq_num + 1) {
+      t_print("SEQ ERROR: last %ld, recvd %ld\n", (long) last_seq_num, (long) sequence);
+      sequence_errors++;
+    }
 
-     last_seq_num = sequence;
-     ret = 0;
+    last_seq_num = sequence;
+    ret = 0;
   } else if (bytes_read > 12) {
-     t_print("%s: Invalid packet Header=%02x%02x EP=%d len=%d\n", __FUNCTION__, buffer[0], buffer[1], buffer[3], bytes_read);
+    t_print("%s: Invalid packet Header=%02x%02x EP=%d len=%d\n", __FUNCTION__, buffer[0], buffer[1], buffer[3], bytes_read);
   }
 
   return ret;
@@ -855,13 +855,12 @@ static gpointer receive_thread(gpointer arg) {
   int ret;
   t_print( "old_protocol: receive_thread\n");
 
-  if (device == DEVICE_OZY) return NULL;  // should not happen
+  if (device == DEVICE_OZY) { return NULL; }  // should not happen
 
   for (;;) {
     //
     // This thread never exits.
     //
-
     if (!P1running) {
       usleep(20000);
       continue;
@@ -878,9 +877,9 @@ static gpointer receive_thread(gpointer arg) {
       if (ret >= 0) {
         queue_two_ozy_input_buffers(&buffer[8], &buffer[520]);
       }
-
     }
   }
+
   return NULL;
 }
 
@@ -2107,8 +2106,6 @@ static void ozy_send_buffer(unsigned char *buffer) {
         TXfreq += vfo[v].xit;
       }
 
-      long long HPSDRfrequency = TXfreq - vfo[v].lo;
-
       //
       // Fast "out-of-band" check. If out-of-band, set TX drive to zero.
       // This already happens during RX and is effective if the
@@ -2157,7 +2154,6 @@ static void ozy_send_buffer(unsigned char *buffer) {
         buffer[C2] |= 0x40;  // enable manual filter selection
         buffer[C3] &= 0x80;  // preserve ONLY "PA enable" bit and clear all filters including "6m LNA"
         buffer[C3] |= 0x20;  // bypass all RX filters
-
         //
         // For "manual" filter selection we also need to select the appropriate TX LPF
         //
@@ -2166,6 +2162,8 @@ static void ozy_send_buffer(unsigned char *buffer) {
         // Even more odd, the Hermes firmware routes 15m through the 10/12 LPF, while
         // the Angelia firmware routes 12m through the 17/15m LPF.
         //
+        long long HPSDRfrequency = TXfreq - vfo[v].lo;
+
         if (HPSDRfrequency > 35600000L) {            // > 10m so use 6m LPF
           buffer[C4] = 0x10;
         } else if (HPSDRfrequency > 24000000L)  {    // > 15m so use 10/12m LPF
@@ -2779,7 +2777,6 @@ static void metis_write(unsigned char ep, unsigned const char* buffer) {
     metis_send_buffer(metis_buffer, 1032);
     metis_offset = 8;
   }
-
 }
 
 void old_protocol_run() {
@@ -2825,18 +2822,21 @@ void old_protocol_run() {
     ozy_send_buffer(buffer);  // sends C1=0 packet
     ozy_send_buffer(buffer);  // sends C1=4 packet
     usleep(20000);
+
     if (device == DEVICE_OZY) { break; }
+
     //
     // The next lines are never executed for OZY
     //
     metis_start_stop(1);      // sends METIS start packet
+
     if (metis_read(buffer, 1032)  ==  0) { break; }  // valid packet received
+
     usleep(20000);
   }
 
   pthread_mutex_unlock(&send_mutex);
   pthread_mutex_unlock(&recv_mutex);
-
   P1running = 1;
 }
 

@@ -100,7 +100,7 @@ static void att_spin_cb(GtkWidget *widget, gpointer data) {
   transmitter->attenuation = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_psatt(client_socket); // this sends auto, attenuation, feedback, and ps antenna
+    send_psatt(cl_sock_tcp); // this sends auto, attenuation, feedback, and ps antenna
   } else {
     schedule_high_priority();
   }
@@ -115,7 +115,7 @@ static void setpk_cb(GtkWidget *widget, gpointer data) {
     transmitter->ps_setpk = newpk;
 
     if (radio_is_remote) {
-      send_psparams(client_socket, transmitter);
+      send_psparams(cl_sock_tcp, transmitter);
     } else {
       tx_ps_setparams(transmitter);
       ps_off_on();
@@ -426,7 +426,7 @@ static void ps_ant_cb(GtkWidget *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_psatt(client_socket);
+    send_psatt(cl_sock_tcp);
   } else {
     schedule_high_priority();
   }
@@ -464,7 +464,7 @@ static void tol_cb(GtkWidget *widget, gpointer data) {
   transmitter->ps_ptol = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (radio_is_remote) {
-    send_psparams(client_socket, transmitter);
+    send_psparams(cl_sock_tcp, transmitter);
   } else {
     tx_ps_setparams(transmitter);
     ps_off_on();
@@ -475,7 +475,7 @@ static void oneshot_cb(GtkWidget *widget, gpointer data) {
   transmitter->ps_oneshot = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (radio_is_remote) {
-    send_psparams(client_socket, transmitter);
+    send_psparams(cl_sock_tcp, transmitter);
   } else {
     tx_ps_setparams(transmitter);
     ps_off_on();
@@ -486,7 +486,7 @@ static void map_cb(GtkWidget *widget, gpointer data) {
   transmitter->ps_map = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (radio_is_remote) {
-    send_psparams(client_socket, transmitter);
+    send_psparams(cl_sock_tcp, transmitter);
   } else {
     tx_ps_setparams(transmitter);
     ps_off_on();
@@ -497,7 +497,7 @@ static void auto_cb(GtkWidget *widget, gpointer data) {
   transmitter->auto_on = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (radio_is_remote) {
-    send_psatt(client_socket);
+    send_psatt(cl_sock_tcp);
   }
 
   if (transmitter->puresignal) {
@@ -545,7 +545,7 @@ static void resume_cb(GtkWidget *widget, gpointer data) {
       transmitter->attenuation = 0;
 
       if (radio_is_remote) {
-        send_psatt(client_socket);
+        send_psatt(cl_sock_tcp);
       }
     }
 
@@ -557,7 +557,7 @@ static void feedback_cb(GtkWidget *widget, gpointer data) {
   transmitter->feedback = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_psatt(client_socket);
+    send_psatt(cl_sock_tcp);
   }
 }
 
@@ -644,7 +644,7 @@ void ps_menu(GtkWidget *parent) {
   // In fact, we provide the possibility of using EXT1 only to support these older
   // (before February, 2015) ANAN-100/200 devices.
   //
-  GtkWidget *ps_ant_label = gtk_label_new("PS FeedBk ANT:");
+  GtkWidget *ps_ant_label = gtk_label_new("PS FeedBk ANT");
   gtk_widget_set_name(ps_ant_label, "boldlabel");
   gtk_widget_show(ps_ant_label);
   gtk_grid_attach(GTK_GRID(grid), ps_ant_label, col, row, 1, 1);

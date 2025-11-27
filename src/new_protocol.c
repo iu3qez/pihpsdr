@@ -474,7 +474,6 @@ void new_protocol_init() {
 
   TXIQRINGBUF = g_new(unsigned char, TXIQRINGBUFLEN);
   RXAUDIORINGBUF = g_new(unsigned char, RXAUDIORINGBUFLEN);
-
   //
   // Initialise semaphores for the never-finishing threads
   // (HighPrio, Mic, rxIQ) and spawn these threads.
@@ -521,7 +520,7 @@ void new_protocol_init() {
     data_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     if (data_socket < 0) {
-      t_perror("Could not create data socket:");
+      t_perror("Could not create data socket");
       g_idle_add(fatal_error, "FATAL: P2 could not create data socket");
     }
 
@@ -593,7 +592,7 @@ void new_protocol_init() {
     // bind to the interface
     if (bind(data_socket, (struct sockaddr * )&radio->network.interface_address,
              radio->network.interface_length) < 0) {
-      t_perror("bind socket failed for data_socket:");
+      t_perror("bind socket failed for data_socket");
       g_idle_add(fatal_error, "FATAL: P2 Bind failed for data socket");
     }
 
@@ -1996,7 +1995,7 @@ static gpointer new_protocol_thread(gpointer data) {
     }
 
     if (bytesread < 0) {
-      t_perror("recvfrom socket failed for new_protocol_thread:");
+      t_perror("recvfrom socket failed for new_protocol_thread");
       g_idle_add(fatal_error, "FATAL: P2 receive (Network problem?)");
       P2running = 0;
       break;

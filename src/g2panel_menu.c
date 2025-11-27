@@ -129,7 +129,7 @@ void g2panel_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button-press-event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, row, 1, 1);
   row++;
-  w = gtk_label_new("Last panel element touched:");
+  w = gtk_label_new("Last panel element touched");
   gtk_widget_set_name(w, "medium_button");
   gtk_widget_set_halign(w, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), w, 0, row, 5, 1);
@@ -138,7 +138,7 @@ void g2panel_menu(GtkWidget *parent) {
   gtk_widget_set_halign(last_label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), last_label, 5, row, 3, 1);
   row++;
-  w = gtk_label_new("piHPSDR command assigned:");
+  w = gtk_label_new("piHPSDR command assigned");
   gtk_widget_set_name(w, "medium_button");
   gtk_widget_set_halign(w, GTK_ALIGN_START);
   gtk_widget_set_valign(w, GTK_ALIGN_CENTER);

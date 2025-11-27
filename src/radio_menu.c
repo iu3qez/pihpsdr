@@ -98,7 +98,7 @@ static void agc_changed_cb(GtkWidget *widget, gpointer data) {
     adc[id].agc = agc;
 
     if (radio_is_remote) {
-      send_soapy_agc(client_socket, id);
+      send_soapy_agc(cl_sock_tcp, id);
       return;
     }
 
@@ -114,15 +114,17 @@ static void agc_changed_cb(GtkWidget *widget, gpointer data) {
 
 static void calibration_value_changed_cb(GtkWidget *widget, gpointer data) {
   double f = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+
   if (f >= 0) {
     frequency_calibration = (int) (10.0 * f + 0.5);
   } else {
     frequency_calibration = (int) (10.0 * f - 0.5);
   }
+
   t_print("F=%f C=%d\n", f, frequency_calibration);
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   }
 }
 
@@ -130,7 +132,7 @@ static void rx_gain_calibration_value_changed_cb(GtkWidget *widget, gpointer dat
   rx_gain_calibration = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   }
 }
 
@@ -144,7 +146,7 @@ static void ptt_ring_cb(GtkWidget *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   } else {
     schedule_transmit_specific();
   }
@@ -156,7 +158,7 @@ static void ptt_tip_cb(GtkWidget *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   } else {
     schedule_transmit_specific();
   }
@@ -167,7 +169,7 @@ static void toggle_cb(GtkWidget *widget, gpointer data) {
   *value = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   } else {
     schedule_general();
     schedule_transmit_specific();
@@ -179,7 +181,7 @@ static void anan10e_cb(GtkWidget *widget, gpointer data) {
   int new = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_anan10E(client_socket, new);
+    send_anan10E(cl_sock_tcp, new);
   } else {
     radio_set_anan10E(new);
   }
@@ -189,7 +191,7 @@ static void split_cb(GtkWidget *widget, gpointer data) {
   int new = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_split(client_socket, new);
+    send_split(cl_sock_tcp, new);
   } else {
     radio_set_split(new);
   }
@@ -212,7 +214,7 @@ static void sat_cb(GtkWidget *widget, gpointer data) {
   sat_mode = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   }
 
   g_idle_add(ext_vfo_update, NULL);
@@ -263,7 +265,7 @@ static void mic_input_cb(GtkWidget *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   } else {
     schedule_transmit_specific();
   }
@@ -285,7 +287,7 @@ static void sample_rate_cb(GtkToggleButton *widget, gpointer data) {
     // of *all* receivers
     //
     for (int id = 0; id < RECEIVERS; id++) {
-      send_sample_rate(client_socket, id, samplerate);
+      send_sample_rate(cl_sock_tcp, id, samplerate);
     }
   } else {
     radio_change_sample_rate(samplerate);
@@ -305,7 +307,7 @@ static void receivers_cb(GtkToggleButton *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_receivers(client_socket, val);
+    send_receivers(cl_sock_tcp, val);
   } else {
     radio_change_receivers(val);
   }
@@ -315,7 +317,7 @@ static void region_cb(GtkWidget *widget, gpointer data) {
   int r = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
 
   if (radio_is_remote) {
-    send_region(client_socket, r);
+    send_region(cl_sock_tcp, r);
   } else {
     radio_change_region(r);
   }
@@ -344,7 +346,7 @@ static void ck10mhz_cb(GtkWidget *widget, gpointer data) {
   atlas_clock_source_10mhz = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   }
 }
 
@@ -352,7 +354,7 @@ static void ck128mhz_cb(GtkWidget *widget, gpointer data) {
   atlas_clock_source_128mhz = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   }
 }
 
@@ -360,7 +362,7 @@ static void micsource_cb(GtkWidget *widget, gpointer data) {
   atlas_mic_source = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   }
 }
 
@@ -368,7 +370,7 @@ static void tx_cb(GtkWidget *widget, gpointer data) {
   atlas_penelope = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   }
 }
 
@@ -398,7 +400,7 @@ void radio_menu(GtkWidget *parent) {
   g_signal_connect (close_b, "button_press_event", G_CALLBACK(close_cb), NULL);
   gtk_grid_attach(GTK_GRID(grid), close_b, 0, 0, 1, 1);
   row = 1;
-  label = gtk_label_new("Receivers:");
+  label = gtk_label_new("Receivers");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
@@ -421,7 +423,7 @@ void radio_menu(GtkWidget *parent) {
     break;
 
   case ORIGINAL_PROTOCOL: {
-    label = gtk_label_new("Sample Rate:");
+    label = gtk_label_new("Sample Rate");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
@@ -457,7 +459,7 @@ void radio_menu(GtkWidget *parent) {
   break;
 
   case SOAPYSDR_PROTOCOL: {
-    label = gtk_label_new("Sample Rate:");
+    label = gtk_label_new("Sample Rate");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
@@ -489,7 +491,7 @@ void radio_menu(GtkWidget *parent) {
 
   max_row = row;
   row = 1;
-  label = gtk_label_new("RIT/XIT step (Hz):");
+  label = gtk_label_new("RIT/XIT step (Hz)");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 1, row, 1, 1);
@@ -522,7 +524,7 @@ void radio_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(grid), rit_combo, 1, row, 1, 1);
   g_signal_connect(rit_combo, "changed", G_CALLBACK(rit_cb), NULL);
   row++;
-  label = gtk_label_new("SAT mode:");
+  label = gtk_label_new("SAT mode");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, 1, row, 1, 1);
@@ -539,7 +541,7 @@ void radio_menu(GtkWidget *parent) {
   if (row > max_row) { max_row = row; }
 
   row = 1;
-  label = gtk_label_new("Region:");
+  label = gtk_label_new("Region");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
@@ -554,7 +556,7 @@ void radio_menu(GtkWidget *parent) {
   row++;
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
-    label = gtk_label_new("Filter Board:");
+    label = gtk_label_new("Filter Board");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_START);
     gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
@@ -596,7 +598,7 @@ void radio_menu(GtkWidget *parent) {
   if (row > max_row) { max_row = row; }
 
   row = max_row;
-  label = gtk_label_new("VFO Enc Div:");
+  label = gtk_label_new("VFO Enc Div");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
@@ -620,12 +622,12 @@ void radio_menu(GtkWidget *parent) {
   //
   if (device == DEVICE_OZY || device == DEVICE_METIS) {
     row = 1;
-    label = gtk_label_new("ATLAS bus settings:");
+    label = gtk_label_new("ATLAS bus settings");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
     gtk_grid_attach(GTK_GRID(grid), label, 3, row, 2, 1);
     row++;
-    label = gtk_label_new("10 MHz source:");
+    label = gtk_label_new("10 MHz source");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(grid), label, 3, row, 1, 1);
@@ -637,7 +639,7 @@ void radio_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), ck10mhz_combo, 4, row, 1, 1);
     g_signal_connect(ck10mhz_combo, "changed", G_CALLBACK(ck10mhz_cb), NULL);
     row++;
-    label = gtk_label_new("122.88 MHz source:");
+    label = gtk_label_new("122.88 MHz source");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(grid), label, 3, row, 1, 1);
@@ -648,7 +650,7 @@ void radio_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), ck128mhz_combo, 4, row, 1, 1);
     g_signal_connect(ck128mhz_combo, "changed", G_CALLBACK(ck128mhz_cb), NULL);
     row++;
-    label = gtk_label_new("Mic source:");
+    label = gtk_label_new("Mic source");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(grid), label, 3, row, 1, 1);
@@ -659,7 +661,7 @@ void radio_menu(GtkWidget *parent) {
     my_combo_attach(GTK_GRID(grid), micsource_combo, 4, row, 1, 1);
     g_signal_connect(micsource_combo, "changed", G_CALLBACK(micsource_cb), NULL);
     row++;
-    label = gtk_label_new("TX config:");
+    label = gtk_label_new("TX config");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_END);
     gtk_grid_attach(GTK_GRID(grid), label, 3, row, 1, 1);
@@ -693,7 +695,7 @@ void radio_menu(GtkWidget *parent) {
   if (device == NEW_DEVICE_ORION || device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN ||
       device == DEVICE_ORION || device == DEVICE_ORION2) {
     row = 1;
-    label = gtk_label_new("ORION/SATURN Mic jack:");
+    label = gtk_label_new("ORION/SATURN Mic jack");
     gtk_widget_set_name(label, "boldlabel");
     gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
     gtk_grid_attach(GTK_GRID(grid), label, 3, row, 2, 1);
@@ -711,7 +713,7 @@ void radio_menu(GtkWidget *parent) {
     row++;
 
     if (device == NEW_DEVICE_SATURN) {
-      label = gtk_label_new("Mic Input:");
+      label = gtk_label_new("Mic Input");
       gtk_widget_set_name(label, "boldlabel");
       gtk_grid_attach(GTK_GRID(grid), label, 4, row, 1, 1);
       GtkWidget *mic_input_combo = gtk_combo_box_text_new();
@@ -882,19 +884,19 @@ void radio_menu(GtkWidget *parent) {
   row++;
   // cppcheck-suppress redundantAssignment
   col = 0;
-  label = gtk_label_new("Frequency\nCalibration (ppm):");
+  label = gtk_label_new("Frequency\nCalibr. (ppm)");
   gtk_widget_set_name(label, "boldlabel");
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   col++;
   GtkWidget *calibration_b = gtk_spin_button_new_with_range(-2500.0, 2500.0, 0.1);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(calibration_b), 0.1*(double)frequency_calibration);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(calibration_b), 0.1 * (double)frequency_calibration);
   gtk_grid_attach(GTK_GRID(grid), calibration_b, col, row, 1, 1);
   g_signal_connect(calibration_b, "value_changed", G_CALLBACK(calibration_value_changed_cb), NULL);
   //
   // Calibration of the RF front end
   //
   col++;
-  label = gtk_label_new("RX Gain\nCalibration (dB):");
+  label = gtk_label_new("RX Gain\nCalibration (dB)");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
@@ -943,7 +945,7 @@ void radio_menu(GtkWidget *parent) {
       if (radio->soapy.rx[id].gains > 0) {
         char text[64];
         row = max_row;
-        snprintf(text, sizeof(text), "RX%d Gains:", id + 1);
+        snprintf(text, sizeof(text), "RX%d Gains", id + 1);
         label = gtk_label_new(text);
         gtk_widget_set_name(label, "boldlabel");
         gtk_widget_set_halign(label, GTK_ALIGN_START);
@@ -980,7 +982,7 @@ void radio_menu(GtkWidget *parent) {
 
     if (can_transmit && radio->soapy.tx.gains > 0) {
       row = max_row;
-      label = gtk_label_new("TX Gains:");
+      label = gtk_label_new("TX Gains");
       gtk_widget_set_name(label, "boldlabel");
       gtk_widget_set_halign(label, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), label, col + 1, row, 1, 1);

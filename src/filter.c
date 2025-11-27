@@ -363,7 +363,7 @@ const int var2_default_high[MODES] = {
   DRM_VAR2_DEFAULT_HIGH
 };
 
-void filterSaveState() {
+void filter_save_state() {
   // save the Var1 and Var2 settings
   SetPropI0("filter.lsb.var1.low",            filterLSB[filterVar1].low);
   SetPropI0("filter.lsb.var1.high",           filterLSB[filterVar1].high);
@@ -403,7 +403,7 @@ void filterSaveState() {
   SetPropI0("filter.dsb.var2.high",           filterDSB[filterVar2].high);
 }
 
-void filterRestoreState() {
+void filter_restore_state() {
   GetPropI0("filter.lsb.var1.low",            filterLSB[filterVar1].low);
   GetPropI0("filter.lsb.var1.high",           filterLSB[filterVar1].high);
   GetPropI0("filter.lsb.var2.low",            filterLSB[filterVar2].low);
@@ -479,7 +479,7 @@ void filter_cut_default(int id) {
   }
 
   if (radio_is_remote) {
-    send_rx_filter_cut(client_socket, rx->id);
+    send_rx_filter_cut(cl_sock_tcp, rx->id);
   } else {
     rx_set_bandpass(rx);
     rx_set_agc(rx);
@@ -573,7 +573,7 @@ void filter_high_changed(int id, int increment) {
   rx->filter_high = high;
 
   if (radio_is_remote) {
-    send_rx_filter_cut(client_socket, rx->id);
+    send_rx_filter_cut(cl_sock_tcp, rx->id);
   } else {
     rx_set_bandpass(rx);
     rx_set_agc(rx);
@@ -663,7 +663,7 @@ void filter_low_changed(int id, int increment) {
   rx->filter_high = high;
 
   if (radio_is_remote) {
-    send_rx_filter_cut(client_socket, rx->id);
+    send_rx_filter_cut(cl_sock_tcp, rx->id);
   } else {
     rx_set_bandpass(rx);
     rx_set_agc(rx);
@@ -770,7 +770,7 @@ void filter_width_changed(int id, int increment) {
   rx->filter_high = high;
 
   if (radio_is_remote) {
-    send_rx_filter_cut(client_socket, rx->id);
+    send_rx_filter_cut(cl_sock_tcp, rx->id);
   } else {
     rx_set_bandpass(rx);
     rx_set_agc(rx);
@@ -849,7 +849,7 @@ void filter_shift_changed(int id, int increment) {
   rx->filter_high = high;
 
   if (radio_is_remote) {
-    send_rx_filter_cut(client_socket, rx->id);
+    send_rx_filter_cut(cl_sock_tcp, rx->id);
   } else {
     rx_set_bandpass(rx);
     rx_set_agc(rx);

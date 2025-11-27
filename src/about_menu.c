@@ -87,10 +87,10 @@ void about_menu(GtkWidget *parent) {
   snprintf(text, sizeof(text), "Build Version: %s\n"
                                "  (Commit %s, Date: %s)\n"
                                "  WDSP Version: %d.%02d",
-                               build_version,
-                               build_commit,
-                               build_date,
-                               GetWDSPVersion() / 100, GetWDSPVersion() % 100);
+           build_version,
+           build_commit,
+           build_date,
+           GetWDSPVersion() / 100, GetWDSPVersion() % 100);
   label = gtk_label_new(text);
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_widget_set_name(label, "small_button");

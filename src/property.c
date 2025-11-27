@@ -151,6 +151,7 @@ void saveProperties(const char* filename) {
       snprintf(line, sizeof(line), "%s=%s\n", property->name, property->value);
       fwrite(line, 1, strlen(line), f);
     }
+
     property = property->next_property;
   }
 
@@ -229,6 +230,13 @@ void setProperty(const char* name, const char* value) {
 double myatof(const char* string) {
   char *lstr = strdup(string);
   double ret;
+
+  //
+  // Emergency fallback (will work in 99.99% of the cases)
+  //
+  if (lstr == NULL) {
+    return atof(string);
+  }
 
   for (char *cp = lstr; *cp; cp++) {
     if (*cp == ',') { *cp = '.'; }

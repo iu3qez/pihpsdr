@@ -160,9 +160,10 @@ struct _mode_settings {
   //
   // Local audio settings
   //
-  int rx_local_audio;               //  RX local audio output
+  int rx_audio_channel;             //  RX1 STEREO/LEFT/RIGHT
+  int rx_local_audio;               //  RX1 local audio output
   int tx_local_audio;               //  TX local audio input
-  char rx_audio_name[128];          //  RX local audio device name
+  char rx_audio_name[128];          //  RX1 local audio device name
   char tx_audio_name[128];          //  TX local audio device name
 };
 
@@ -190,6 +191,8 @@ extern void       vfo_id_move_to(int id, long long hz, int round);
 extern void       vfo_update(void);
 extern void       vfo_save_state(void);
 extern void       vfo_restore_state(void);
+extern void       modesettings_save_state(void);
+extern void       modesettings_restore_state(void);
 extern void       vfo_id_band_changed(int id, int b);
 extern void       vfo_id_bandstack_changed(int id, int b);
 extern void       vfo_bandstack_changed(int b);

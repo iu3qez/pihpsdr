@@ -258,7 +258,7 @@ extern int have_g2_v2;           // G2V2 ANDROMEDA message read
 extern int have_lime;            // The radio is a LIME-SDR
 extern int have_radioberry1;     // RadioBerry with first-generation  firmware
 extern int have_radioberry2;     // RadioBerry with second-generation firmware
-extern int have_radioberry3;	 // RadioBerry with third-generation firmware (pio support)
+extern int have_radioberry3;   // RadioBerry with third-generation firmware (pio support)
 extern int rx_gain_calibration;  // used to calibrate the input signal
 
 extern double drive_min;         // minimum value of the drive slider
@@ -363,14 +363,14 @@ extern void   radio_set_pan(int id, int value);
 
 extern int compare_doubles(const void *a, const void *b);
 
-extern int  radio_remote_change_receivers(gpointer data);
-extern int  radio_remote_start(gpointer data);
-extern int  radio_remote_set_mox(gpointer data);
-extern int  radio_remote_set_vox(gpointer data);
-extern int  radio_remote_set_tune(gpointer data);
-extern int  radio_remote_set_twotone(gpointer data);
-extern int  radio_remote_protocol_run(gpointer data);
-extern int  radio_remote_protocol_stop(gpointer data);
+extern int  radio_client_change_receivers(gpointer data);
+extern int  radio_client_start(gpointer data);
+extern int  radio_client_set_mox(gpointer data);
+extern int  radio_client_set_vox(gpointer data);
+extern int  radio_client_set_tune(gpointer data);
+extern int  radio_client_set_twotone(gpointer data);
+extern int  radio_server_protocol_run(gpointer data);
+extern int  radio_server_protocol_stop(gpointer data);
 
 extern int optimize_for_touchscreen;
 extern void my_combo_attach(GtkGrid *grid, GtkWidget *combo, int row, int col, int spanrow, int spancol);

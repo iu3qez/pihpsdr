@@ -110,35 +110,41 @@ static int CWOUT_LINE = -1;
 
 void gpio_set_ptt(int state) {
 #ifdef GPIOV1
+
   if (pttout_line) {
     if (gpiod_line_set_value(pttout_line, NOT(state)) < 0) {
       t_print("%s failed: %s\n", __FUNCTION__, g_strerror(errno));
     }
   }
-#endif
 
+#endif
 #ifdef GPIOV2
+
   if (pttout_request && PTTOUT_LINE >= 0) {
     gpiod_line_request_set_value(pttout_request, PTTOUT_LINE,
-              state ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE);
+                                 state ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE);
   }
+
 #endif
 }
 
 void gpio_set_cw(int state) {
 #ifdef GPIOV1
+
   if (cwout_line) {
     if (gpiod_line_set_value(cwout_line, NOT(state)) < 0) {
       t_print("%s failed: %s\n", __FUNCTION__, g_strerror(errno));
     }
   }
-#endif
 
+#endif
 #ifdef GPIOV2
+
   if (cwout_request && CWOUT_LINE >= 0) {
     gpiod_line_request_set_value(cwout_request, CWOUT_LINE,
-              state ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE);
+                                 state ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE);
   }
+
 #endif
 }
 
@@ -233,14 +239,14 @@ guchar encoder_state_table[13][4] = {
   /* R_CCW_BEG0  */ {R_START0,           R_CCW_BEG0, R_CCW_BEG1, R_START1 | DIR_CCW},
 };
 
-  const char *consumer = "pihpsdr";
+const char *consumer = "pihpsdr";
 
-  //
-  // gpio_init() tries several chips, until success.
-  // gpio_device is then the path to the first device sucessfully opened.
-  //
-  static char *gpio_device = NULL;
-  static struct gpiod_chip *chip = NULL;
+//
+// gpio_init() tries several chips, until success.
+// gpio_device is then the path to the first device sucessfully opened.
+//
+static char *gpio_device = NULL;
+static struct gpiod_chip *chip = NULL;
 
 //
 // The "static const" data is the DEFAULT assignment for encoders,
@@ -423,8 +429,8 @@ typedef enum _offset_action {
 // Table associating (action, num) with each GPIO line
 //
 struct _line_list {
- OFFSET_ACTION action;
- int num;               // encoder number or OffSpecial action
+  OFFSET_ACTION action;
+  int num;               // encoder number or OffSpecial action
 } LineList[MAX_LINES];
 
 static GMutex encoder_mutex;
@@ -488,7 +494,6 @@ static gpointer rotary_encoder_thread(gpointer data) {
   // y = (x*x + 138*x - 776) / 117
   //
   while (TRUE) {
-
     for (i = 0; i < MAX_ENCODERS; i++) {
       if (encoders[i].bottom.enabled && encoders[i].bottom.pos != 0) {
         action = encoders[i].bottom.function;
@@ -497,8 +502,11 @@ static gpointer rotary_encoder_thread(gpointer data) {
         val = encoders[i].bottom.pos;
         encoders[i].bottom.pos = 0;
         g_mutex_unlock(&encoder_mutex);
+
         if (val > 20) { val = (val * val + 138 * val - 776) / 117; }
+
         if (val < -20) { val = -(val * val - 138 * val - 776) / 117; }
+
         schedule_action(action, mode, val);
       }
 
@@ -509,8 +517,11 @@ static gpointer rotary_encoder_thread(gpointer data) {
         val = encoders[i].top.pos;
         encoders[i].top.pos = 0;
         g_mutex_unlock(&encoder_mutex);
+
         if (val > 20) { val = (val * val + 138 * val - 776) / 117; }
+
         if (val < -20) { val = -(val * val - 138 * val - 776) / 117; }
+
         schedule_action(action, mode, val);
       }
     }
@@ -595,6 +606,7 @@ static void process_edge(int offset, int value) {
 #ifdef GPIOV1
   uint32_t t;  // used for debouncing
 #endif
+
   //
   // The idea of using a nested if (rather than a switch) is to
   // guarantee that encoder events are handled as fast as possible.
@@ -622,6 +634,7 @@ static void process_edge(int offset, int value) {
       encoders[num].button.debounce = t + 50; // 50 msec settle time
       schedule_action(encoders[num].button.function, value ? PRESSED : RELEASED, 0);
     }
+
 #endif
 #ifdef GPIOV2
     schedule_action(encoders[num].button.function, value ? PRESSED : RELEASED, 0);
@@ -634,6 +647,7 @@ static void process_edge(int offset, int value) {
       switches[num].debounce = t + 50; // 50 msec settle time
       schedule_action(switches[num].function, value ? PRESSED : RELEASED, 0);
     }
+
 #endif
 #ifdef GPIOV2
     schedule_action(switches[num].function, value ? PRESSED : RELEASED, 0);
@@ -750,7 +764,6 @@ void gpio_default_switch_actions(int ctrlr) {
 //
 void gpio_set_defaults(int ctrlr) {
   t_print("%s: Controller=%d\n", __FUNCTION__, ctrlr);
-
   //
   // When changing a controller, mark all "extra" lines
   // as "do not use"
@@ -819,14 +832,13 @@ void gpio_set_defaults(int ctrlr) {
     PTTIN_LINE = 16;
     PTTOUT_LINE = 22;
     CWOUT_LINE = 23;
-
     memcpy(encoders, encoders_no_controller, sizeof(encoders));
     memcpy(switches, switches_no_controller, sizeof(switches));
     break;
   }
 }
 
-void gpioRestoreState() {
+void gpio_restore_state() {
   //
   // This is ONLY called when the discovery screen initializes
   //
@@ -868,7 +880,7 @@ void gpioRestoreState() {
   GetPropI0("i2c_irq_line",                                       I2C_INTERRUPT);
 }
 
-void gpioSaveState() {
+void gpio_save_state() {
   //
   // This is ONLY called from the discovery "Controller" callback
   //
@@ -902,11 +914,10 @@ void gpioSaveState() {
   SetPropI0("pttout_line",                                        PTTOUT_LINE);
   SetPropI0("cwout_line",                                         CWOUT_LINE);
   SetPropI0("i2c_irq_line",                                       I2C_INTERRUPT);
-
   saveProperties("gpio.props");
 }
 
-void gpioRestoreActions() {
+void gpio_restore_actions() {
   //
   // This is called when restoring the radio state. It does not *set* controller
   // but simply checks whether the controller value in the radio props file
@@ -940,7 +951,7 @@ void gpioRestoreActions() {
   }
 }
 
-void gpioSaveActions() {
+void gpio_save_actions() {
   //
   // This is called when saving the radio state.
   //
@@ -980,15 +991,15 @@ static gpointer monitor_thread(gpointer arg) {
   t.tv_sec = 60;
   t.tv_nsec = 0;
   ret = gpiod_ctxless_event_monitor_multiple(
-              gpio_device, GPIOD_CTXLESS_EVENT_BOTH_EDGES,
-              (unsigned int *)input_lines, num_input_lines, FALSE,
-              consumer, &t, NULL, interrupt_cb, NULL);
+          gpio_device, GPIOD_CTXLESS_EVENT_BOTH_EDGES,
+          (unsigned int *)input_lines, num_input_lines, FALSE,
+          consumer, &t, NULL, interrupt_cb, NULL);
 
   if (ret < 0) {
     t_print("%s: ctxless event monitor failed: %s\n", __FUNCTION__, g_strerror(errno));
   }
-#endif
 
+#endif
 #ifdef GPIOV2
   int event_buf_size = MAX_LINES;
   struct gpiod_edge_event_buffer *event_buffer = gpiod_edge_event_buffer_new(event_buf_size);
@@ -999,7 +1010,6 @@ static gpointer monitor_thread(gpointer arg) {
   }
 
   for (;;) {
-
     if (!input_request) { break; }  // set to NULL in gpio_close
 
     ret = gpiod_line_request_read_edge_events(input_request, event_buffer, event_buf_size);
@@ -1017,9 +1027,11 @@ static gpointer monitor_thread(gpointer arg) {
       case GPIOD_EDGE_EVENT_RISING_EDGE:
         process_edge(offset, 0);
         break;
+
       case GPIOD_EDGE_EVENT_FALLING_EDGE:
         process_edge(offset, 1);
         break;
+
       default:
         t_print("%s: Unknown Edge Event\n", __FUNCTION__);
         break;
@@ -1028,9 +1040,7 @@ static gpointer monitor_thread(gpointer arg) {
   }
 
   gpiod_edge_event_buffer_free(event_buffer);
-
 #endif
-
   t_print("%s: exit\n", __FUNCTION__);
   return NULL;
 }
@@ -1060,6 +1070,7 @@ static void setup_input_lines() {
 #else
     config.flags = input_pullup[i] ? GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP : GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN;
 #endif
+
     if (gpiod_line_request(line, &config, 1) < 0) {
       t_print("%s: line %d gpiod_line_request failed: %s\n", __FUNCTION__, input_lines[i], g_strerror(errno));
       input_lines[i] = -1;
@@ -1068,8 +1079,8 @@ static void setup_input_lines() {
 
     gpiod_line_release(line);  // release line since the event monitor will request it later
   }
-#endif
 
+#endif
 #ifdef GPIOV2
   input_request = NULL;
   struct gpiod_line_settings *settings = gpiod_line_settings_new();
@@ -1081,7 +1092,7 @@ static void setup_input_lines() {
     gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_INPUT);
     gpiod_line_settings_set_edge_detection(settings, GPIOD_LINE_EDGE_BOTH);
 
-    for (int i=0; i < num_input_lines; i++) {
+    for (int i = 0; i < num_input_lines; i++) {
       if (input_pullup[i]) {
         gpiod_line_settings_set_bias(settings, GPIOD_LINE_BIAS_PULL_UP);
       } else {
@@ -1102,7 +1113,9 @@ static void setup_input_lines() {
   }
 
   if (reqcfg) { gpiod_request_config_free(reqcfg); }
+
   if (lineconfig) { gpiod_line_config_free(lineconfig); }
+
   if (settings) { gpiod_line_settings_free(settings); }
 
 #endif
@@ -1129,7 +1142,6 @@ static struct gpiod_line *setup_output_line(unsigned int offset, int initialValu
   config.consumer = consumer;
   config.request_type = GPIOD_LINE_REQUEST_DIRECTION_OUTPUT;
   config.flags = 0;  // active High
-
   struct gpiod_line *line = gpiod_chip_get_line(chip, offset);
 
   if (!line) {
@@ -1163,14 +1175,13 @@ static struct gpiod_line_request *setup_output_request(unsigned int offset, int 
 
   gpiod_request_config_set_consumer(reqcfg, consumer);
   gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_OUTPUT);
-
   gpiod_line_settings_set_output_value(settings,
-            initialValue ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE);
+                                       initialValue ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE);
 
   if (gpiod_line_config_add_line_settings(lineconfig, &offset, 1, settings) == 0) {
     result = gpiod_chip_request_lines(chip, reqcfg, lineconfig);
   } else {
-      t_print("%s: Offset=%d failed: %s\n", __FUNCTION__, offset, g_strerror(errno));
+    t_print("%s: Offset=%d failed: %s\n", __FUNCTION__, offset, g_strerror(errno));
     result = NULL;
   }
 
@@ -1178,7 +1189,9 @@ static struct gpiod_line_request *setup_output_request(unsigned int offset, int 
   // Release everything that has been allocated
   //
   if (reqcfg) { gpiod_request_config_free(reqcfg); }
+
   if (lineconfig) { gpiod_line_config_free(lineconfig); }
+
   if (settings) { gpiod_line_settings_free(settings); }
 
   return result;
@@ -1197,6 +1210,7 @@ static int check_line(int line, int seq, char *text) {
       return 0;
     }
   }
+
   return 1;
 }
 
@@ -1283,7 +1297,6 @@ void gpio_init() {
   }
 
   t_print("%s: GPIO device=%s\n", __FUNCTION__, gpio_device);
-
   num_input_lines = 0;
 
   for (int i = 0; i < MAX_LINES; i++) {
@@ -1304,22 +1317,27 @@ void gpio_init() {
         if (check_line(encoders[i].bottom.address_a, i, "EncoderBotA")) {
           input_lines[num_input_lines] =  encoders[i].bottom.address_a;
           input_pullup[num_input_lines] = encoders[i].bottom.pullup;
+
           if (encoders[i].bottom.function == VFO) {
             input_debounce[num_input_lines++] = 0;
           } else {
             input_debounce[num_input_lines++] = 2000;
           }
+
           LineList[encoders[i].bottom.address_a].action = OffBotEncA;
           LineList[encoders[i].bottom.address_a].num = i;
         }
+
         if (check_line(encoders[i].bottom.address_b, i, "EncoderBotB")) {
           input_lines[num_input_lines] =  encoders[i].bottom.address_b;
           input_pullup[num_input_lines] = encoders[i].bottom.pullup;
+
           if (encoders[i].bottom.function == VFO) {
             input_debounce[num_input_lines++] = 0;
           } else {
             input_debounce[num_input_lines++] = 2000;
           }
+
           LineList[encoders[i].bottom.address_b].action = OffBotEncB;
           LineList[encoders[i].bottom.address_b].num = i;
         }
@@ -1329,22 +1347,27 @@ void gpio_init() {
         if (check_line(encoders[i].top.address_a, i, "EncoderTopA")) {
           input_lines[num_input_lines] =  encoders[i].top.address_a;
           input_pullup[num_input_lines] = encoders[i].top.pullup;
+
           if (encoders[i].top.function == VFO) {
             input_debounce[num_input_lines++] = 0;
           } else {
             input_debounce[num_input_lines++] = 2000;
           }
+
           LineList[encoders[i].top.address_a].action = OffTopEncA;
           LineList[encoders[i].top.address_a].num = i;
         }
+
         if (check_line(encoders[i].top.address_b, i, "EncoderTopB")) {
           input_lines[num_input_lines] =  encoders[i].top.address_b;
           input_pullup[num_input_lines] = encoders[i].top.pullup;
+
           if (encoders[i].top.function == VFO) {
             input_debounce[num_input_lines++] = 0;
           } else {
             input_debounce[num_input_lines++] = 2000;
           }
+
           LineList[encoders[i].top.address_b].action = OffTopEncB;
           LineList[encoders[i].top.address_b].num = i;
         }
@@ -1383,6 +1406,7 @@ void gpio_init() {
     // Setup I2C interrupt line: debounce with 1 msec
     //
     i2c_init();
+
     if (check_line(I2C_INTERRUPT, 0, "I2CIRQ")) {
       input_lines[num_input_lines] =  I2C_INTERRUPT;
       input_pullup[num_input_lines] = TRUE;
@@ -1472,7 +1496,7 @@ void gpio_init() {
     monitor_thread_id = g_thread_new( "gpiod monitor", monitor_thread, NULL);
 
     if (controller != NO_CONTROLLER) {
-    rotary_encoder_thread_id = g_thread_new( "encoders", rotary_encoder_thread, NULL);
+      rotary_encoder_thread_id = g_thread_new( "encoders", rotary_encoder_thread, NULL);
     }
   }
 
@@ -1482,17 +1506,18 @@ void gpio_init() {
   gpiod_chip_close(chip);
   chip = NULL;
 #endif
-
   return;
 }
 
 void gpio_close() {
 #ifdef GPIOV2
+
   if (input_request) { gpiod_line_request_release(input_request); }
 
   if (pttout_request) { gpiod_line_request_release(pttout_request); }
 
   if (cwout_request) { gpiod_line_request_release(cwout_request); }
+
 #endif
 
   if (chip) { gpiod_chip_close(chip); }

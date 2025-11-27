@@ -78,8 +78,36 @@ typedef struct _transmitter {
 
   cairo_surface_t *panadapter_surface;
 
+  //
+  // everything related to local (TX input) audio
+  //
   int local_audio;
   char audio_name[128];
+  GMutex audio_mutex;
+  GThread * audio_thread_id;
+  int audio_flag;
+  volatile int audio_buffer_inpt;
+  volatile int audio_buffer_outpt;
+  volatile int audio_running;
+  float *audio_buffer;
+
+#if defined(PORTAUDIO) && defined(PULSEAUDIO) && defined(ALSA)
+  // this is only possible for "cppcheck" runs
+  // declare all data without conflicts
+  void *audio_handle;
+  int audio_running;
+  snd_pcm_format_t audio_format;
+#endif
+#if defined(PORTAUDIO) && !defined(PULSEAUDIO) && !defined(ALSA)
+  PaStream *audio_handle;
+#endif
+#if !defined(PORTAUDIO) && !defined(PULSEAUDIO) && defined(ALSA)
+  snd_pcm_t *audio_handle;
+  snd_pcm_format_t audio_format;
+#endif
+#if !defined(PORTAUDIO) && defined(PULSEAUDIO) && !defined(ALSA)
+  pa_simple *audio_handle;
+#endif
 
   int out_of_band;
   guint out_of_band_timer_id;
@@ -247,7 +275,6 @@ extern void   tx_set_twotone(TRANSMITTER *tx, int state);
 extern void   tx_queue_cw_event(int state, int wait);
 
 extern void tx_create_remote(TRANSMITTER *rx);
-extern int  tx_remote_update_display(gpointer data);
 
 #endif
 

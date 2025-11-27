@@ -116,7 +116,7 @@ int main() {
   sleep(1);
 
   if ((udpsock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    perror("SOCKET:");
+    perror("SOCKET");
     exit(1);
   }
 
@@ -133,7 +133,7 @@ int main() {
   setsockopt(udpsock, SOL_SOCKET, SO_RCVTIMEO, (void *)&tv, sizeof(tv));
 
   if (bind(udpsock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-    perror("BIND:");
+    perror("BIND");
     exit(1);
   }
 

@@ -35,24 +35,40 @@
 #include "ext.h"
 #include "filter.h"
 #include "message.h"
+#include "meter.h"
 #include "radio.h"
+#include "rx_panadapter.h"
 #include "sliders.h"
 #include "store.h"
+#include "tx_panadapter.h"
 #include "vfo.h"
 #include "vox.h"
+#include "waterfall.h"
 
-int client_socket = -1;
+int cl_sock_tcp = -1;
 int remote_started = 0;
 
 static int client_running = 0;
-static GThread *client_thread_id;
+static GThread *client_tcp_thread_id;
+static GThread *client_udp_thread_id;
 static GMutex accumulated_mutex;
 static int accumulated_steps[2] = {0, 0};
 static long long accumulated_hz[2] = {0LL, 0LL};
 static int accumulated_round[2] = {FALSE, FALSE};
 guint check_vfo_timer_id = 0;
+static int cl_sock_udp;
+static struct sockaddr_in server_address;
 
-static void *client_thread(void* arg);
+//
+// old_rx1mode and old_txmode store the current RX1 and TX mode
+// and this is used to detect mode changes which may then
+// induce a change of the local audio setup
+//
+static int old_rx1mode;
+static int old_txmode;
+
+static void *client_tcp_thread(void* arg);
+static void *client_udp_thread(void* arg);
 
 //
 // version of connect() which takes a time-out.
@@ -127,50 +143,49 @@ static int connect_wait (int sockno, struct sockaddr *addr, size_t addrlen, stru
 // -5  wrong password
 //
 int radio_connect_remote(char *host, int port, const char *pwd) {
-  struct sockaddr_in server_address;
   struct timeval timeout;
   int on = 1;
   int rc;
-  client_socket = socket(AF_INET, SOCK_STREAM, 0);
+  cl_sock_tcp = socket(AF_INET, SOCK_STREAM, 0);
   static char server_host[128];
 
-  if (client_socket == -1) {
+  if (cl_sock_tcp == -1) {
     t_print("%s: socket creation failed...\n", __FUNCTION__);
     return -1;
   }
 
-  setsockopt(client_socket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-  setsockopt(client_socket, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
+  setsockopt(cl_sock_tcp, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+  setsockopt(cl_sock_tcp, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
   struct hostent *server = gethostbyname(host);
 
   if (server == NULL) {
     t_print("%s: no such host: %s\n", __FUNCTION__, host);
-    close(client_socket);
+    close(cl_sock_tcp);
     return -3;
   }
 
-  // assign IP, PORT and bind to address
+  // assign IP, PORT and connect
   memset(&server_address, 0, sizeof(server_address));
   server_address.sin_family = AF_INET;
   bcopy((char *)server->h_addr, (char *)&server_address.sin_addr.s_addr, server->h_length);
   server_address.sin_port = htons(port);
   timeout.tv_sec = 10;
   timeout.tv_usec = 0;
-  rc = connect_wait(client_socket, (struct sockaddr *)&server_address, sizeof(server_address), &timeout);
+  rc = connect_wait(cl_sock_tcp, (struct sockaddr *)&server_address, sizeof(server_address), &timeout);
 
   if (rc != 0) {
     t_perror("ConnectWait");
-    close(client_socket);
+    close(cl_sock_tcp);
     return rc;  // -1: general error, -2: timeout
   }
 
-  t_print("%s: socket %d bound to %s:%d\n", __FUNCTION__, client_socket, host, port);
+  t_print("%s: socket %d bound to %s:%d\n", __FUNCTION__, cl_sock_tcp, host, ntohs(server_address.sin_port));
   unsigned char s[2 * SHA512_DIGEST_LENGTH];
   unsigned char sha[SHA512_DIGEST_LENGTH];
 
-  if (recv_bytes(client_socket, (char *)s, 4) < 0) {
+  if (recv_tcp(cl_sock_tcp, (char *)s, 4) < 0) {
     t_print("%s: Could not receive Version number\n", __FUNCTION__);
-    close(client_socket);
+    close(cl_sock_tcp);
     return -1;
   }
 
@@ -179,33 +194,64 @@ int radio_connect_remote(char *host, int port, const char *pwd) {
       ((CLIENT_SERVER_VERSION >>  8) & 0xFF) != s[2] ||
       ((CLIENT_SERVER_VERSION      ) & 0xFF) != s[3]) {
     t_print("%s: Wrong Client/Server version number\n", __FUNCTION__);
-    close(client_socket);
+    close(cl_sock_tcp);
     return -4;
   }
 
-  if (recv_bytes(client_socket, (char *)s, SHA512_DIGEST_LENGTH) < 0) {
+  if (recv_tcp(cl_sock_tcp, (char *)s, SHA512_DIGEST_LENGTH) < 0) {
     t_print("%s: Could not receive Challenge\n", __FUNCTION__);
-    close(client_socket);
+    close(cl_sock_tcp);
     return -1;
   }
 
   generate_pwd_hash(s, sha, pwd);
-  send_bytes(client_socket, (char *)sha, SHA512_DIGEST_LENGTH);
+  send_tcp(cl_sock_tcp, (char *)sha, SHA512_DIGEST_LENGTH);
 
-  if (recv_bytes(client_socket, (char *)s, 1) < 0) {
+  if (recv_tcp(cl_sock_tcp, (char *)s, 1) < 0) {
     t_print("%s: Could not receive pwd Receipt\n", __FUNCTION__);
-    close(client_socket);
+    close(cl_sock_tcp);
     return -1;
   }
 
   if (*s != 0x7F) {
     t_print("%s: Server did not accept password\n", __FUNCTION__);
-    close(client_socket);
+    close(cl_sock_tcp);
     return -5;
   }
 
   snprintf(server_host, sizeof(server_host), "%s:%d", host, port);
-  client_thread_id = g_thread_new("remote_client", client_thread, &server_host);
+
+  //
+  // Open UDP socket. To allow debugging with server and client running
+  // on the same machine, we bind the UDP socket to the listen_port
+  // on the client side, and to (listen_port+1) on the server side.
+  //
+  if ((cl_sock_udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    t_perror("Client: UDP socket");
+    close(cl_sock_tcp);
+    return -1;
+  }
+
+  //
+  // "connect" the UDP socket, that is, associate it with the server addr/port.
+  // This implies we must use "send" rather than "sentto" on this socket
+  //
+  server_address.sin_port = htons(listen_port);
+
+  if (connect(cl_sock_udp, (struct sockaddr *)&server_address, sizeof(server_address)) < 0) {
+    t_perror("Client UDP connect");
+  }
+
+  if (send(cl_sock_udp, sha, SHA512_DIGEST_LENGTH, 0) < 0) {
+    t_perror("Client: UDP test packet");
+    close(cl_sock_tcp);
+    close(cl_sock_udp);
+    return -1;
+  }
+
+  client_running = TRUE;
+  client_tcp_thread_id = g_thread_new("remote_client_tcp", client_tcp_thread, &server_host);
+  client_udp_thread_id = g_thread_new("remote_client_udp", client_udp_thread, NULL);
   return 0;
 }
 
@@ -223,7 +269,7 @@ void server_tx_audio(short sample) {
 
   static short speak = 0;
 
-  if (client_socket < 0) { return; }
+  if (cl_sock_tcp < 0) { return; }
 
   if (sample > speak) { speak = sample; }
 
@@ -243,9 +289,8 @@ void server_tx_audio(short sample) {
       txaudio_data.header.data_type = to_16(INFO_TXAUDIO);
       txaudio_data.numsamples = to_16(txaudio_buffer_index);
 
-      if (send_bytes(client_socket, (char *)&txaudio_data, sizeof(TXAUDIO_DATA)) < 0) {
-        t_perror("server_txaudio");
-        client_socket = -1;
+      if (send(cl_sock_udp, &txaudio_data, sizeof(TXAUDIO_DATA), 0) < 0) {
+        perror("TXAUDIO:UDP:SEND");
       }
 
       txaudio_buffer_index = 0;
@@ -290,7 +335,7 @@ static void send_vfo_move(int s, int id, long long hz, int round) {
   command.header.b1 = id;
   command.header.b2 = round;
   command.u64 = to_64(hz);
-  send_bytes(s, (char *)&command, sizeof(command));
+  send_tcp(s, (char *)&command, sizeof(U64_COMMAND));
 }
 
 static int check_vfo(void *arg) {
@@ -299,7 +344,7 @@ static int check_vfo(void *arg) {
   if (!client_running) { return FALSE; }
 
   if (count++ >= 150) {
-    send_heartbeat(client_socket);
+    send_heartbeat(cl_sock_tcp);
     count = 0;
   }
 
@@ -307,12 +352,12 @@ static int check_vfo(void *arg) {
 
   for (int v = 0; v < 2; v++) {
     if (accumulated_steps[v] != 0) {
-      send_vfo_step(client_socket, v, accumulated_steps[v]);
+      send_vfo_step(cl_sock_tcp, v, accumulated_steps[v]);
       accumulated_steps[v] = 0;
     }
 
     if (accumulated_hz[v] != 0LL || accumulated_round[v]) {
-      send_vfo_move(client_socket, v, accumulated_hz[v], accumulated_round[v]);
+      send_vfo_move(cl_sock_tcp, v, accumulated_hz[v], accumulated_round[v]);
       accumulated_hz[v] = 0LL;
       accumulated_round[v] = FALSE;
     }
@@ -332,21 +377,241 @@ void start_vfo_timer() {
 
 ////////////////////////////////////////////////////////////////////////////
 //
-// client_thread is running on the "remote"  computer
-// (which communicates with the server on the "local" computer)
+// Functions to be run in the GTK idle queue. These functions have to
+// deallocate the data provided to them at the end
+//
+////////////////////////////////////////////////////////////////////////////
+
+static int client_info_display(gpointer ptr) {
+  DISPLAY_DATA *data  = (DISPLAY_DATA *)ptr;
+  adc[0].overload = data->adc0_overload;
+  adc[1].overload = data->adc1_overload;
+  high_swr_seen = data->high_swr_seen;
+  tx_fifo_overrun = data->tx_fifo_overrun;
+  tx_fifo_underrun = data->tx_fifo_underrun;
+  TxInhibit = data->TxInhibit;
+  capture_state = data->capture_state;
+  exciter_power = from_16(data->exciter_power);
+  ADC0 = from_16(data->ADC0);
+  ADC1 = from_16(data->ADC1);
+  sequence_errors = from_16(data->sequence_errors);
+  capture_record_pointer = from_32(data->capture_record_pointer);
+  capture_replay_pointer = from_32(data->capture_replay_pointer);
+
+  if (can_transmit) {
+    int old = transmitter->out_of_band;
+    transmitter->out_of_band = data->tx_oob;
+
+    if (old != transmitter->out_of_band) {
+      //
+      // If oob flag has changed, we must do a VFO update
+      //
+      g_idle_add(ext_vfo_update, NULL);
+    }
+
+    if (data->txzero && transmitter->drive > 0.4) {
+      //
+      // This happens after an "SWR alarm" event
+      //
+      radio_set_drive(0.0);
+    }
+  }
+
+  g_free(ptr);
+  return G_SOURCE_REMOVE;
+}
+
+static int client_spectrum(gpointer ptr) {
+  SPECTRUM_DATA *data = (SPECTRUM_DATA *)ptr;
+  int type = from_16(data->header.data_type);
+  //
+  // We load the current VFO frequencies on top of the spectrum data packets,
+  // so we can apply this info *before* drawing the spectrum. Normally the
+  // data should not have changed.
+  //
+  long long frequency_a = from_64(data->vfo_a_freq);
+  long long frequency_b = from_64(data->vfo_b_freq);
+  long long ctun_frequency_a = from_64(data->vfo_a_ctun_freq);
+  long long ctun_frequency_b = from_64(data->vfo_b_ctun_freq);
+  long long offset_a = from_64(data->vfo_a_offset);
+  long long offset_b = from_64(data->vfo_b_offset);
+
+  if (vfo[VFO_A].frequency != frequency_a || vfo[VFO_B].frequency != frequency_b
+      || vfo[VFO_A].ctun_frequency != ctun_frequency_a || vfo[VFO_B].ctun_frequency != ctun_frequency_b
+      || vfo[VFO_A].offset != offset_a || vfo[VFO_B].offset != offset_b) {
+    vfo[VFO_A].frequency = frequency_a;
+    vfo[VFO_B].frequency = frequency_b;
+    vfo[VFO_A].ctun_frequency = ctun_frequency_a;
+    vfo[VFO_B].ctun_frequency = ctun_frequency_b;
+    vfo[VFO_A].offset = offset_a;
+    vfo[VFO_B].offset = offset_b;
+    g_idle_add(ext_vfo_update, NULL);
+  }
+
+  if (type == INFO_RX_SPECTRUM && data->id < receivers) {
+    RECEIVER *rx = receiver[data->id];
+    rx->cA = from_double(data->cA);
+    rx->cB = from_double(data->cB);
+    rx->cAp = from_double(data->cAp);
+    rx->cBp = from_double(data->cBp);
+    rx->meter = from_double(data->meter);
+    rx->pixels_available = data->avail;
+    int width = from_16(data->width);
+    g_mutex_lock(&rx->display_mutex);
+
+    if (width == rx->width && rx->pixel_samples != NULL && rx->pixels > 0 && rx->displaying) {
+      for (int i = 0; i < rx->width; i++) {
+        rx->pixel_samples[i] = (float)((int)data->sample[i] - 200);
+      }
+
+      if (rx->display_panadapter) {
+        rx_panadapter_update(rx);
+      }
+
+      if (rx->display_waterfall) {
+        waterfall_update(rx);
+      }
+    }
+
+    g_mutex_unlock(&rx->display_mutex);
+
+    if (rx == active_receiver) {
+      meter_update(rx, SMETER, rx->meter, 0.0, 0.0);
+    }
+  }
+
+  if (type == INFO_TX_SPECTRUM && can_transmit) {
+    TRANSMITTER *tx = transmitter;
+    tx->alc = from_double(data->alc);
+    tx->fwd = from_double(data->fwd);
+    tx->swr = from_double(data->swr);
+    int width = from_16(data->width);
+    g_mutex_lock(&tx->display_mutex);
+
+    if (width == tx->width && tx->pixel_samples != NULL && tx->displaying && tx->pixels > 0 && tx->display_panadapter) {
+      for (int i = 0; i < tx->width; i++) {
+        tx->pixel_samples[i] = (float)((int)data->sample[i] - 200);
+      }
+
+      tx_panadapter_update(tx);
+    }
+
+    g_mutex_unlock(&tx->display_mutex);
+
+    if (!duplex) {
+      meter_update(active_receiver, POWER, tx->fwd, tx->alc, tx->swr);
+    }
+  }
+
+  g_free(ptr);
+  return G_SOURCE_REMOVE;
+}
+////////////////////////////////////////////////////////////////////////////
+//
+// client_tcp_thread and client_udp_thread are running on the "remote"
+// computer (which communicates with the server on the "local" computer)
 //
 // It receives a lot of data which is stored to get the proper menus etc.,
 // but this data does not affect any radio operation (all of which runs
 // on the "local" computer)
 //
+// The UDP thread receives the periodically sent data which should be
+// discarded if the connection "hangs" for a short time. Currently this is
+//  - RX audio
+//  - RX and TX spectrum
+//  - INFO_DISPLAY and INFO_PS data
+//
+// The TCP thread receives all messages that should not get lost, and that
+// make sense to receive after a short "hang"
 ////////////////////////////////////////////////////////////////////////////
 
-static void *client_thread(void* arg) {
+static void *client_udp_thread(void* arg) {
+  char *buffer; // large enough
+  t_print("%s: Starting\n", __FUNCTION__);
+  buffer = g_new(char, 4096);
+
+  while (client_running) {
+    int bytes_read = recvfrom(cl_sock_udp, buffer, 4096, 0, NULL, NULL);
+
+    if (bytes_read < 12) { continue;}
+
+    int type = ntohs(((HEADER *)buffer)->data_type);
+
+    switch (type) {
+    case INFO_RX_SPECTRUM:
+    case INFO_TX_SPECTRUM:
+      g_idle_add(client_spectrum, buffer);
+      buffer = g_new(char, 4096);
+      break;
+
+    case INFO_DISPLAY:
+      g_idle_add(client_info_display, buffer);
+      buffer = g_new(char, 4096);
+      break;
+
+    case INFO_PS:
+      if (can_transmit) {
+        PS_DATA *psdata = (PS_DATA *)buffer;
+
+        for (int i = 0; i < 16; i++) {
+          transmitter->psinfo[i] = from_16(psdata->psinfo[i]);
+        }
+
+        transmitter->attenuation = from_16(psdata->attenuation);
+        transmitter->ps_getmx = from_double(psdata->ps_getmx);
+      }
+
+      break;
+
+    case INFO_RXAUDIO: {
+      RXAUDIO_DATA *rxdata = (RXAUDIO_DATA *)buffer;
+      RECEIVER *rx = receiver[rxdata->rx];
+      int numsamples = from_16(rxdata->numsamples);
+
+      //
+      // Note CAPTURing is only done on the server side
+      //
+      for (int i = 0; i < numsamples; i++) {
+        short left_sample = from_16(rxdata->samples[i]);
+        short right_sample = left_sample;
+
+        if (radio_is_transmitting() && (!duplex || mute_rx_while_transmitting)) {
+          left_sample = 0.0;
+          right_sample = 0.0;
+        }
+
+        if (rx->mute_radio || (rx != active_receiver && rx->mute_when_not_active)) {
+          left_sample = 0;
+          right_sample = 0;
+        }
+
+        if (rx->audio_channel == LEFT)  { right_sample = 0; }
+
+        if (rx->audio_channel == RIGHT) { left_sample  = 0; }
+
+        if (rx->local_audio) {
+          audio_write(rx, (float)left_sample / 32767.0, (float)right_sample / 32767.0);
+        }
+      }
+    }
+    break;
+
+    default:
+      t_print("%s: unkown command\n");
+      break;
+    }
+  }
+
+  g_free(buffer);
+  t_print("%s: Terminating\n", __FUNCTION__);
+  return NULL;
+}
+
+static void *client_tcp_thread(void* arg) {
   int bytes_read;
   HEADER header;
   char *server = (char *)arg;
   static char title[256];
-  client_running = TRUE;
   //
   // Some settings/allocation must be made HERE
   //
@@ -365,10 +630,10 @@ static void *client_thread(void* arg) {
     memset(rx, 0, sizeof(RECEIVER));
     g_mutex_init(&rx->display_mutex);
     g_mutex_init(&rx->mutex);
-    g_mutex_init(&rx->local_audio_mutex);
+    g_mutex_init(&rx->audio_mutex);
     rx->id = i;
     rx->pixel_samples = NULL;
-    rx->local_audio_buffer = NULL;
+    rx->audio_buffer = NULL;
     rx->display_panadapter = 1;
     rx->display_waterfall = 1;
     rx->panadapter_high = -40;
@@ -386,7 +651,6 @@ static void *client_thread(void* arg) {
     rx->waterfall_percent = 25;
     rx->display_filled = 1;
     rx->display_gradient = 1;
-    rx->local_audio_buffer = NULL;
     rx->local_audio = 0;
     snprintf(rx->audio_name, sizeof(rx->audio_name), "NO AUDIO");
     rx->mute_when_not_active = 0;
@@ -396,6 +660,7 @@ static void *client_thread(void* arg) {
 
   active_receiver = receiver[0];
   g_mutex_init(&transmitter->display_mutex);
+  transmitter->display_filled = 1;
   transmitter->display_panadapter = 1;
   transmitter->display_waterfall = 0;
   transmitter->panadapter_high = 0;
@@ -411,6 +676,10 @@ static void *client_thread(void* arg) {
   transmitter->dialog_x = -1;
   transmitter->dialog_y = -1;
   transmitter->dialog = NULL;
+  transmitter->local_audio = 0;
+  transmitter->audio_flag = 0;
+  g_mutex_init(&transmitter->audio_mutex);
+  snprintf(transmitter->audio_name, sizeof(transmitter->audio_name), "%s", "NO AUDIO");
 
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     RECEIVER *rx = receiver[PS_RX_FEEDBACK] = g_new(RECEIVER, 1);
@@ -420,7 +689,7 @@ static void *client_thread(void* arg) {
 
   while (client_running) {
     int type;
-    bytes_read = recv_bytes(client_socket, (char *)&header, sizeof(header));
+    bytes_read = recv_tcp(cl_sock_tcp, (char *)&header, sizeof(HEADER));
 
     if (bytes_read <= 0) {
       t_print("%s: ReadErr for HEADER\n", __FUNCTION__);
@@ -437,7 +706,7 @@ static void *client_thread(void* arg) {
       uint8_t c;
 
       while (syncs != sizeof(syncbytes) && client_running) {
-        bytes_read = recv_bytes(client_socket, (char *)&c, 1);
+        bytes_read = recv_tcp(cl_sock_tcp, (char *)&c, 1);
 
         if (bytes_read <= 0) {
           t_print("%s: ReadErr for HEADER RESYNC\n", __FUNCTION__);
@@ -451,7 +720,7 @@ static void *client_thread(void* arg) {
         }
       }
 
-      if (recv_bytes(client_socket, (char *)&header + sizeof(header.sync), sizeof(header) - sizeof(header.sync)) <= 0) {
+      if (recv_tcp(cl_sock_tcp, (char *)&header + sizeof(header.sync), sizeof(HEADER) - sizeof(header.sync)) <= 0) {
         return NULL;
       }
 
@@ -460,75 +729,21 @@ static void *client_thread(void* arg) {
 
     type = from_16(header.data_type);
 
+    //
+    // In the following switch statement, process selected commands immediately
+    // but delegate others to functions executed in the GTK idle thread
+    //
+    // Note: INFO_DISPLAY, INFO_PS, INFO_RXAUDIO, INFO_RX_SPECTRUM, INFO_TX_SPECTRUM
+    //       are now handled by the UDP receiving thread
+    //
+
     switch (type) {
-    case INFO_DISPLAY: {
-      //
-      // This data is needed if one wants warnings, PA currents etc. to be on display
-      // (it is transferred every 100 msec)
-      //
-      DISPLAY_DATA data;
-
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(data) - sizeof(HEADER)) < 0) { return NULL; }
-
-      adc[0].overload = data.adc0_overload;
-      adc[1].overload = data.adc1_overload;
-      high_swr_seen = data.high_swr_seen;
-      tx_fifo_overrun = data.tx_fifo_overrun;
-      tx_fifo_underrun = data.tx_fifo_underrun;
-      TxInhibit = data.TxInhibit;
-      capture_state = data.capture_state;
-      exciter_power = from_16(data.exciter_power);
-      ADC0 = from_16(data.ADC0);
-      ADC1 = from_16(data.ADC1);
-      sequence_errors = from_16(data.sequence_errors);
-      capture_record_pointer = from_32(data.capture_record_pointer);
-      capture_replay_pointer = from_32(data.capture_replay_pointer);
-
-      if (can_transmit) {
-        int old = transmitter->out_of_band;
-        transmitter->out_of_band = data.tx_oob;
-
-        if (old != transmitter->out_of_band) {
-          //
-          // If oob flag has changed, we must do a VFO update
-          //
-          g_idle_add(ext_vfo_update, NULL);
-        }
-
-        if (data.txzero && transmitter->drive > 0.4) {
-          //
-          // This happens after an "SWR alarm" event
-          //
-          radio_set_drive(0.0);
-        }
-      }
-    }
-    break;
-
-    case INFO_PS: {
-      //
-      // This data is needed for the PS menu and to indicate PS status on the TX panadapter
-      // (it is transferred every 100 msec)
-      //
-      if (can_transmit) {
-        PS_DATA data;
-
-        if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(data) - sizeof(HEADER)) < 0) { return NULL; }
-
-        for (int i = 0; i < 16; i++) {
-          transmitter->psinfo[i] = from_16(data.psinfo[i]);
-        }
-
-        transmitter->attenuation = from_16(data.attenuation);
-        transmitter->ps_getmx = from_double(data.ps_getmx);
-      }
-    }
-    break;
-
     case INFO_MEMORY: {
+      // sent by the server upon initialisation, and as a response to a send_store()
+      // executed from the client's MEMORY menu.
       MEMORY_DATA data;
 
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(data) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&data + sizeof(HEADER), sizeof(MEMORY_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       int index = data.index;
       mem[index].sat_mode           = data.sat_mode;
@@ -552,9 +767,10 @@ static void *client_thread(void* arg) {
     break;
 
     case INFO_BAND: {
+      // send by the server upon initialization, and after changing the filter board
       BAND_DATA data;
 
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(data) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&data + sizeof(HEADER), sizeof(BAND_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       if (data.band > BANDS + XVTRS) {
         t_print("%s: WARNING: band data received for b=%d, too large.\n", __FUNCTION__, data.band);
@@ -585,9 +801,10 @@ static void *client_thread(void* arg) {
     break;
 
     case INFO_BANDSTACK: {
+      // sent by the server upon initialisation, and as a response to changing the band, the bandstack, or the region
       BANDSTACK_DATA data;
 
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(data) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&data + sizeof(HEADER), sizeof(BANDSTACK_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       if (data.band > BANDS + XVTRS) {
         t_print("%s: WARNING: band data received for b=%d, too large.\n", __FUNCTION__, data.band);
@@ -615,9 +832,10 @@ static void *client_thread(void* arg) {
     break;
 
     case INFO_RADIO: {
+      // sent by the server upon initialisation, and as a response to changing the filter board or the ANAN10 button,
       RADIO_DATA data;
 
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(data) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&data + sizeof(HEADER), sizeof(RADIO_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       snprintf(radio->name, sizeof(radio->name), "%s", data.name);
       locked = data.locked;
@@ -761,9 +979,10 @@ static void *client_thread(void* arg) {
     break;
 
     case INFO_ADC: {
+      // sent by the server upon initialisation and after applying band settings
       ADC_DATA data;
 
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(ADC_DATA) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&data + sizeof(HEADER), sizeof(ADC_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       int i = data.adc;
       adc[i].preamp = data.preamp;
@@ -786,9 +1005,12 @@ static void *client_thread(void* arg) {
     break;
 
     case INFO_RECEIVER: {
+      // sent by the server upon initialisation and as a response to many things (CMD_STEP, CMD_RCL,
+      // CMD_NOISE, CMD_BANDSTACK, CMD_BAND_SEL, CMD_MODE, CMD_SPLIT, CMD_VFO_A_TO_B,
+      // CMD_VFO_B_TO_A, CMD_VFO_SWAP, CMD_RECEIVERS)
       RECEIVER_DATA data;
 
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(RECEIVER_DATA) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&data + sizeof(HEADER), sizeof(RECEIVER_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       int id = data.id;
       RECEIVER *rx = receiver[id];
@@ -874,9 +1096,12 @@ static void *client_thread(void* arg) {
     break;
 
     case INFO_TRANSMITTER: {
+      // sent by the server upon initialisation and as a response to many things (CMD_RCL,
+      // CMD_BANDSTACK, CMD_BAND_SEL, CMD_MODE, CMD_SPLIT, CMD_VFO_A_TO_B,
+      // CMD_VFO_B_TO_A, CMD_VFO_SWAP, CMD_CTCSS, CMD_AMCARRIER, CMD_TXMENU)
       TRANSMITTER_DATA data;
 
-      if (recv_bytes(client_socket, (char *)&data + sizeof(HEADER), sizeof(TRANSMITTER_DATA) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&data + sizeof(HEADER), sizeof(TRANSMITTER_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       //
       // When transmitter data is fully received, we can set can_transmit
@@ -954,9 +1179,12 @@ static void *client_thread(void* arg) {
     break;
 
     case INFO_VFO: {
+      // sent by the server upon initialisation and as a response to many things (CMD_FREQ, CMD_STEP,
+      // CMD_MOVE, CMD_MOVETO, CMD_RCL, CMD_BANDSTACK, CMD_BAND_SEL, CMD_MODE, CMD_CTUN,
+      // CMD_VFO_A_TO_B, CMD_VFO_B_TO_A, CMD_VFO_SWAP, CMD_RIT, CMD_XIT, CMD_RIT_STEP
       VFO_DATA vfo_data;
 
-      if (recv_bytes(client_socket, (char *)&vfo_data + sizeof(HEADER), sizeof(VFO_DATA) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&vfo_data + sizeof(HEADER), sizeof(VFO_DATA) - sizeof(HEADER)) < 0) { return NULL; }
 
       int v = vfo_data.vfo;
       vfo[v].band = vfo_data.band;
@@ -978,135 +1206,73 @@ static void *client_thread(void* arg) {
       vfo[v].lo = from_64(vfo_data.lo);
       vfo[v].offset = from_64(vfo_data.offset);
       vfo[v].step   = from_64(vfo_data.step);
+
+      //
+      // If the RX1 and/or TX mode changed, possibly change local audio settings
+      //
+      if (old_rx1mode != vfo[0].mode) {
+        int m = old_rx1mode = vfo[0].mode;
+        RECEIVER *rx = receiver[0];
+
+        if ((rx->local_audio != mode_settings[m].rx_local_audio) ||
+            strcmp(rx->audio_name, mode_settings[m].rx_audio_name)) {
+          if (rx->local_audio) {
+            rx->local_audio = 0;
+            audio_close_output(rx);
+          }
+
+          if (mode_settings[m].rx_local_audio) {
+            snprintf(rx->audio_name, sizeof(rx->audio_name), "%s", mode_settings[m].rx_audio_name);
+
+            if (audio_open_output(rx) < 0) {
+              rx->local_audio = 0;
+              t_print("%s: Open audio output failed\n", __FUNCTION__);
+            } else {
+              rx->local_audio = 1;
+            }
+          }
+        }
+      }
+
+      if (old_txmode != vfo_get_tx_mode()) {
+        int m = old_txmode = vfo_get_tx_mode();
+
+        if (transmitter->local_audio != mode_settings[m].tx_local_audio ||
+            strncmp(transmitter->audio_name, mode_settings[m].tx_audio_name, sizeof(transmitter->audio_name))) {
+          //
+          // TX local audio settings in mode_settings differ from local settings:
+          //
+          if (transmitter->local_audio) {
+            transmitter->local_audio = 0;
+            audio_close_input(transmitter);
+          }
+
+          if (mode_settings[m].tx_local_audio) {
+            snprintf(transmitter->audio_name, sizeof(transmitter->audio_name), "%s", mode_settings[m].tx_audio_name);
+
+            if (audio_open_input(transmitter) < 0) {
+              transmitter->local_audio = 0;
+              t_print("%s: Open audio input failed\n", __FUNCTION__);
+            } else {
+              transmitter->local_audio = 1;
+            }
+          }
+        }
+      }
+
       g_idle_add(ext_vfo_update, NULL);
     }
     break;
 
-    case INFO_RX_SPECTRUM:
-    case INFO_TX_SPECTRUM: {
-      SPECTRUM_DATA spectrum_data;
-      //
-      // The length of the payload is included in the header, only
-      // read the number of bytes specified there.
-      //
-      size_t payload = from_16(header.s1);
-
-      if (recv_bytes(client_socket, (char *)&spectrum_data + sizeof(HEADER), payload) < 0) { return NULL; }
-
-      //
-      // We load the current VFO frequencies on top of the spectrum data packets,
-      // so we can apply this info *before* drawing the spectrum. Normally the
-      // data should not have changed.
-      //
-      long long frequency_a = from_64(spectrum_data.vfo_a_freq);
-      long long frequency_b = from_64(spectrum_data.vfo_b_freq);
-      long long ctun_frequency_a = from_64(spectrum_data.vfo_a_ctun_freq);
-      long long ctun_frequency_b = from_64(spectrum_data.vfo_b_ctun_freq);
-      long long offset_a = from_64(spectrum_data.vfo_a_offset);
-      long long offset_b = from_64(spectrum_data.vfo_b_offset);
-
-      if (vfo[VFO_A].frequency != frequency_a || vfo[VFO_B].frequency != frequency_b
-          || vfo[VFO_A].ctun_frequency != ctun_frequency_a || vfo[VFO_B].ctun_frequency != ctun_frequency_b
-          || vfo[VFO_A].offset != offset_a || vfo[VFO_B].offset != offset_b) {
-        vfo[VFO_A].frequency = frequency_a;
-        vfo[VFO_B].frequency = frequency_b;
-        vfo[VFO_A].ctun_frequency = ctun_frequency_a;
-        vfo[VFO_B].ctun_frequency = ctun_frequency_b;
-        vfo[VFO_A].offset = offset_a;
-        vfo[VFO_B].offset = offset_b;
-        g_idle_add(ext_vfo_update, NULL);
-      }
-
-      if (type == INFO_RX_SPECTRUM && spectrum_data.id < receivers) {
-        RECEIVER *rx = receiver[spectrum_data.id];
-        rx->cA = from_double(spectrum_data.cA);
-        rx->cB = from_double(spectrum_data.cB);
-        rx->cAp = from_double(spectrum_data.cAp);
-        rx->cBp = from_double(spectrum_data.cBp);
-        rx->meter = from_double(spectrum_data.meter);
-        rx->pixels_available = spectrum_data.avail;
-        int width = from_16(spectrum_data.width);
-
-        if (width == rx->width) {
-          g_mutex_lock(&rx->display_mutex);
-
-          if (rx->pixel_samples == NULL) {
-            rx->pixel_samples = g_new(float, (int) rx->width);
-          }
-
-          for (int i = 0; i < rx->width; i++) {
-            rx->pixel_samples[i] = (float)((int)spectrum_data.sample[i] - 200);
-          }
-
-          g_mutex_unlock(&rx->display_mutex);
-          g_idle_add(rx_remote_update_display, rx);
-        }
-      }
-
-      if (type == INFO_TX_SPECTRUM && can_transmit) {
-        TRANSMITTER *tx = transmitter;
-        tx->alc = from_double(spectrum_data.alc);
-        tx->fwd = from_double(spectrum_data.fwd);
-        tx->swr = from_double(spectrum_data.swr);
-        int width = from_16(spectrum_data.width);
-
-        if (tx->pixel_samples == NULL) {
-          tx->pixel_samples = g_new(float, (int) tx->width);
-        }
-
-        if (width == tx->width) {
-          g_mutex_lock(&tx->display_mutex);
-
-          for (int i = 0; i < tx->width; i++) {
-            tx->pixel_samples[i] = (float)((int)spectrum_data.sample[i] - 200);
-          }
-
-          g_mutex_unlock(&tx->display_mutex);
-          g_idle_add(tx_remote_update_display, tx);
-        }
-      }
-    }
-    break;
-
-    case INFO_RXAUDIO: {
-      RXAUDIO_DATA rxaudio_data;
-
-      if (recv_bytes(client_socket, (char *)&rxaudio_data + sizeof(HEADER), sizeof(RXAUDIO_DATA) - sizeof(HEADER)) < 0) { return NULL; }
-
-      RECEIVER *rx = receiver[rxaudio_data.rx];
-      int numsamples = from_16(rxaudio_data.numsamples);
-
-      //
-      // Note CAPTURing is only done on the server side
-      //
-      for (int i = 0; i < numsamples; i++) {
-        short left_sample = from_16(rxaudio_data.samples[i]);
-        short right_sample = left_sample;
-
-        if (radio_is_transmitting() && (!duplex || mute_rx_while_transmitting)) {
-          left_sample = 0.0;
-          right_sample = 0.0;
-        }
-
-        if (rx->mute_radio || (rx != active_receiver && rx->mute_when_not_active)) {
-          left_sample = 0;
-          right_sample = 0;
-        }
-
-        if (rx->audio_channel == LEFT)  { right_sample = 0; }
-
-        if (rx->audio_channel == RIGHT) { left_sample  = 0; }
-
-        if (rx->local_audio) {
-          audio_write(rx, (float)left_sample / 32767.0, (float)right_sample / 32767.0);
-        }
-      }
-    }
-    break;
-
     case CMD_START_RADIO: {
+      // sent by the server once upon initialisation
       if (!remote_started) {
-        g_idle_add(radio_remote_start, (gpointer)server);
+        //
+        // Init the "old" modes used to detect mode changes
+        //
+        old_rx1mode = vfo[0].mode;
+        old_txmode = vfo_get_tx_mode();
+        g_idle_add(radio_client_start, (gpointer)server);
       }
 
       g_idle_add(ext_vfo_update, NULL);
@@ -1114,9 +1280,10 @@ static void *client_thread(void* arg) {
     break;
 
     case CMD_SAMPLE_RATE: {
+      // sent by the server as a response to a CMD_SAMPLE_RATE
       U32_COMMAND cmd;
 
-      if (recv_bytes(client_socket, (char *)&cmd + sizeof(HEADER), sizeof(U32_COMMAND) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&cmd + sizeof(HEADER), sizeof(U32_COMMAND) - sizeof(HEADER)) < 0) { return NULL; }
 
       int id = header.b1;
       receiver[id]->sample_rate = from_32(cmd.u32);
@@ -1124,44 +1291,48 @@ static void *client_thread(void* arg) {
     break;
 
     case CMD_LOCK: {
+      // sent as a response to a CMD_LOCK
       locked = header.b1;
       g_idle_add(ext_vfo_update, NULL);
     }
     break;
 
-    case CMD_SPLIT: {
-      split = header.b1;
-      g_idle_add(ext_vfo_update, NULL);
-    }
-    break;
+    //    case CMD_SPLIT: {
+    //      split = header.b1;
+    //      g_idle_add(ext_vfo_update, NULL);
+    //    }
+    //    break;
 
     case CMD_SAT: {
+      // sent as a response to a CMD_SAT
       sat_mode = header.b1;
       g_idle_add(ext_vfo_update, NULL);
     }
     break;
 
-    case CMD_DUP: {
-      duplex = header.b1;
-      g_idle_add(ext_vfo_update, NULL);
-    }
-    break;
+    //    case CMD_DUP: {
+    //      duplex = header.b1;
+    //      g_idle_add(ext_vfo_update, NULL);
+    //    }
+    //    break;
 
     case CMD_RECEIVERS: {
+      // sent by the server as a response to a CMD_RECEIVERS
       int r = header.b1;
-      g_idle_add(radio_remote_change_receivers, GINT_TO_POINTER(r));
+      g_idle_add(radio_client_change_receivers, GINT_TO_POINTER(r));
     }
     break;
 
-    case CMD_MODE: {
-      int id = header.b1;
-      int m = header.b2;
-      vfo[id].mode = m;
-      g_idle_add(ext_vfo_update, NULL);
-    }
-    break;
+    //    case CMD_MODE: {
+    //      int id = header.b1;
+    //      int m = header.b2;
+    //      vfo[id].mode = m;
+    //      g_idle_add(ext_vfo_update, NULL);
+    //    }
+    //    break;
 
     case CMD_FILTER_VAR: {
+      // sent by the server upon initialisation
       int m = header.b1;
       int f = header.b2;
       filters[m][f].low = from_16(header.s1);
@@ -1172,8 +1343,8 @@ static void *client_thread(void* arg) {
 
     case CMD_RX_FILTER_CUT: {
       //
-      // This commands is only used to set the RX filter edges
-      // on the client side.
+      // Sent by the server as a response to CMD_FILTER_VAR, CMD_FILTER_SEL, CMD_DEVIATION
+      // On the client side, only used to set the RX filter edges
       //
       int id = header.b1;
 
@@ -1188,8 +1359,8 @@ static void *client_thread(void* arg) {
 
     case CMD_TX_FILTER_CUT: {
       //
-      // This commands is only used to set the TX filter edges
-      // on the client side.
+      // Sent by the server as a response to CMD_FILTER_VAR, CMD_FILTER_SEL, CMD_DEVIATION
+      // On the client side, only used to set the TX filter edges
       //
       if (can_transmit) {
         transmitter->filter_low = from_16(header.s1);
@@ -1200,48 +1371,53 @@ static void *client_thread(void* arg) {
     }
     break;
 
-    case CMD_AGC: {
-      int id = header.b1;
-      receiver[id]->agc = header.b2;
-      g_idle_add(ext_vfo_update, NULL);
-    }
-    break;
+    //    case CMD_AGC: {
+    //      int id = header.b1;
+    //      receiver[id]->agc = header.b2;
+    //      g_idle_add(ext_vfo_update, NULL);
+    //    }
+    //    break;
 
-    case CMD_ZOOM: {
-      int id = header.b1;
-      receiver[id]->zoom = header.b2;
-      g_idle_add(sliders_zoom, GINT_TO_POINTER(100 + id));
-      g_idle_add(ext_vfo_update, NULL);
-    }
-    break;
+    //    case CMD_ZOOM: {
+    //      int id = header.b1;
+    //      receiver[id]->zoom = header.b2;
+    //      g_idle_add(sliders_zoom, GINT_TO_POINTER(100 + id));
+    //      g_idle_add(ext_vfo_update, NULL);
+    //    }
+    //    break;
 
     case CMD_PAN: {
+      //
+      // Sent by the server as a response to CMD_FREQ, CMD_MOVE, CMD_MOVETO, CMD_ZOOM
+      // (since these may change the PAN value)
+      //
       int id = header.b1;
       receiver[id]->pan = header.b2;
       g_idle_add(sliders_pan, GINT_TO_POINTER(100 + id));
     }
     break;
 
-    case CMD_VOLUME: {
-      DOUBLE_COMMAND cmd;
-
-      if (recv_bytes(client_socket, (char *)&cmd + sizeof(HEADER), sizeof(DOUBLE_COMMAND) - sizeof(HEADER)) < 0) { return NULL; }
-
-      int id = cmd.header.b1;
-      double volume = from_double(cmd.dbl);
-      receiver[id]->volume = volume;
-    }
-    break;
+    //    case CMD_VOLUME: {
+    //      DOUBLE_COMMAND cmd;
+    //
+    //      if (recv_tcp(cl_sock_tcp, (char *)&cmd + sizeof(HEADER), sizeof(DOUBLE_COMMAND) - sizeof(HEADER)) < 0) { return NULL; }
+    //
+    //      int id = cmd.header.b1;
+    //      double volume = from_double(cmd.dbl);
+    //      receiver[id]->volume = volume;
+    //    }
+    //    break;
 
     case CMD_AGC_GAIN: {
       //
+      // Sent as a response to CMD_AGC_GAIN, CMD_FILTER_SEL, CMD_RX_FILTER_CUT.
       // When this command comes back from the server,
       // it has re-calculated "hant" and "thresh", while the other two
       // entries should be exactly those the client has just sent.
       //
       AGC_GAIN_COMMAND agc_gain_cmd;
 
-      if (recv_bytes(client_socket, (char *)&agc_gain_cmd + sizeof(HEADER), sizeof(AGC_GAIN_COMMAND) - sizeof(HEADER)) < 0) { return NULL; }
+      if (recv_tcp(cl_sock_tcp, (char *)&agc_gain_cmd + sizeof(HEADER), sizeof(AGC_GAIN_COMMAND) - sizeof(HEADER)) < 0) { return NULL; }
 
       int id = agc_gain_cmd.id;
       receiver[id]->agc_gain = from_double(agc_gain_cmd.gain);
@@ -1251,50 +1427,62 @@ static void *client_thread(void* arg) {
     }
     break;
 
-    case CMD_ATTENUATION: {
-      int id = header.b1;
-      int att = from_16(header.s1);
-      radio_set_attenuation(id, att);
-    }
-    break;
+    //    case CMD_ATTENUATION: {
+    //      int id = header.b1;
+    //      int att = from_16(header.s1);
+    //      radio_set_attenuation(id, att);
+    //    }
+    //    break;
 
-    case CMD_RFGAIN: {
-      DOUBLE_COMMAND command;
+    //    case CMD_RFGAIN: {
+    //      DOUBLE_COMMAND command;
+    //
+    //      if (recv_tcp(cl_sock_tcp, (char *)&command + sizeof(HEADER), sizeof(DOUBLE_COMMAND) - sizeof(HEADER)) < 0) { return NULL; }
+    //
+    //      int id = command.header.b1;
+    //      double gain = from_double(command.dbl);
+    //      adc[receiver[id]->adc].gain = gain;
+    //    }
+    //    break;
 
-      if (recv_bytes(client_socket, (char *)&command + sizeof(HEADER), sizeof(DOUBLE_COMMAND) - sizeof(HEADER)) < 0) { return NULL; }
-
-      int id = command.header.b1;
-      double gain = from_double(command.dbl);
-      adc[receiver[id]->adc].gain = gain;
-    }
-    break;
-
-    case CMD_RIT_STEP: {
-      int v = header.b1;
-      int step = from_16(header.s1);
-      vfo_id_set_rit_step(v, step);
-      g_idle_add(ext_vfo_update, NULL);
-    }
-    break;
+    //    case CMD_RIT_STEP: {
+    //      int v = header.b1;
+    //      int step = from_16(header.s1);
+    //      vfo_id_set_rit_step(v, step);
+    //      g_idle_add(ext_vfo_update, NULL);
+    //    }
+    //    break;
 
     case CMD_MOX: {
-      g_idle_add(radio_remote_set_mox, GINT_TO_POINTER(header.b1));
+      //
+      // Sent by the server as a response to a CMD_TOGGLE_MOX, CMD_MOX
+      //
+      g_idle_add(radio_client_set_mox, GINT_TO_POINTER(header.b1));
     }
     break;
 
     case CMD_VOX: {
-      g_idle_add(radio_remote_set_vox, GINT_TO_POINTER(header.b1));
+      //
+      // Sent by the server as a response to a CMD_VOX
+      //
+      g_idle_add(radio_client_set_vox, GINT_TO_POINTER(header.b1));
     }
     break;
 
     case CMD_TUNE: {
-      g_idle_add(radio_remote_set_tune, GINT_TO_POINTER(header.b1));
+      //
+      // Sent by the server as a response to a CMD_TOGGLE_TUNE, CMD_TUNE
+      //
+      g_idle_add(radio_client_set_tune, GINT_TO_POINTER(header.b1));
     }
     break;
 
     case CMD_TWOTONE: {
-      g_idle_add(radio_remote_set_twotone, GINT_TO_POINTER(header.b1));
-      g_idle_add(radio_remote_set_mox, GINT_TO_POINTER(header.b1));
+      //
+      // Sent by the server as a response to a CMD_TWOTONE
+      //
+      g_idle_add(radio_client_set_twotone, GINT_TO_POINTER(header.b1));
+      g_idle_add(radio_client_set_mox, GINT_TO_POINTER(header.b1));
     }
     break;
 
