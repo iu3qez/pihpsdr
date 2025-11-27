@@ -917,12 +917,13 @@ static void *listen_thread(void *arg) {
 
     //
     // Set a time-out of 30 seconds. The client is supposed to send a heart-beat packet at least
-    // every 15 sec
+    // every 15 sec. For sending, the time-out is set to 5 seconds, to "survive" short drop-outs
+    // in the internet connection.
     //
     timeout.tv_sec = 30;
     timeout.tv_usec = 0;
     setsockopt(remoteclient.sock_tcp, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    timeout.tv_sec =  1;
+    timeout.tv_sec =  5;
     setsockopt(remoteclient.sock_tcp, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
     unsigned char s[2 * SHA512_DIGEST_LENGTH];
     unsigned char sha[SHA512_DIGEST_LENGTH];
