@@ -33,6 +33,7 @@
 #include <ifaddrs.h>
 
 #include "appearance.h"
+#include "audio.h"
 #include "discovered.h"
 #include "main.h"
 #include "agc.h"
@@ -100,9 +101,7 @@ static void vfo_save_bandstack() {
   }
 }
 
-static void modesettingsSaveState() {
-  ASSERT_SERVER();
-
+void modesettings_save_state() {
   for (int i = 0; i < MODES; i++) {
     SetPropI1("modeset.%d.filter", i,                 mode_settings[i].filter);
     SetPropI1("modeset.%d.cwPeak", i,                 mode_settings[i].cwPeak);
@@ -168,12 +167,16 @@ static void modesettingsSaveState() {
       SetPropF2("modeset.%d.cfc_lvl.%d", i, j,        mode_settings[i].cfc_lvl[j]);
       SetPropF2("modeset.%d.cfc_post.%d", i, j,       mode_settings[i].cfc_post[j]);
     }
+
+    SetPropI1("modeset.%d.rx_audio_channel", i,       mode_settings[i].rx_audio_channel);
+    SetPropI1("modeset.%d.rx_local_audio", i,         mode_settings[i].rx_local_audio);
+    SetPropI1("modeset.%d.tx_local_audio", i,         mode_settings[i].tx_local_audio);
+    SetPropS1("modeset.%d.rx_audio_name", i,          mode_settings[i].rx_audio_name);
+    SetPropS1("modeset.%d.tx_audio_name", i,          mode_settings[i].tx_audio_name);
   }
 }
 
-static void modesettingsRestoreState() {
-  ASSERT_SERVER();
-
+void modesettings_restore_state() {
   for (int i = 0; i < MODES; i++) {
     //
     // set defaults that depend on  the mode: filter, agc, step
@@ -310,6 +313,11 @@ static void modesettingsRestoreState() {
     mode_settings[i].tx_eq_freq[10] =  5000.0;
     mode_settings[i].rx_eq_freq[10] =  5000.0;
     mode_settings[i].cfc_freq  [10] =  5000.0;
+    mode_settings[i].rx_audio_channel =  STEREO;
+    mode_settings[i].rx_local_audio =  0;
+    mode_settings[i].tx_local_audio =  0;
+    snprintf(mode_settings[i].rx_audio_name, sizeof(mode_settings[i].rx_audio_name), "%s", "NO AUDIO");
+    snprintf(mode_settings[i].tx_audio_name, sizeof(mode_settings[i].tx_audio_name), "%s", "NO AUDIO");
     GetPropI1("modeset.%d.filter", i,                 mode_settings[i].filter);
     GetPropI1("modeset.%d.cwPeak", i,                 mode_settings[i].cwPeak);
     GetPropI1("modeset.%d.step", i,                   mode_settings[i].step);
@@ -374,11 +382,19 @@ static void modesettingsRestoreState() {
       GetPropF2("modeset.%d.cfc_lvl.%d", i, j,        mode_settings[i].cfc_lvl[j]);
       GetPropF2("modeset.%d.cfc_post.%d", i, j,       mode_settings[i].cfc_post[j]);
     }
+
+    GetPropI1("modeset.%d.rx_audio_channel", i,       mode_settings[i].rx_audio_channel);
+    GetPropI1("modeset.%d.rx_local_audio", i,         mode_settings[i].rx_local_audio);
+    GetPropI1("modeset.%d.tx_local_audio", i,         mode_settings[i].tx_local_audio);
+    GetPropS1("modeset.%d.rx_audio_name", i,          mode_settings[i].rx_audio_name);
+    GetPropS1("modeset.%d.tx_audio_name", i,          mode_settings[i].tx_audio_name);
   }
 }
 
 void copy_mode_settings(int mode) {
-  ASSERT_SERVER();
+  //
+  // The client may call this, if local audio settings have been changed
+  //
 
   //
   // If mode is USB or LSB or DSB, copy settings of that mode to USB and LSB and DSB
@@ -430,8 +446,6 @@ void vfo_save_state() {
     SetPropI1("vfo.%d.step", i,             vfo[i].step);
     SetPropI1("vfo.%d.rit_step", i,         vfo[i].rit_step);
   }
-
-  modesettingsSaveState();
 }
 
 void vfo_restore_state() {
@@ -491,8 +505,6 @@ void vfo_restore_state() {
       vfo[i].offset = 0;
     }
   }
-
-  modesettingsRestoreState();
 }
 
 static inline void vfo_id_adjust_band(int v, long long f) {
@@ -651,6 +663,32 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
   radio_set_squelch       (rx->id, mode_settings[m].squelch);
   radio_set_squelch_enable(rx->id, mode_settings[m].squelch_enable);
 
+  if (rx->id == 0) {
+    rx->audio_channel = mode_settings[m].rx_audio_channel;
+
+    if (rx->local_audio != mode_settings[m].rx_local_audio
+                    || strncmp(rx->audio_name, mode_settings[m].rx_audio_name, sizeof(rx->audio_name))) {
+      //
+      // This is RX1 and local audio settings in mode_settings differ from actual settings
+      //
+      if (rx->local_audio) {
+        rx->local_audio = 0;
+        audio_close_output(rx);
+      }
+
+      if (mode_settings[m].rx_local_audio) {
+        snprintf(rx->audio_name, sizeof(rx->audio_name), "%s", mode_settings[m].rx_audio_name);
+
+        if (audio_open_output(rx) < 0) {
+          rx->local_audio = 0;
+          t_print("%s: Open audio output failed\n", __FUNCTION__);
+        } else {
+          rx->local_audio = 1;
+        }
+      }
+    }
+  }
+
   //
   // Transmitter-specific settings: TXEQ, CMRP, DEXP, CFC
   // only changed if this VFO controls the TX
@@ -689,6 +727,28 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
     tx_set_dexp(transmitter);
     tx_set_equalizer(transmitter);
     radio_set_mic_gain(mode_settings[m].mic_gain);
+
+    if (transmitter->local_audio != mode_settings[m].tx_local_audio ||
+        strncmp(transmitter->audio_name, mode_settings[m].tx_audio_name, sizeof(transmitter->audio_name))) {
+      //
+      // TX local audio settings in mode_settings differ from local settings:
+      //
+      if (transmitter->local_audio) {
+        transmitter->local_audio = 0;
+        audio_close_input(transmitter);
+      }
+
+      if (mode_settings[m].tx_local_audio) {
+        snprintf(transmitter->audio_name, sizeof(transmitter->audio_name), "%s", mode_settings[m].tx_audio_name);
+
+        if (audio_open_input(transmitter) < 0) {
+          transmitter->local_audio = 0;
+          t_print("%s: Open audio input failed\n", __FUNCTION__);
+        } else {
+          transmitter->local_audio = 1;
+        }
+      }
+    }
   }
 
   g_idle_add(ext_vfo_update, NULL);
@@ -697,7 +757,7 @@ void vfo_apply_mode_settings(RECEIVER *rx) {
 
 void vfo_id_band_changed(int id, int b) {
   if (radio_is_remote) {
-    send_band(client_socket, id, b);
+    send_band(cl_sock_tcp, id, b);
     return;
   }
 
@@ -804,7 +864,7 @@ void vfo_id_bandstack_changed(int id, int b) {
   }
 
   if (radio_is_remote) {
-    send_bandstack(client_socket, oldstack, b);
+    send_bandstack(cl_sock_tcp, oldstack, b);
     return;
   }
 
@@ -838,18 +898,12 @@ void vfo_id_bandstack_changed(int id, int b) {
 
 void vfo_mode_changed(int m) {
   int id = active_receiver->id;
-
-  if (radio_is_remote) {
-    send_mode(client_socket, id, m);
-    return;
-  }
-
   vfo_id_mode_changed(id, m);
 }
 
 void vfo_id_mode_changed(int id, int m) {
   if (radio_is_remote) {
-    send_mode(client_socket, id, m);
+    send_mode(cl_sock_tcp, id, m);
     return;
   }
 
@@ -898,7 +952,7 @@ void vfo_id_cwpeak_changed(int id, int p) {
   vfo[id].cwAudioPeakFilter = p;
 
   if (radio_is_remote) {
-    send_cwpeak(client_socket, id, p);
+    send_cwpeak(cl_sock_tcp, id, p);
   } else {
     if (id == 0) {
       int mode = vfo[id].mode;
@@ -922,7 +976,7 @@ void vfo_id_filter_changed(int id, int f) {
   vfo[id].filter = f;
 
   if (radio_is_remote) {
-    send_filter_sel(client_socket, id, f);
+    send_filter_sel(cl_sock_tcp, id, f);
     return;
   }
 
@@ -976,7 +1030,7 @@ void vfo_vfos_changed() {
 
 void vfo_a_to_b() {
   if (radio_is_remote) {
-    send_vfo_atob(client_socket);
+    send_vfo_atob(cl_sock_tcp);
     return;
   }
 
@@ -992,7 +1046,7 @@ void vfo_a_to_b() {
 
 void vfo_b_to_a() {
   if (radio_is_remote) {
-    send_vfo_btoa(client_socket);
+    send_vfo_btoa(cl_sock_tcp);
     return;
   }
 
@@ -1008,7 +1062,7 @@ void vfo_b_to_a() {
 
 void vfo_a_swap_b() {
   if (radio_is_remote) {
-    send_vfo_swap(client_socket);
+    send_vfo_swap(cl_sock_tcp);
     return;
   }
 
@@ -1078,7 +1132,7 @@ void vfo_id_set_step_from_index(int id, int index) {
   vfo[id].step = step;
 
   if (radio_is_remote) {
-    send_vfo_stepsize(client_socket, id, step);
+    send_vfo_stepsize(cl_sock_tcp, id, step);
   } else {
     if (id == 0) {
       int mode = vfo[id].mode;
@@ -1193,7 +1247,7 @@ void vfo_set_rit_step(int step) {
   int id = active_receiver->id;
 
   if (radio_is_remote) {
-    send_rit_step(client_socket, id, step);
+    send_rit_step(cl_sock_tcp, id, step);
     return;
   }
 
@@ -1202,7 +1256,7 @@ void vfo_set_rit_step(int step) {
 
 void vfo_id_set_rit_step(int id, int step) {
   if (radio_is_remote) {
-    send_rit_step(client_socket, id, step);
+    send_rit_step(cl_sock_tcp, id, step);
     return;
   }
 
@@ -1334,7 +1388,7 @@ void vfo_id_move(int id, long long hz, int round) {
 
 void vfo_id_move_to(int id, long long f, int round) {
   if (radio_is_remote) {
-    send_vfo_move_to(client_socket, id, f, round);
+    send_vfo_move_to(cl_sock_tcp, id, f, round);
     return;
   }
 
@@ -2300,7 +2354,7 @@ void vfo_id_xit_value(int id, long long value ) {
   vfo[id].xit_enabled = value ? 1 : 0;
 
   if (radio_is_remote) {
-    send_xit(client_socket, id);
+    send_xit(cl_sock_tcp, id);
   } else {
     schedule_high_priority();
   }
@@ -2332,7 +2386,7 @@ void vfo_id_rit_value(int id, long long value) {
   vfo[id].rit_enabled = value ? 1 : 0;
 
   if (radio_is_remote) {
-    send_rit(client_socket, id);
+    send_rit(cl_sock_tcp, id);
     return;
   } else if (id < receivers) {
     rx_frequency_changed(receiver[id]);
@@ -2345,7 +2399,7 @@ void vfo_id_rit_onoff(int id, int enable) {
   vfo[id].rit_enabled = SET(enable);
 
   if (radio_is_remote) {
-    send_rit(client_socket, id);
+    send_rit(cl_sock_tcp, id);
   } else if (id < receivers) {
     rx_frequency_changed(receiver[id]);
   }
@@ -2362,7 +2416,7 @@ void vfo_id_xit_onoff(int id, int enable) {
   vfo[id].xit_enabled = SET(enable);
 
   if (radio_is_remote) {
-    send_xit(client_socket, id);
+    send_xit(cl_sock_tcp, id);
   } else {
     schedule_high_priority();
   }
@@ -2396,7 +2450,7 @@ void vfo_id_rit_incr(int id, int incr) {
 //
 void vfo_id_set_frequency(int v, long long f) {
   if (radio_is_remote) {
-    send_vfo_frequency(client_socket, v, f);
+    send_vfo_frequency(cl_sock_tcp, v, f);
     return;
   }
 
@@ -2445,7 +2499,7 @@ void vfo_id_set_frequency(int v, long long f) {
 //
 void vfo_id_ctun_update(int id, int state) {
   if (radio_is_remote) {
-    send_ctun(client_socket, id, state);
+    send_ctun(cl_sock_tcp, id, state);
     return;
   }
 

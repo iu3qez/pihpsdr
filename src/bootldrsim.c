@@ -294,7 +294,7 @@ int main(int argc, char **argv) {
             outfd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC);
 
             if (outfd < 0) {
-              perror("OPEN outfile:");
+              perror("OPEN outfile");
               outfile = NULL;
             }
           }

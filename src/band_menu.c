@@ -77,7 +77,7 @@ static gboolean band_select_cb (GtkWidget *widget, gpointer data) {
   // band stack
   //
   if (radio_is_remote) {
-    send_band(client_socket, myvfo, choice->info);
+    send_band(cl_sock_tcp, myvfo, choice->info);
     // We have to assume that the band change succeeded, we just cannot know.
     newband = choice->info;
   } else {

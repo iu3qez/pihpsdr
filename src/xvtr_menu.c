@@ -123,15 +123,15 @@ static void save_xvtr () {
 
   if (radio_is_remote) {
     for (int b = BANDS; b < BANDS + XVTRS; b++) {
-      send_band_data(client_socket, b);
+      send_band_data(cl_sock_tcp, b);
       const BAND *band = band_get_band(b);
 
       for (int s = 0; s < band->bandstack->entries; s++) {
-        send_bandstack_data(client_socket, b, s);
+        send_bandstack_data(cl_sock_tcp, b, s);
       }
     }
 
-    send_xvtr_changed(client_socket);
+    send_xvtr_changed(cl_sock_tcp);
   } else {
     vfo_xvtr_changed();
   }

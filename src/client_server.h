@@ -141,14 +141,14 @@ enum _header_type_enum {
   CLIENT_SERVER_COMMANDS,
 };
 
-#define CLIENT_SERVER_VERSION 0x01260002 // 32-bit version number
+#define CLIENT_SERVER_VERSION 0x01260010 // 32-bit version number
 #define SPECTRUM_DATA_SIZE 4096          // Maximum width of a panadapter
 #define AUDIO_DATA_SIZE 512              // 512 (mono) samples
 
 typedef struct _remote_client {
   int running;
-  int authorised;
-  int socket;
+  int sock_tcp;
+  int sock_udp;
   socklen_t address_length;
   struct sockaddr_in address;
   guint timer_id;
@@ -191,7 +191,7 @@ typedef struct __attribute__((__packed__)) _header {
 typedef struct __attribute__((__packed__)) _radiomenu_data {
   HEADER header;
   //
-  uint64_t frequency_calibration;
+  uint16_t frequency_calibration;
   //
   uint16_t rx_gain_calibration;
   uint16_t OCfull_tune_time;
@@ -364,12 +364,12 @@ typedef struct __attribute__((__packed__)) _radio_data {
   mydouble soapy_tx_gain_elem_min[8];
   mydouble soapy_tx_gain_elem_max[8];
   //
-  uint64_t frequency_calibration;
   uint64_t radio_frequency_min;
   uint64_t radio_frequency_max;
   //
   uint32_t soapy_radio_sample_rate;
   //
+  uint16_t frequency_calibration;
   uint16_t pa_power;
   uint16_t OCfull_tune_time;
   uint16_t OCmemory_tune_time;
@@ -526,6 +526,7 @@ typedef struct __attribute__((__packed__)) _transmitter_data {
   mydouble ps_ampdelay;
   mydouble ps_moxdelay;
   mydouble ps_loopdelay;
+  mydouble ps_setpk;
   //
   uint32_t fft_size;
   //
@@ -885,7 +886,8 @@ extern int hpsdr_server;
 extern int server_stops_protocol;
 extern char hpsdr_pwd[HPSDR_PWD_LEN];
 
-extern int client_socket;
+extern int cl_sock_tcp;
+
 extern int start_spectrum(void *data);
 extern void start_vfo_timer(void);
 extern gboolean remote_started;
@@ -958,7 +960,6 @@ extern void send_mox(int s, int state);
 extern void send_radio_data(int sock);
 extern void send_radiomenu(int s);
 extern void send_recall(int s, int index);
-extern void send_receiver_data(int sock, int rx);
 extern void send_receivers(int s, int receivers);
 extern void send_region(int s, int region);
 extern void send_restart(int s);
@@ -1009,8 +1010,8 @@ extern void send_zoom(int s, const RECEIVER *rx);
 extern void update_vfo_move(int v, long long hz, int round);
 extern void update_vfo_step(int v, int steps);
 
-extern int recv_bytes(int s, char *buffer, int bytes);
-extern int send_bytes(int s, char *buffer, int bytes);
+extern int recv_tcp(int s, char *buffer, int bytes);
+extern int send_tcp(int s, char *buffer, int bytes);
 extern void generate_pwd_hash(unsigned char *s, unsigned char *hash, const char *pwd);
 //
 // htonll and friends are macros, and this may have
@@ -1020,15 +1021,15 @@ extern void generate_pwd_hash(unsigned char *s, unsigned char *hash, const char 
 //
 
 static inline uint64_t to_double(double x) {
-//
-// The uint64 range encompasses 0 ... 1.8E19
-//
-// With a resolution of 1E-10, we map doubles
-// in the range +/- 9E8 onto that range. For example,
-// 123456789.123456789 becomes 10234567891234567890 (1.02E19),
-// 0.0 becomes 9000000000000000000 (9E18),
-// and -123456789.123456789 becomes 7765432108765432110 (7.76E18)
-//
+  //
+  // The uint64 range encompasses 0 ... 1.8E19
+  //
+  // With a resolution of 1E-10, we map doubles
+  // in the range +/- 9E8 onto that range. For example,
+  // 123456789.123456789 becomes 10234567891234567890 (1.02E19),
+  // 0.0 becomes 9000000000000000000 (9E18),
+  // and -123456789.123456789 becomes 7765432108765432110 (7.76E18)
+  //
   uint64_t u64 = (x + 9.0E8) * 1.0E10;
 #ifdef __APPLE__
   uint64_t ret = htonll(u64);

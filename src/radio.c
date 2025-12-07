@@ -101,8 +101,8 @@ static GtkWidget *menu_b;
 static GtkWidget *vfo_panel;
 static GtkWidget *meter;
 
-// RX and TX calibration
-long long frequency_calibration = 0LL;
+// RX and TX frequency calibration (relative, in Hz per 10 MHz)
+int frequency_calibration = 0;
 
 int sat_mode = SAT_NONE;
 
@@ -257,6 +257,7 @@ int have_g2_v2 = 0;
 int have_lime = 0;
 int have_radioberry1 = 0;
 int have_radioberry2 = 0;
+int have_radioberry3 = 0;
 int rx_gain_calibration = 0;
 
 int split = 0;
@@ -423,6 +424,22 @@ gboolean radio_keypress_cb(GtkWidget *widget, GdkEventKey *event, gpointer data)
 
   case  GDK_KEY_D:
     vfo_id_step(1 - active_receiver->id, -10);
+    break;
+
+  //
+  // pressing 'm' or 'M' can now be used to open the main menu.
+  // this was necessary since on some systems, going full-screen
+  // makes the HIDE and MENU buttons in the top right corner
+  // deaf.
+  //
+  case GDK_KEY_m:
+  case GDK_KEY_M:
+
+    // start the main menu
+    if (main_menu == NULL) {
+      new_menu();
+    }
+
     break;
 
   //
@@ -845,7 +862,12 @@ static gboolean menu_cb (GtkWidget *widget, GdkEventButton *event, gpointer data
 static void radio_create_visual() {
   int y = 0;
   fixed = gtk_fixed_new();
-  g_object_ref(topgrid);  // so it does not get deleted
+  //
+  // The next statement takes care topgrid does not get destroyed
+  // when removing it from top_window. It seems it is not used
+  // any longer but the statement can also not do any harm.
+  //
+  g_object_ref(topgrid);
   gtk_container_remove(GTK_CONTAINER(top_window), topgrid);
   gtk_container_add(GTK_CONTAINER(top_window), fixed);
   int my_height = display_height[display_size];
@@ -903,7 +925,7 @@ static void radio_create_visual() {
   // Since we start with RX1 as the active receiver,
   // make sure this one is also selected on the server
   //
-  send_rx_select(client_socket, 0);
+  send_rx_select(cl_sock_tcp, 0);
 
   if (!radio_is_remote) {
     //
@@ -1021,7 +1043,7 @@ static void radio_create_visual() {
     receivers = RECEIVERS;
 
     if (radio_is_remote) {
-      radio_remote_change_receivers(GINT_TO_POINTER(r));
+      radio_client_change_receivers(GINT_TO_POINTER(r));
     } else {
       radio_change_receivers(r);
     }
@@ -1125,8 +1147,10 @@ void radio_start_radio() {
       //
       if (radio->software_version < 732) {
         have_radioberry1 = 1;
-      } else {
+      } else if (radio->software_version < 750) {
         have_radioberry2 = 1;
+      } else {
+        have_radioberry3 = 1;
       }
     }
   }
@@ -1767,9 +1791,9 @@ void radio_start_radio() {
   radio_protocol_running = 1;
 }
 
-int radio_remote_change_receivers(gpointer data) {
+int radio_client_change_receivers(gpointer data) {
   int r = GPOINTER_TO_INT(data);
-  t_print("radio_remote_change_receivers: from %d to %d\n", receivers, r);
+  t_print("%s: from %d to %d\n", __FUNCTION__, receivers, r);
 
   if (receivers == r) { return G_SOURCE_REMOVE; }
 
@@ -1778,13 +1802,13 @@ int radio_remote_change_receivers(gpointer data) {
     receiver[1]->displaying = 0;
     gtk_container_remove(GTK_CONTAINER(fixed), receiver[1]->panel);
     receivers = 1;
-    send_startstop_rxspectrum(client_socket, 1, 0);
+    send_startstop_rxspectrum(cl_sock_tcp, 1, 0);
     break;
 
   case 2:
     gtk_fixed_put(GTK_FIXED(fixed), receiver[1]->panel, 0, 0);
     receivers = 2;
-    send_startstop_rxspectrum(client_socket, 1, 1);
+    send_startstop_rxspectrum(cl_sock_tcp, 1, 1);
     receiver[1]->displaying = 1;
     break;
   }
@@ -1942,7 +1966,7 @@ static void rxtx(int state) {
           rx_off(receiver[i]);
           rx_set_displaying(receiver[i]);
         } else {
-          send_startstop_rxspectrum(client_socket, i, 0);
+          send_startstop_rxspectrum(cl_sock_tcp, i, 0);
         }
 
         g_object_ref((gpointer)receiver[i]->panel);
@@ -1985,7 +2009,7 @@ static void rxtx(int state) {
 #endif
       }
     } else {
-      send_startstop_txspectrum(client_socket, 1);
+      send_startstop_txspectrum(cl_sock_tcp, 1);
     }
 
 #ifdef DUMP_TX_DATA
@@ -2031,7 +2055,7 @@ static void rxtx(int state) {
       tx_off(transmitter);
       tx_set_displaying(transmitter);
     } else {
-      send_startstop_txspectrum(client_socket, 0);
+      send_startstop_txspectrum(cl_sock_tcp, 0);
     }
 
     if (transmitter->dialog) {
@@ -2104,7 +2128,7 @@ static void rxtx(int state) {
 
           receiver[i]->txrxcount = 0;
         } else {
-          send_startstop_rxspectrum(client_socket, i, 1);
+          send_startstop_rxspectrum(cl_sock_tcp, i, 1);
         }
       }
     }
@@ -2117,14 +2141,14 @@ static void rxtx(int state) {
 
 void radio_toggle_mox() {
   if (radio_is_remote) {
-    send_toggle_mox(client_socket);
+    send_toggle_mox(cl_sock_tcp);
     return;
   }
 
   radio_set_mox(!mox);
 }
 
-int radio_remote_set_vox(gpointer data) {
+int radio_client_set_vox(gpointer data) {
   int state = GPOINTER_TO_INT(data);
 
   if (can_transmit) {
@@ -2141,7 +2165,7 @@ int radio_remote_set_vox(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-int radio_remote_set_mox(gpointer data) {
+int radio_client_set_mox(gpointer data) {
   int state = GPOINTER_TO_INT(data);
 
   if (can_transmit) {
@@ -2159,7 +2183,7 @@ int radio_remote_set_mox(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-int radio_remote_set_twotone(gpointer data) {
+int radio_client_set_twotone(gpointer data) {
   if (can_transmit) {
     transmitter->twotone = GPOINTER_TO_INT(data);
   }
@@ -2168,7 +2192,7 @@ int radio_remote_set_twotone(gpointer data) {
   return G_SOURCE_REMOVE;
 }
 
-int radio_remote_set_tune(gpointer data) {
+int radio_client_set_tune(gpointer data) {
   int state = GPOINTER_TO_INT(data);
 
   if (can_transmit) {
@@ -2221,7 +2245,7 @@ void radio_set_pan(int id, int value) {
 
 void radio_set_mox(int state) {
   if (radio_is_remote) {
-    send_mox(client_socket, state);
+    send_mox(cl_sock_tcp, state);
     return;
   }
 
@@ -2274,7 +2298,7 @@ void radio_set_duplex(int state) {
   if (!can_transmit || (state == duplex)) { return; }
 
   if (radio_is_remote) {
-    send_duplex(client_socket, state);
+    send_duplex(cl_sock_tcp, state);
   }
 
   duplex = state;
@@ -2330,7 +2354,7 @@ void radio_load_filters(int b) {
   filter_board = b;
 
   if (radio_is_remote) {
-    send_filter_board(client_socket, filter_board);
+    send_filter_board(cl_sock_tcp, filter_board);
     return;
   }
 
@@ -2375,7 +2399,7 @@ void radio_set_sidetone_freq(int val) {
   cw_keyer_sidetone_frequency = val;
 
   if (radio_is_remote) {
-    send_sidetone_freq(client_socket, cw_keyer_sidetone_frequency);
+    send_sidetone_freq(cl_sock_tcp, cw_keyer_sidetone_frequency);
   } else {
     // changing the side tone frequency affects BFO frequency offsets
     rx_filter_changed(active_receiver);
@@ -2411,7 +2435,7 @@ void radio_set_diversity_gain(double val) {
   }
 
   if (radio_is_remote) {
-    send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
+    send_diversity(cl_sock_tcp, diversity_enabled, div_gain, div_phase);
     return;
   }
 
@@ -2430,7 +2454,7 @@ void radio_set_diversity_phase(double value) {
   }
 
   if (radio_is_remote) {
-    send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
+    send_diversity(cl_sock_tcp, diversity_enabled, div_gain, div_phase);
     return;
   }
 
@@ -2439,7 +2463,7 @@ void radio_set_diversity_phase(double value) {
 
 void radio_set_diversity(int state) {
   if (radio_is_remote) {
-    send_diversity(client_socket, state, div_gain, div_phase);
+    send_diversity(cl_sock_tcp, state, div_gain, div_phase);
   } else {
     //
     // If we have only one receiver, then changing diversity
@@ -2467,7 +2491,7 @@ void radio_set_diversity(int state) {
 
 void radio_set_vox(int state) {
   if (radio_is_remote) {
-    send_vox(client_socket, state);
+    send_vox(cl_sock_tcp, state);
     return;
   }
 
@@ -2489,7 +2513,7 @@ void radio_set_vox(int state) {
 
 void radio_set_twotone(TRANSMITTER *tx, int state) {
   if (radio_is_remote) {
-    send_twotone(client_socket, state);
+    send_twotone(cl_sock_tcp, state);
     return;
   }
 
@@ -2499,7 +2523,7 @@ void radio_set_twotone(TRANSMITTER *tx, int state) {
 
 void radio_toggle_tune() {
   if (radio_is_remote) {
-    send_toggle_tune(client_socket);
+    send_toggle_tune(cl_sock_tcp);
     return;
   }
 
@@ -2511,7 +2535,7 @@ void radio_toggle_tune() {
 
 void radio_set_tune(int state) {
   if (radio_is_remote) {
-    send_tune(client_socket, state);
+    send_tune(cl_sock_tcp, state);
     return;
   }
 
@@ -2841,7 +2865,7 @@ void radio_set_rf_gain(int id, double value) {
   g_idle_add(sliders_rf_gain, GINT_TO_POINTER(100 * suppress_popup_sliders + id));
 
   if (radio_is_remote) {
-    send_rfgain(client_socket, id, adc[rxadc].gain);
+    send_rfgain(cl_sock_tcp, id, adc[rxadc].gain);
     return;
   }
 
@@ -2889,7 +2913,7 @@ void radio_set_linein_gain(double value) {
   linein_gain = value;
 
   if (radio_is_remote) {
-    send_txmenu(client_socket);
+    send_txmenu(cl_sock_tcp);
   } else {
     schedule_high_priority();
   }
@@ -3002,7 +3026,7 @@ void radio_set_dither(int id, int value) {
   adc[rxadc].dither = value;
 
   if (radio_is_remote) {
-    send_rxmenu(client_socket, rxadc);
+    send_rxmenu(cl_sock_tcp, rxadc);
     return;
   }
 
@@ -3016,7 +3040,7 @@ void radio_set_random(int id, int value) {
   adc[rxadc].random = value;
 
   if (radio_is_remote) {
-    send_rxmenu(client_socket, rxadc);
+    send_rxmenu(cl_sock_tcp, rxadc);
     return;
   }
 
@@ -3032,7 +3056,7 @@ void radio_set_preamp(int id, int value) {
   adc[rxadc].preamp = value;
 
   if (radio_is_remote) {
-    send_rxmenu(client_socket, id);
+    send_rxmenu(cl_sock_tcp, id);
     return;
   }
 
@@ -3098,7 +3122,7 @@ void radio_set_attenuation(int id, int value) {
   g_idle_add(sliders_attenuation, GINT_TO_POINTER(100 * suppress_popup_sliders + id));
 
   if (radio_is_remote) {
-    send_attenuation(client_socket, id, value);
+    send_attenuation(cl_sock_tcp, id, value);
     return;
   }
 
@@ -3126,7 +3150,7 @@ void radio_set_drive(double value) {
   g_idle_add(sliders_drive, GINT_TO_POINTER(100 * suppress_popup_sliders));
 
   if (radio_is_remote) {
-    send_drive(client_socket, value);
+    send_drive(cl_sock_tcp, value);
     return;
   }
 
@@ -3154,7 +3178,7 @@ void radio_set_drive(double value) {
 
 void radio_set_satmode(int mode) {
   if (radio_is_remote) {
-    send_sat(client_socket, mode);
+    send_sat(cl_sock_tcp, mode);
     return;
   }
 
@@ -3211,13 +3235,6 @@ void radio_apply_band_settings(int flag, int id) {
     }
   }
 
-  //
-  // If a client is connected, update ADC0 data on the client side
-  //
-  if (remoteclient.running) {
-    send_adc_data(remoteclient.socket, rxadc);
-  }
-
   schedule_high_priority();         // possibly update RX/TX antennas
   schedule_general();               // possibly update PA disable
   suppress_popup_sliders--;
@@ -3262,7 +3279,7 @@ void radio_set_alex_attenuation(int v) {
   }
 
   if (radio_is_remote)  {
-    send_rxmenu(client_socket, 0);
+    send_rxmenu(cl_sock_tcp, 0);
     return;
   }
 
@@ -3291,7 +3308,7 @@ void radio_set_split(int val) {
     split = val;
 
     if (radio_is_remote) {
-      send_split(client_socket, val);
+      send_split(cl_sock_tcp, val);
     } else {
       radio_tx_vfo_changed();
       radio_apply_band_settings(0, 0);
@@ -3419,24 +3436,29 @@ static void radio_restore_state() {
     }
 
     GetPropI1("radio.adc[%d].alex_antenna", 2,               adc[2].antenna);  // for PS RX feedback
-    filterRestoreState();
-    bandRestoreState();
-    memRestoreState();
+    filter_restore_state();
+    band_restore_state();
+    mem_restore_state();
     vfo_restore_state();
   }
 
   //
+  // ModeSettings are needed on the client side as well,
+  // since we store mode-dependent audio settings there
+  //
+  modesettings_restore_state();
+  //
   // GPIO, rigctl and MIDI should be
   // read from the local file on the client side
-  ///
+  //
   toolbar_restore_state();
   sliders_restore_state();
 #ifdef GPIO
-  gpioRestoreActions();
+  gpio_restore_actions();
 #endif
-  rigctlRestoreState();
+  rigctl_restore_state();
 #ifdef MIDI
-  midiRestoreState();
+  midi_restore_state();
 #endif
   t_print("%s: radio state (except receiver/transmitter) restored.\n", __FUNCTION__);
 
@@ -3638,27 +3660,33 @@ void radio_save_state() {
     }
 
     SetPropI1("radio.adc[%d].alex_antenna", 2,               adc[2].antenna);  // for PS RX feedback
-    filterSaveState();
-    bandSaveState();
-    memSaveState();
+    filter_save_state();
+    band_save_state();
+    mem_save_state();
     vfo_save_state();
   }
 
+  //
+  // Toolbar, Sliders, Mode settings (RX/TX local audio settings),
+  // GPIO, TCI/CAT, MIDI
+  // are handled on the client side in client/server operation
+  //
+  modesettings_save_state();
   toolbar_save_state();
   sliders_save_state();
 #ifdef GPIO
-  gpioSaveActions();
+  gpio_save_actions();
 #endif
-  rigctlSaveState();
+  rigctl_save_state();
 #ifdef MIDI
-  midiSaveState();
+  midi_save_state();
 #endif
   saveProperties(property_path);
   g_mutex_unlock(&property_mutex);
 }
 
 // cppcheck-suppress constParameterPointer
-int radio_remote_start(void *data) {
+int radio_client_start(void *data) {
   const char *server = (const char *)data;
   snprintf(property_path, sizeof(property_path), "%s@%s.props", radio->name, server);
 
@@ -3675,7 +3703,7 @@ int radio_remote_start(void *data) {
   // Read "local" data from the props file.
   //
   radio_restore_state();
-  send_screen(client_socket, rx_stack_horizontal, display_width[display_size]);
+  send_screen(cl_sock_tcp, rx_stack_horizontal, display_width[display_size]);
   radio_create_visual();
   radio_reconfigure_screen();
 
@@ -3707,10 +3735,10 @@ int radio_remote_start(void *data) {
   if (can_transmit) {
     tx_restore_state(transmitter);
 
-    if (transmitter->local_microphone) {
-      if (audio_open_input() != 0) {
+    if (transmitter->local_audio) {
+      if (audio_open_input(transmitter) != 0) {
         t_print("audio_open_input failed\n");
-        transmitter->local_microphone = 0;
+        transmitter->local_audio = 0;
       }
     }
   }
@@ -3746,7 +3774,7 @@ int radio_remote_start(void *data) {
 #endif
 
   for (int i = 0; i < receivers; i++) {
-    send_startstop_rxspectrum(client_socket, i, 1);
+    send_startstop_rxspectrum(cl_sock_tcp, i, 1);
   }
 
   if (open_test_menu) {
@@ -3844,7 +3872,7 @@ int radio_max_band() {
   return max;
 }
 
-int radio_remote_protocol_stop(gpointer data) {
+int radio_server_protocol_stop(gpointer data) {
   //
   // stop protocol via GTK queue
   //
@@ -3880,7 +3908,7 @@ void radio_protocol_stop() {
   radio_protocol_running = 0;
 }
 
-int radio_remote_protocol_run(gpointer data) {
+int radio_server_protocol_run(gpointer data) {
   //
   // start protocol via GTK queue
   //

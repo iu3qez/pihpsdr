@@ -37,6 +37,7 @@ static GtkWidget *feedback_l;
 static GtkWidget *correcting_l;
 static GtkWidget *get_pk;
 static GtkWidget *set_pk;
+static GtkWidget *tx_att_lbl;
 static GtkWidget *tx_att;
 static GtkWidget *tx_att_spin;
 
@@ -99,7 +100,7 @@ static void att_spin_cb(GtkWidget *widget, gpointer data) {
   transmitter->attenuation = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_psatt(client_socket); // this sends auto, attenuation, feedback, and ps antenna
+    send_psatt(cl_sock_tcp); // this sends auto, attenuation, feedback, and ps antenna
   } else {
     schedule_high_priority();
   }
@@ -114,7 +115,7 @@ static void setpk_cb(GtkWidget *widget, gpointer data) {
     transmitter->ps_setpk = newpk;
 
     if (radio_is_remote) {
-      send_psparams(client_socket, transmitter);
+      send_psparams(cl_sock_tcp, transmitter);
     } else {
       tx_ps_setparams(transmitter);
       ps_off_on();
@@ -425,7 +426,7 @@ static void ps_ant_cb(GtkWidget *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_psatt(client_socket);
+    send_psatt(cl_sock_tcp);
   } else {
     schedule_high_priority();
   }
@@ -443,16 +444,18 @@ static void enable_cb(GtkWidget *widget, gpointer data) {
         snprintf(label, sizeof(label), "%d", transmitter->attenuation);
         gtk_label_set_text(GTK_LABEL(tx_att), label);
         gtk_widget_show(tx_att);
+        gtk_widget_show(tx_att_lbl);
         gtk_widget_hide(tx_att_spin);
       } else {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_att_spin), (double) transmitter->attenuation);
         gtk_widget_show(tx_att_spin);
         gtk_widget_hide(tx_att);
+        gtk_widget_show(tx_att_lbl);
       }
     } else {
       gtk_widget_hide(tx_att_spin);
-      gtk_widget_show(tx_att);
-      gtk_label_set_text(GTK_LABEL(tx_att), "");
+      gtk_widget_hide(tx_att);
+      gtk_widget_hide(tx_att_lbl);
     }
   }
 }
@@ -461,7 +464,7 @@ static void tol_cb(GtkWidget *widget, gpointer data) {
   transmitter->ps_ptol = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (radio_is_remote) {
-    send_psparams(client_socket, transmitter);
+    send_psparams(cl_sock_tcp, transmitter);
   } else {
     tx_ps_setparams(transmitter);
     ps_off_on();
@@ -472,7 +475,7 @@ static void oneshot_cb(GtkWidget *widget, gpointer data) {
   transmitter->ps_oneshot = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (radio_is_remote) {
-    send_psparams(client_socket, transmitter);
+    send_psparams(cl_sock_tcp, transmitter);
   } else {
     tx_ps_setparams(transmitter);
     ps_off_on();
@@ -483,7 +486,7 @@ static void map_cb(GtkWidget *widget, gpointer data) {
   transmitter->ps_map = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (radio_is_remote) {
-    send_psparams(client_socket, transmitter);
+    send_psparams(cl_sock_tcp, transmitter);
   } else {
     tx_ps_setparams(transmitter);
     ps_off_on();
@@ -494,7 +497,7 @@ static void auto_cb(GtkWidget *widget, gpointer data) {
   transmitter->auto_on = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
 
   if (radio_is_remote) {
-    send_psatt(client_socket);
+    send_psatt(cl_sock_tcp);
   }
 
   if (transmitter->puresignal) {
@@ -507,6 +510,7 @@ static void auto_cb(GtkWidget *widget, gpointer data) {
       char label[16];
       snprintf(label, sizeof(label), "%d", transmitter->attenuation);
       gtk_label_set_text(GTK_LABEL(tx_att), label);
+      gtk_widget_show(tx_att_lbl);
       gtk_widget_show(tx_att);
       gtk_widget_hide(tx_att_spin);
     } else {
@@ -517,13 +521,15 @@ static void auto_cb(GtkWidget *widget, gpointer data) {
       // set attenuation to value stored in spin button
       //
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(tx_att_spin), (double) transmitter->attenuation);
+      gtk_widget_show(tx_att_lbl);
       gtk_widget_show(tx_att_spin);
       gtk_widget_hide(tx_att);
     }
   } else {
-    gtk_widget_show(tx_att);
+    // PS not enabled: maximum TX ATT is enforced
+    gtk_widget_hide(tx_att);
+    gtk_widget_hide(tx_att_lbl);
     gtk_widget_hide(tx_att_spin);
-    gtk_label_set_text(GTK_LABEL(tx_att), "");
   }
 }
 
@@ -539,7 +545,7 @@ static void resume_cb(GtkWidget *widget, gpointer data) {
       transmitter->attenuation = 0;
 
       if (radio_is_remote) {
-        send_psatt(client_socket);
+        send_psatt(cl_sock_tcp);
       }
     }
 
@@ -551,7 +557,7 @@ static void feedback_cb(GtkWidget *widget, gpointer data) {
   transmitter->feedback = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   if (radio_is_remote) {
-    send_psatt(client_socket);
+    send_psatt(cl_sock_tcp);
   }
 }
 
@@ -638,7 +644,7 @@ void ps_menu(GtkWidget *parent) {
   // In fact, we provide the possibility of using EXT1 only to support these older
   // (before February, 2015) ANAN-100/200 devices.
   //
-  GtkWidget *ps_ant_label = gtk_label_new("PS FeedBk ANT:");
+  GtkWidget *ps_ant_label = gtk_label_new("PS FeedBk ANT");
   gtk_widget_set_name(ps_ant_label, "boldlabel");
   gtk_widget_show(ps_ant_label);
   gtk_grid_attach(GTK_GRID(grid), ps_ant_label, col, row, 1, 1);
@@ -766,9 +772,9 @@ void ps_menu(GtkWidget *parent) {
   gtk_entry_set_width_chars(GTK_ENTRY(set_pk), 10);
   g_signal_connect(set_pk, "activate", G_CALLBACK(setpk_cb), NULL);
   col++;
-  lbl = gtk_label_new("TX ATT");
-  gtk_widget_set_name(lbl, "boldlabel");
-  gtk_grid_attach(GTK_GRID(grid), lbl, col, row, 1, 1);
+  tx_att_lbl = gtk_label_new("TX ATT");
+  gtk_widget_set_name(tx_att_lbl, "boldlabel");
+  gtk_grid_attach(GTK_GRID(grid), tx_att_lbl, col, row, 1, 1);
   col++;
   tx_att = gtk_label_new("");
   gtk_widget_set_name(tx_att, "small_button_with_border");
@@ -799,14 +805,16 @@ void ps_menu(GtkWidget *parent) {
     if (transmitter->auto_on) {
       gtk_widget_hide(tx_att_spin);
       gtk_widget_show(tx_att);
+      gtk_widget_show(tx_att_lbl);
     } else {
       gtk_widget_hide(tx_att);
+      gtk_widget_show(tx_att_lbl);
       gtk_widget_show(tx_att_spin);
     }
   } else {
     gtk_widget_hide(tx_att_spin);
-    gtk_widget_show(tx_att);
-    gtk_entry_set_text(GTK_ENTRY(tx_att), "");
+    gtk_widget_hide(tx_att);
+    gtk_widget_hide(tx_att_lbl);
   }
 }
 

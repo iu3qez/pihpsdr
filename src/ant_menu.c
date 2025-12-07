@@ -57,7 +57,7 @@ static void rx_ant_cb(GtkToggleButton *widget, gpointer data) {
   band->RxAntenna = ant;
 
   if (radio_is_remote) {
-    send_band_data(client_socket, b);
+    send_band_data(cl_sock_tcp, b);
   } else {
     radio_apply_band_settings(0, 0);
   }
@@ -70,7 +70,7 @@ static void tx_ant_cb(GtkToggleButton *widget, gpointer data) {
   band->TxAntenna = ant;
 
   if (radio_is_remote) {
-    send_band_data(client_socket, b);
+    send_band_data(cl_sock_tcp, b);
   } else {
     radio_apply_band_settings(0, 0);
   }
@@ -87,7 +87,7 @@ static void adc_antenna_cb(GtkComboBox *widget, gpointer data) {
 
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio_is_remote) {
-      send_soapy_rxant(client_socket, id);
+      send_soapy_rxant(cl_sock_tcp, id);
     } else {
 #ifdef SOAPYSDR
       soapy_protocol_set_rx_antenna(id, ant);
@@ -112,7 +112,7 @@ static void dac_antenna_cb(GtkComboBox *widget, gpointer data) {
 
   if (device == SOAPYSDR_USB_DEVICE) {
     if (radio_is_remote) {
-      send_soapy_txant(client_socket);
+      send_soapy_txant(cl_sock_tcp);
     } else {
 #ifdef SOAPYSDR
       soapy_protocol_set_tx_antenna(transmitter->antenna);
@@ -310,7 +310,7 @@ static void newpa_cb(GtkWidget *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_radiomenu(client_socket);
+    send_radiomenu(cl_sock_tcp);
   } else {
     schedule_high_priority();
   }
@@ -370,7 +370,7 @@ void ant_menu(GtkWidget *parent) {
     for (int id = 0; id < RECEIVERS; id++) {
       if (radio->soapy.rx[id].antennas > 0) {
         char text[64];
-        snprintf(text, sizeof(text), "RX%d Antenna:", id + 1);
+        snprintf(text, sizeof(text), "RX%d Antenna", id + 1);
         GtkWidget *label = gtk_label_new(text);
         gtk_widget_set_name(label, "boldlabel");
         gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
@@ -388,7 +388,7 @@ void ant_menu(GtkWidget *parent) {
     }
 
     if (can_transmit && radio->soapy.tx.antennas > 0) {
-      GtkWidget *label = gtk_label_new("TX Antenna:");
+      GtkWidget *label = gtk_label_new("TX Antenna");
       gtk_widget_set_name(label, "boldlabel");
       gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
       GtkWidget *box = gtk_combo_box_text_new();

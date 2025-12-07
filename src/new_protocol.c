@@ -470,14 +470,6 @@ void new_protocol_init() {
 
   TXIQRINGBUF = g_new(unsigned char, TXIQRINGBUFLEN);
   RXAUDIORINGBUF = g_new(unsigned char, RXAUDIORINGBUFLEN);
-
-  if (transmitter->local_microphone) {
-    if (audio_open_input() != 0) {
-      t_print("audio_open_input failed\n");
-      transmitter->local_microphone = 0;
-    }
-  }
-
   //
   // Initialise semaphores for the never-finishing threads
   // (HighPrio, Mic, rxIQ) and spawn these threads.
@@ -524,7 +516,7 @@ void new_protocol_init() {
     data_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     if (data_socket < 0) {
-      t_perror("Could not create data socket:");
+      t_perror("Could not create data socket");
       g_idle_add(fatal_error, "FATAL: P2 could not create data socket");
     }
 
@@ -596,7 +588,7 @@ void new_protocol_init() {
     // bind to the interface
     if (bind(data_socket, (struct sockaddr * )&radio->network.interface_address,
              radio->network.interface_length) < 0) {
-      t_perror("bind socket failed for data_socket:");
+      t_perror("bind socket failed for data_socket");
       g_idle_add(fatal_error, "FATAL: P2 Bind failed for data socket");
     }
 
@@ -709,6 +701,7 @@ static void new_protocol_high_priority() {
   long long HPFfreq;          // frequency determining the HPF filters
   long long LPFfreq;          // frequency determining the LPF filters
   long long BPFfreq;          // frequency determining the BPF filters
+  long long freq;
   unsigned long phase;
 
   if (data_socket == -1 && !have_saturn_xdma) {
@@ -763,7 +756,9 @@ static void new_protocol_high_priority() {
   //  Set DDC frequencies for RX1 and RX2
   //
   for (int id = 0; id < 2; id++) {
-    DDCfrequency[id] = vfo[id].frequency + frequency_calibration -  vfo[id].lo;
+    // apply *relative* frequency calibration to the DDC frequency
+    freq = vfo[id].frequency - vfo[id].lo;  // uncorrected DDC freq
+    DDCfrequency[id] = (freq * (10000000LL + frequency_calibration)) / 10000000LL;
   }
 
   // CW mode from the Host; disabled since pihpsdr does not use this CW option.
@@ -820,7 +815,9 @@ static void new_protocol_high_priority() {
     txfreq += vfo[txvfo].xit;
   }
 
-  DUCfrequency = txfreq - vfo[txvfo].lo + frequency_calibration;
+  // apply *relative* frequency calibration to the DUC frequency
+  freq = txfreq - vfo[txvfo].lo;  // uncorrected DUC freq
+  DUCfrequency = (freq * (10000000LL + frequency_calibration)) / 10000000LL;
   phase = (unsigned long)(((double)DUCfrequency) * 34.952533333333333333333333333333);
 
   if (xmit && transmitter->puresignal) {
@@ -1994,7 +1991,7 @@ static gpointer new_protocol_thread(gpointer data) {
     }
 
     if (bytesread < 0) {
-      t_perror("recvfrom socket failed for new_protocol_thread:");
+      t_perror("recvfrom socket failed for new_protocol_thread");
       g_idle_add(fatal_error, "FATAL: P2 receive (Network problem?)");
       P2running = 0;
       break;

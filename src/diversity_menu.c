@@ -62,7 +62,7 @@ static void gain_coarse_changed_cb(GtkWidget *widget, gpointer data) {
   div_gain = gtk_range_get_value(GTK_RANGE(widget)) + gain_fine;
 
   if (radio_is_remote) {
-    send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
+    send_diversity(cl_sock_tcp, diversity_enabled, div_gain, div_phase);
     return;
   }
 
@@ -73,7 +73,7 @@ static void gain_fine_changed_cb(GtkWidget *widget, gpointer data) {
   div_gain = gain_coarse + gtk_range_get_value(GTK_RANGE(widget));
 
   if (radio_is_remote) {
-    send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
+    send_diversity(cl_sock_tcp, diversity_enabled, div_gain, div_phase);
     return;
   }
 
@@ -84,7 +84,7 @@ static void phase_coarse_changed_cb(GtkWidget *widget, gpointer data) {
   div_phase = gtk_range_get_value(GTK_RANGE(widget)) + phase_fine;
 
   if (radio_is_remote) {
-    send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
+    send_diversity(cl_sock_tcp, diversity_enabled, div_gain, div_phase);
     return;
   }
 
@@ -95,7 +95,7 @@ static void phase_fine_changed_cb(GtkWidget *widget, gpointer data) {
   div_phase = phase_coarse + gtk_range_get_value(GTK_RANGE(widget));
 
   if (radio_is_remote) {
-    send_diversity(client_socket, diversity_enabled, div_gain, div_phase);
+    send_diversity(cl_sock_tcp, diversity_enabled, div_gain, div_phase);
     return;
   }
 
@@ -146,7 +146,7 @@ void diversity_menu(GtkWidget *parent) {
   gtk_widget_show(diversity_b);
   gtk_grid_attach(GTK_GRID(grid), diversity_b, 1, 0, 1, 1);
   g_signal_connect(diversity_b, "toggled", G_CALLBACK(diversity_cb), NULL);
-  GtkWidget *gain_coarse_label = gtk_label_new("Gain (dB, coarse):");
+  GtkWidget *gain_coarse_label = gtk_label_new("Gain (dB, coarse)");
   gtk_widget_set_name(gain_coarse_label, "boldlabel");
   gtk_widget_set_halign(gain_coarse_label, GTK_ALIGN_END);
   gtk_misc_set_alignment (GTK_MISC(gain_coarse_label), 0, 0);
@@ -158,7 +158,7 @@ void diversity_menu(GtkWidget *parent) {
   gtk_widget_show(gain_coarse_scale);
   gtk_grid_attach(GTK_GRID(grid), gain_coarse_scale, 1, 1, 1, 1);
   g_signal_connect(G_OBJECT(gain_coarse_scale), "value_changed", G_CALLBACK(gain_coarse_changed_cb), NULL);
-  GtkWidget *gain_fine_label = gtk_label_new("Gain (dB, fine):");
+  GtkWidget *gain_fine_label = gtk_label_new("Gain (dB, fine)");
   gtk_widget_set_name(gain_fine_label, "boldlabel");
   gtk_widget_set_halign(gain_fine_label, GTK_ALIGN_END);
   gtk_misc_set_alignment (GTK_MISC(gain_fine_label), 0, 0);
@@ -170,7 +170,7 @@ void diversity_menu(GtkWidget *parent) {
   gtk_widget_show(gain_fine_scale);
   gtk_grid_attach(GTK_GRID(grid), gain_fine_scale, 1, 2, 1, 1);
   g_signal_connect(G_OBJECT(gain_fine_scale), "value_changed", G_CALLBACK(gain_fine_changed_cb), NULL);
-  GtkWidget *phase_coarse_label = gtk_label_new("Phase (coarse):");
+  GtkWidget *phase_coarse_label = gtk_label_new("Phase (coarse)");
   gtk_widget_set_name(phase_coarse_label, "boldlabel");
   gtk_widget_set_halign(phase_coarse_label, GTK_ALIGN_END);
   gtk_misc_set_alignment (GTK_MISC(phase_coarse_label), 0, 0);
@@ -182,7 +182,7 @@ void diversity_menu(GtkWidget *parent) {
   gtk_widget_show(phase_coarse_scale);
   gtk_grid_attach(GTK_GRID(grid), phase_coarse_scale, 1, 3, 1, 1);
   g_signal_connect(G_OBJECT(phase_coarse_scale), "value_changed", G_CALLBACK(phase_coarse_changed_cb), NULL);
-  GtkWidget *phase_fine_label = gtk_label_new("Phase (fine):");
+  GtkWidget *phase_fine_label = gtk_label_new("Phase (fine)");
   gtk_widget_set_name(phase_fine_label, "boldlabel");
   gtk_widget_set_halign(phase_fine_label, GTK_ALIGN_END);
   gtk_misc_set_alignment (GTK_MISC(phase_fine_label), 0, 0);

@@ -63,7 +63,7 @@ static int apply(gpointer data) {
   radio_reconfigure_screen();
 
   if (radio_is_remote) {
-    send_screen(client_socket, rx_stack_horizontal, display_width[my_display_size]);
+    send_screen(cl_sock_tcp, rx_stack_horizontal, display_width[my_display_size]);
   }
 
   //
@@ -220,7 +220,7 @@ void screen_menu(GtkWidget *parent) {
   gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
   row++;
   col = 0;
-  label = gtk_label_new("Font used:");
+  label = gtk_label_new("Font used");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
@@ -236,7 +236,7 @@ void screen_menu(GtkWidget *parent) {
   g_signal_connect(button, "changed", G_CALLBACK(font_cb), NULL);
   row++;
   col = 0;
-  label = gtk_label_new("Window size:");
+  label = gtk_label_new("Window size");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
@@ -256,7 +256,7 @@ void screen_menu(GtkWidget *parent) {
   g_signal_connect(size_b, "changed", G_CALLBACK(size_cb), NULL);
   row++;
   col = 0;
-  label = gtk_label_new("Custom Width/Height:");
+  label = gtk_label_new("Custom Width/Height");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
@@ -272,7 +272,7 @@ void screen_menu(GtkWidget *parent) {
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
   row++;
   col = 0;
-  label = gtk_label_new("Select VFO bar layout:");
+  label = gtk_label_new("Select VFO bar layout");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_END);
   gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);

@@ -93,7 +93,7 @@ gboolean rx_button_press_event(GtkWidget *widget, GdkEventButton *event, gpointe
 
 void rx_set_active(RECEIVER *rx) {
   if (radio_is_remote) {
-    send_rx_select(client_socket, rx->id);
+    send_rx_select(cl_sock_tcp, rx->id);
   }
 
   //
@@ -250,7 +250,6 @@ void rx_save_state(const RECEIVER *rx) {
   SetPropI1("receiver.%d.audio_channel", rx->id,                rx->audio_channel);
   SetPropI1("receiver.%d.local_audio", rx->id,                  rx->local_audio);
   SetPropS1("receiver.%d.audio_name", rx->id,                   rx->audio_name);
-  SetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   SetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   SetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
   SetPropI1("receiver.%d.panadapter_low", rx->id,               rx->panadapter_low);
@@ -344,7 +343,6 @@ void rx_restore_state(RECEIVER *rx) {
   GetPropI1("receiver.%d.audio_channel", rx->id,                rx->audio_channel);
   GetPropI1("receiver.%d.local_audio", rx->id,                  rx->local_audio);
   GetPropS1("receiver.%d.audio_name", rx->id,                   rx->audio_name);
-  GetPropI1("receiver.%d.audio_device", rx->id,                 rx->audio_device);
   GetPropI1("receiver.%d.mute_when_not_active", rx->id,         rx->mute_when_not_active);
   GetPropI1("receiver.%d.mute_radio", rx->id,                   rx->mute_radio);
   GetPropI1("receiver.%d.panadapter_low", rx->id,               rx->panadapter_low);
@@ -572,6 +570,13 @@ void rx_set_displaying(RECEIVER *rx) {
 }
 
 static void rx_create_visual(RECEIVER *rx) {
+  //
+  // TODO: I do not see why we are using g_object_weak_ref() here, and put
+  //       a strong reference in radio_create_visual() and in each RX/TX
+  //       transition (before removing the RX panel from FIXED)
+  //       One g_object_ref() here should be enough. This is
+  //       the way it is done for the transmitter panel.
+  //
   int y = 0;
   rx->panel = gtk_fixed_new();
   t_print("%s: RXid=%d width=%d height=%d %p\n", __FUNCTION__, rx->id, rx->width, rx->height, rx->panel);
@@ -825,12 +830,11 @@ RECEIVER *rx_create_receiver(int id, int width, int height) {
   rx->agc_slope = 35.0;
   rx->agc_hang_threshold = 0.0;
   rx->local_audio = 0;
-  g_mutex_init(&rx->local_audio_mutex);
-  rx->local_audio_buffer = NULL;
+  g_mutex_init(&rx->audio_mutex);
+  rx->audio_buffer = NULL;
   snprintf(rx->audio_name, sizeof(rx->audio_name), "NO AUDIO");
   rx->mute_when_not_active = 0;
   rx->audio_channel = STEREO;
-  rx->audio_device = -1;
   rx->squelch_enable = 0;
   rx->squelch = 0;
   rx->binaural = 0;
@@ -1087,7 +1091,6 @@ void rx_vfo_changed(RECEIVER *rx) {
 
 static void rx_process_buffer(RECEIVER *rx) {
   ASSERT_SERVER();
-
   //
   // CAPTURE/REPLAY scaling and unscaling:
   // -------------------------------------
@@ -1290,12 +1293,13 @@ void rx_update_width(RECEIVER *rx) {
   //
   rx->pixels = rx->width;
 
-  if (!radio_is_remote) {
-    if (rx->pixel_samples != NULL) {
-      g_free(rx->pixel_samples);
-    }
+  if (rx->pixel_samples != NULL) {
+    g_free(rx->pixel_samples);
+  }
 
-    rx->pixel_samples = g_new(float, rx->pixels);
+  rx->pixel_samples = g_new(float, rx->pixels);
+
+  if (!radio_is_remote) {
     rx_set_analyzer(rx);
   }
 }
@@ -1305,7 +1309,7 @@ void rx_update_pan(RECEIVER *rx) {
   // This is called when the pan value changes
   //
   if (radio_is_remote) {
-    send_pan(client_socket, rx);
+    send_pan(cl_sock_tcp, rx);
   } else {
     rx_set_analyzer(rx);
   }
@@ -1330,7 +1334,7 @@ static void rx_adjust_pan(RECEIVER * rx) {
   g_idle_add(sliders_pan, GINT_TO_POINTER(100 + rx->id));
 
   if (radio_is_remote) {
-    send_pan(client_socket, rx);
+    send_pan(cl_sock_tcp, rx);
   } else {
     rx_set_analyzer(rx);
   }
@@ -1345,7 +1349,7 @@ void rx_update_zoom(RECEIVER *rx) {
   rx_adjust_pan(rx);
 
   if (radio_is_remote) {
-    send_zoom(client_socket, rx);
+    send_zoom(cl_sock_tcp, rx);
     return;
   }
 
@@ -1676,7 +1680,7 @@ void rx_on(const RECEIVER *rx) {
 
 void rx_set_af_binaural(const RECEIVER *rx) {
   if (radio_is_remote) {
-    send_afbinaural(client_socket, rx);
+    send_afbinaural(cl_sock_tcp, rx);
     return;
   }
 
@@ -1685,7 +1689,7 @@ void rx_set_af_binaural(const RECEIVER *rx) {
 
 void rx_set_af_gain(const RECEIVER *rx) {
   if (radio_is_remote) {
-    send_volume(client_socket, rx->id, rx->volume);
+    send_volume(cl_sock_tcp, rx->id, rx->volume);
     return;
   }
 
@@ -1712,7 +1716,7 @@ void rx_set_af_gain(const RECEIVER *rx) {
 
 void rx_set_agc(RECEIVER *rx) {
   if (radio_is_remote) {
-    send_agc_gain(client_socket, rx);
+    send_agc_gain(cl_sock_tcp, rx);
     return;
   }
 
@@ -1893,7 +1897,7 @@ void rx_capture_end(const RECEIVER *rx) {
 
 void rx_set_equalizer(RECEIVER *rx) {
   if (radio_is_remote) {
-    send_eq(client_socket, rx->id);
+    send_eq(cl_sock_tcp, rx->id);
     return;
   }
 
@@ -1919,7 +1923,7 @@ void rx_set_equalizer(RECEIVER *rx) {
 
 void rx_set_fft_latency(const RECEIVER *rx) {
   if (radio_is_remote) {
-    send_rx_fft(client_socket, rx);
+    send_rx_fft(cl_sock_tcp, rx);
     return;
   }
 
@@ -1928,7 +1932,7 @@ void rx_set_fft_latency(const RECEIVER *rx) {
 
 void rx_set_fft_size(const RECEIVER *rx) {
   if (radio_is_remote) {
-    send_rx_fft(client_socket, rx);
+    send_rx_fft(cl_sock_tcp, rx);
     return;
   }
 
@@ -1947,7 +1951,7 @@ void rx_set_mode(const RECEIVER *rx) {
 
 void rx_set_noise(const RECEIVER *rx) {
   if (radio_is_remote) {
-    send_noise(client_socket, rx);
+    send_noise(cl_sock_tcp, rx);
     return;
   }
 
@@ -2083,7 +2087,7 @@ void rx_set_offset(const RECEIVER *rx) {
 
 void rx_set_squelch(const RECEIVER *rx) {
   if (radio_is_remote) {
-    send_squelch(client_socket, rx->id, rx->squelch_enable, rx->squelch);
+    send_squelch(cl_sock_tcp, rx->id, rx->squelch_enable, rx->squelch);
     return;
   }
 

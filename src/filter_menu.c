@@ -172,7 +172,7 @@ static gboolean deviation_select_cb (GtkWidget *widget, gpointer data) {
     current = choice;
 
     if (radio_is_remote) {
-      send_deviation(client_socket, id, choice->info);
+      send_deviation(cl_sock_tcp, id, choice->info);
     } else {
       vfo[id].deviation = choice->info;
       rx_set_filter(myrx);
@@ -231,7 +231,7 @@ static void var_spin_low_cb (GtkWidget *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_filter_var(client_socket, m, f);
+    send_filter_var(cl_sock_tcp, m, f);
   }
 
   //
@@ -297,7 +297,7 @@ static void var_spin_high_cb (GtkWidget *widget, gpointer data) {
   }
 
   if (radio_is_remote) {
-    send_filter_var(client_socket, m, f);
+    send_filter_var(cl_sock_tcp, m, f);
   }
 
   //
@@ -464,11 +464,11 @@ void filter_menu(GtkWidget *parent) {
     case modeSAM:
     case modeSPEC:
     case modeDRM:
-      w = gtk_label_new("Filter Width:");
+      w = gtk_label_new("Filter Width");
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), w, 2, row, 3, 1);
-      w = gtk_label_new("Filter Shift:");
+      w = gtk_label_new("Filter Shift");
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), w, 5, row, 3, 1);
@@ -485,11 +485,11 @@ void filter_menu(GtkWidget *parent) {
 
     case modeLSB:
     case modeDIGL:
-      w = gtk_label_new("Filter Cut Low:");
+      w = gtk_label_new("Filter Cut Low");
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), w, 2, row, 3, 1);
-      w = gtk_label_new("Filter Cut High:");
+      w = gtk_label_new("Filter Cut High");
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), w, 5, row, 3, 1);
@@ -505,11 +505,11 @@ void filter_menu(GtkWidget *parent) {
 
     case modeUSB:
     case modeDIGU:
-      w = gtk_label_new("Filter Cut Low:");
+      w = gtk_label_new("Filter Cut Low");
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), w, 2, row, 3, 1);
-      w = gtk_label_new("Filter Cut High:");
+      w = gtk_label_new("Filter Cut High");
       gtk_widget_set_name(w, "boldlabel");
       gtk_widget_set_halign(w, GTK_ALIGN_START);
       gtk_grid_attach(GTK_GRID(grid), w, 5, row, 3, 1);

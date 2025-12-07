@@ -259,7 +259,7 @@ void equalizer_menu(GtkWidget *parent) {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mbtn), en);
     g_signal_connect(mbtn, "toggled", G_CALLBACK(enable_cb), GINT_TO_POINTER(myeq));
     mycol++;
-    label = gtk_label_new("Added Frequency-Independent Gain:");
+    label = gtk_label_new("Added Frequency-Independent Gain");
     gtk_widget_set_name(label, "boldlabel");
     gtk_grid_attach(GTK_GRID(mygrid), label, mycol, myrow, 2, 1);
     mycol += 2;

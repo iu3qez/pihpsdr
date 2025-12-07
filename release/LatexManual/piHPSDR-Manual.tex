@@ -1165,6 +1165,7 @@ that setting, the behaviour may be unexpected or even undetermined.
 There is one place from which \textit{all} \pH menus are at hand,
 and this is the "Main Menu". It can be opened by clicking into the \rett{Menu} button at the
 top right corner of the \pH window, the outcome is shown in Fig. \ref{fig:MainMenu}.
+It is also possible to open the main menu just by hitting 'm' or 'M' on the keyboard.
 In the Main menu, there are some commands available here that do not directly affect the radio operation,
 so these commands are found in the top and bottom line of the Main Menu. We first
 mention the \rett{Restart} button in the middle of the top line. This restarts the
@@ -1292,12 +1293,12 @@ Note this menu looks slightly different for different radios and protocols, this
 at the end of the section. First, we go through all the elements we see in Fig. \ref{fig:RadioMenu},
 they will be coloured red in the following list.
 
-\rett{Receivers:} In the pop-down menu (GTK combo-box) below this string, you can select the number
+\rett{Receivers}. In the pop-down menu (GTK combo-box) below this string, you can select the number
 of receivers that are running (well, you can choose between 1 and 2). When the number of receivers change,
 the radio communication will shortly be stopped and then resumed, so do not be surprised if the spectrum
 scope freezes for a second or so.
 
-\rett{RIT/XIT step:} In the pop-down menu you can choose among three (1 Hz, 10 Hz, 100 Hz) RIT step sizes
+\rett{RIT/XIT step}. In the pop-down menu you can choose among three (1 Hz, 10 Hz, 100 Hz) RIT step sizes
 for the VFO of the active receiver. For example, if the RIT step is 10 Hz, then you can change the RIT offset
 in steps of 10 Hz with the RIT+ or RIT- buttons in the toolbar or a push-button, or with
 an encoder assigned to the \bltt{RIT} command. Note that for the
@@ -1305,13 +1306,13 @@ an encoder assigned to the \bltt{RIT} command. Note that for the
 size is part of the RX/TX profile (see chapter \ref{sec:rxtxprofiles}) and therefore it is automatically updated
 if you change the mode.
 
-\rett{Region:} Although not obvious, this selects settings for the 60m band. Possible choices are "Other",
+\rett{Region}. Although not obvious, this selects settings for the 60m band. Possible choices are "Other",
 "UK" and "WRC15". The \texttt{Other} and \texttt{UK} choices implement the channel structure of the 60m
 band according to the regulations valid in the USA and Great Britain. "WRC15" gives you a small (15 kHz
 wide) 60m band according to the WRC15 (World Radio Conference 2015) document, which is now implemented in
 many countries.
 
-\rett{Orion/Saturn Mic jack:} This part of the menu is not shown for pre-Orion boards.
+\rett{Orion/Saturn Mic jack}. This part of the menu is not shown for pre-Orion boards.
 The Orion, Orion2, and Saturn boards can switch the connections
 of the TRS microphone jack in software (hardware jumpers had to be used previously).
 While the ring of the TRS plug is always connected to ground, the microphone and PTT connections are on the
@@ -1320,12 +1321,12 @@ enable the PTT function of the jack, and select whether a bias (DC offset) is ap
 (this is necessary for condenser (electret) microphones and detrimental if a dynamic microphone is connected without
 a blocking capacitor).
 
-\rett{Mic Input:} This is only shown for Anan G2 radios (Saturn boards).
+\rett{Mic Input}. This is only shown for Anan G2 radios (Saturn boards).
 These radios have two jacks for connecting a
 microphone, either a 3.5mm TRS jack in the front panel, or an XLR connection in the back panel. The pop-down
 menu lets you choose between these two options.
 
-\rett{SAT mode:} Here you can choose between \texttt{SAT off}, \texttt{SAT}, and \texttt{RSAT}. In SAT mode,
+\rett{SAT mode}. Here you can choose between \texttt{SAT off}, \texttt{SAT}, and \texttt{RSAT}. In SAT mode,
 frequency moves applied to one of the two VFOs are applied to the other VFO as well. This is convenient
 for cross-band operation over satellites with (normal) linear transponders. In RSAT mode, frequency
 moves applied to one of the two VFOs are applied to the other with the sign inverted, that is, if
@@ -1334,7 +1335,7 @@ amount. This is convenient for cross-band operation over satellites with inverte
 transponders are sometimes find in low and fast moving satellites because this leads to some Doppler
 correction.
 
-\rett{Filter board:} Normally SDRs have some sort of built-in PA with a filter board. Filters in the TX path
+\rett{Filter board}. Normally SDRs have some sort of built-in PA with a filter board. Filters in the TX path
 between the PA and the antenna are always required, and filters in the RX path provide some protection
 against ADC overloads from strong out-of-band signals. Here you can choose between \texttt{NONE},
 \texttt{ALEX},
@@ -1352,7 +1353,7 @@ It is possible to change the OC settings in the \bltt{OC} menu, and these settin
 preferences. Upon next program start, however, these preferences will again be overwritten as long
 as the \texttt{N2ADR} filter board is chosen.
 
-\rett{VFO Enc Div:} This option applies to VFO knobs in front panels, GPIO
+\rett{VFO Enc Div}. This option applies to VFO knobs in front panels, GPIO
 or MIDI controllers. In some cases, these encoders generate too many ticks per revolution,
 such that it is difficult to fine tune on a signal.
 If the VFO Encoder Divisor, as shown in the example, has a value of
@@ -1360,13 +1361,13 @@ If the VFO Encoder Divisor, as shown in the example, has a value of
 optical encoders found in some of the GPIO controllers. For the default value of 1,
 the divisor has no effect.
 
-\rett{VFO snap} If this box is checked, VFO frequency changes by clicking or dragging in the
+\rett{VFO snap}. If this box is checked, VFO frequency changes by clicking or dragging in the
 RX panadapter are finally rounded to the nearest multiple of the current VFO step size. This
 option is mostly meant for touch-screens which are usually not very accurate. Note that if
 this option is checked, you may not be able to exactly tune on a signal by clicking on
 it with a mouse.
 
-\rett{Split} Use this checkbox to enable/disable Split mode. In Split mode, the frequency of
+\rett{Split}. Use this checkbox to enable/disable Split mode. In Split mode, the frequency of
 the non-active receiver (when using two receivers) or the frequency of VFO-B (when using one
 receiver) controls the TX frequency. In normal (non-Split) mode, it is the frequency of
 the active receiver (2 RX) or the frequency of VFO-A (1 RX) that matters.
@@ -1376,7 +1377,7 @@ transmitted when doing split and using the microphone. Normally one
 starts with the \bltt{A>B} command (that is, copy VFO-A to VFO-B), and
 then adjusts the transmit frequency.
 
-\rett{Duplex} Use this checkbox to enable/disable Duplex mode. In Duplex mode, the receiver(s)
+\rett{Duplex}. Use this checkbox to enable/disable Duplex mode. In Duplex mode, the receiver(s)
 continue working during TX. In normal setup, this is detrimental since the very strong
 signal that originates from the cross-talk at the T/R relay will lead to AGC pumping,
 making your receiver(s) essentially deaf for a short period after TX/RX switching.
@@ -1386,22 +1387,22 @@ see your own down-link signal. In contrast to what is often stated, Duplex mode 
 affect the data stream between the computer and the radio, it \textit{only} determines
 whether the receivers (within the WDSP library) are shut down during transmit or not.
 
-\rett{Mute RX when TX} Normally, the receivers are shut down while transmitting, except
+\rett{Mute RX when TX}. Normally, the receivers are shut down while transmitting, except
 in duplex mode. This option (checkbox) mutes the RX audio while transmitting even if running
 Duplex. It is important
 to note that the RX continue to work, so you can see the signals on the RX panel, the
 S-meter works, etc. This option is largely equivalent to moving the AF slider to the
 minimum position while transmitting.
 
-\rett{PA enable} This enables/disables the PA in the radio. In addition to this global
+\rett{PA enable}. This enables/disables the PA in the radio. In addition to this global
 flag, there is a per-band PA enable option for the transverter bands (see the \bltt{XVTR}
 menu).
 
 Note that the last four options (\rett{Split}, \rett{Duplex}, \rett{Mute RX when TX},
 and \rett{PA enable} are not shown for RX-only radios.
 
-\rett{Optimise for TouchScreen} The normal procedure to make a selection from a
-pop-down menu (such as the \rett{Receivers:} button on this screen) is to click
+\rett{Optimise for TouchScreen}. The normal procedure to make a selection from a
+pop-down menu (such as the \rett{Receivers} button on this screen) is to click
 (and hold) it with a mouse, then drag the mouse to your choice, and then the selection
 is made by releasing the mouse button. This is very difficult to achieve on a touch
 screen. Therefore, if \rett{Optimise for TouchScreen} checkbox is checked, the pop-down
@@ -1412,12 +1413,12 @@ when using a mouse, it is a great helper when using a touch screen. Therefore th
 option is set by default, but you can uncheck it here if you prefer normal
 mouse operation. Note that this option becomes effective when the next menu is opened.
 
-\rett{Mute Spkr Amp} This box only appears on Anan-7000/8000 and G2 radios using protocol 2.
+\rett{Mute Spkr Amp}. This box only appears on Anan-7000/8000 and G2 radios using protocol 2.
 If checked, the audio amplifier driving the speakers (either the speaker jacks in the
 back panel, or the built-in speakers) is disabled. This does not affect the audio signal
 at the headphone jack.
 
-\rett{Mute Spkr when TX} This box only appears on Anan-7000/8000 and G2 radios using protocol 2.
+\rett{Mute Spkr when TX}. This box only appears on Anan-7000/8000 and G2 radios using protocol 2.
 If checked, it mutes the audio amplifier driving the speakers upon transmit only.
 Note that this box has no effect if TXing in CW mode or TUNE-ing such that a side tone
 is not muted. It is generally \textit{not recommended} to use this option, because the
@@ -1425,7 +1426,7 @@ speakers emit an audible ``pop'' each time the speaker amplifier is muted or un-
 Some users have reported RFI problems with the speakers and this option has been added
 to make it possible to mute the speakers during transmit only.
 
-\rett{Enable TxInhibit Input} This box only appears for HPSDR (and not for SoapySDR)
+\rett{Enable TxInhibit Input}. This box only appears for HPSDR (and not for SoapySDR)
 radios.
 For  protocol 1, TxInhibit is signalled for most radios by the Hermes IO1 bit being
 cleared (the Hermes IO2 bit is used for Anan-7000/8000). For protocol 2, for most
@@ -1439,7 +1440,7 @@ Note that for effective hardware protection, processing the TxInhibit bit must
 take place in the FPGA of the radio. This checkbox simply enables \pH to tell
 the user about such an event.
 
-\rett{Enable AutoTune  input} his box only appears for HPSDR (and not for SoapySDR)
+\rett{Enable AutoTune  input}. his box only appears for HPSDR (and not for SoapySDR)
 radios. The AutoTune state is signalled for protocol 1 by the input bit IO3,
 and for protocol 2 by the user input bit IO6 (the active state is represented
 by the bit being cleared).
@@ -1453,11 +1454,12 @@ For such a setup, it is usually recommended to use a reduced RF output level whi
 \bltt{TUNE}-ing  (see the \bltt{TX} menu, chapter \ref{sec:txmenu}).
 
 
-\rett{Frequency Calibration} Here you can set a frequency offset (in Hz). This offset
-will be added to all frequencies sent to the radio. This means that if you discover that
-a reference signal occurs in your RX panel at 10001 kHz where it should occur at 10000
-kHz, you have to set the calibration value to -1000. Note it is an absolute value,
-which will we applied to all frequencies.
+\rett{Frequency~Calibr.~(ppm)}. Here you can apply a small correction to the frequencies.
+Typically, all frequencies are derived from a common clock, so any correction must
+be \textit{relative}. For example, if you choose a value of 3.0 here, then the
+TX/RX frequencies at 7 MHz will be increased by 21 Hz, but this increase is
+four times larger at 28 MHz. Note that for transverter bands, adjusting the frequency
+is better done by adjusting the local oscillator frequency (see Sec. \ref{sec:xvtrmenu}).
 
 \rett{RX Gain Calibration} Here you can calibrate your RF front end. To this end, you
 need a highly accurate signal source of, say, -73 dBm. Connect this source to your
@@ -1486,7 +1488,8 @@ is enabled, RX audio data is sent to the HL2.
 \rett{HL2 CL1/2} This box only appears if the radio is a HermesLite-II (HL2). This
 radio has two SMA jacks denoted CL1 and CL2. If this box is checked, CL1 can be
 used as a master clock input for a 10 MHz clock, while CL2 then is a master
-clock output (also 10 MHz).
+clock output (also 10 MHz). Sec. \ref{sec:hl2support} discusses the HL2-specific options
+in more detail.
 
 \rett{Anan-10E/100B} This box only appears for Hermes boards. While the Anan-10E and
 the Anan-100B identify themselves as Hermes boards, they have a FPGA with limited
@@ -1517,7 +1520,7 @@ itself as a METIS board.
 \end{figure}
 
 The first difference you notice is that at the left edge of the menu, in the middle,
-there is a new \rett{Sample Rate:} pop-down menu. This has nothing to do with the
+there is a new \rett{Sample Rate} pop-down menu. This has nothing to do with the
 ATLAS bus, this occurs if the radio is connected via Protocol-1, as it is often the case for
 legacy radios. In Protocol-1, all receivers share the sample rate, therefore it is set in the
 \bltt{Radio} menu. The same applies for SoapySDR radios. In Protocol-2 on the other hand, each
@@ -1527,20 +1530,20 @@ in the \bltt{RX} menu. The ATLAS bus settings are at the right edge of the menu 
 To build a radio, they must be synchronised somehow, and therefore their clocks cannot run
 independently, but there must be a master clock.
 
-\rett{10 MHz source:} This selects the 10 MHz master clock, which can be either \texttt{ATLAS}
+\rett{10 MHz source} This selects the 10 MHz master clock, which can be either \texttt{ATLAS}
 (the bus itself is the source), \texttt{Penelope} (the transmitter board is the source),
 or \texttt{Mercury} (the receiver board is the source).
 
-\rett{122.88 MHz source:} This selects the 122.88 MHz master clock, which can be either
+\rett{122.88 MHz source} This selects the 122.88 MHz master clock, which can be either
 \texttt{Penelope} or \texttt{Mercury}.
 
-\rett{Mic source:} This selects where the microphone samples that are sent to the computer
+\rett{Mic source} This selects where the microphone samples that are sent to the computer
 originate, that is, where your microphone has to be connected. The default is
 \texttt{Penelope}, this means the microphone is connected to the transmitter board. The
 other choice is \texttt{Janus}. The \texttt{Janus} board is simply an ADC/DAC board (not
 a radio) and used in some very early setups.
 
-\rett{TX config:} This indicates which transmitter board is present on the bus. It can
+\rett{TX config} This indicates which transmitter board is present on the bus. It can
 be \texttt{No TX}, if this is a receive-only radio, \texttt{Penelope} or \texttt{Pennylane}.
 The \texttt{Pennylane} is a later version of the Penelope transmitter board, the essential
 difference is that it can control the output signal level. In the Penelope case,
@@ -1575,7 +1578,7 @@ via the main menu and the \bltt{Screen} button and is shown in Fig. \ref{fig:Scr
 \label{fig:ScreenMenu}
 \end{figure}
 
-In the first line, starting with \rett{Font used:},
+In the first line, starting with \rett{Font used},
  there is a combo-box for choosing the font. Currently, the choices
 are \rett{FreeSans}, \rett{Roboto Mono}, \rett{Open Sans} and \rett{Piboto}. Changing
 the font affects all menus, the slider, zoom and tool bars, as well as the VFO bar.
@@ -1597,7 +1600,7 @@ font files (\texttt{*.otf} or \texttt{*.ttf}) to that directory and run the comm
 double-clicking a font  (\texttt{*.ttf}) file will open the MacOS FontBook application
 which shows you the new font, and then click on the "Install" button.
 
-In the second line, starting with \rett{Window size:}, one can choose the size of the \pH window.
+In the second line, starting with \rett{Window size}, one can choose the size of the \pH window.
 Currently the choices are \rett{Full Screen}, \rett{Custom}, \rett{640*400}, \rett{800*480},
 \rett{1024*600}, and \rett{1280*720}. For the \rett{Full Screen}  choice, the \pH will occupy the entire
 screen space (in a multi-monitor setup, this is the area of the monitor
@@ -1719,44 +1722,44 @@ in Fig. \ref{fig:DisplayMenuGeneral}.
 
 
 
-\rett{Frames Per Second:} This adjust how often the RX display is re-drawn.
+\rett{Frames Per Second} This adjust how often the RX display is re-drawn.
 10 frames per second (the default) is a good value.
 
-\rett{Panadapter High:} This value is the dBm value of the RX signal strength at the
+\rett{Panadapter High} This value is the dBm value of the RX signal strength at the
 top of the RX spectrum scope. A value of -40 dBm corresponds to S9 + 33 dB for HF
 signals.
 
-\rett{Panadapter Low:} This value is the dBm value of the RX signal strength at the
+\rett{Panadapter Low} This value is the dBm value of the RX signal strength at the
 bottom of the RX spectrum scope. A value of -140 dBm is usually low enough such that
 the noise floor is still on display.
 
-\rett{Panadapter Step:} This value is the spacing of the horizontal lines on
+\rett{Panadapter Step} This value is the spacing of the horizontal lines on
 the spectrum scope. Lines are drawn at dBm values that are multiples of the step
 size.
 
-\rett{Waterfall High:} This is the RX dBm value that will lead to the brightest
-colour (yellow) in the waterfall. If the \rett{Waterfall Automatic:} box is checked
+\rett{Waterfall High} This is the RX dBm value that will lead to the brightest
+colour (yellow) in the waterfall. If the \rett{Waterfall Automatic} box is checked
 (see below), this spin button has no effect.
 
-\rett{Waterfall Low:} This is the RX dBm value below which the waterfall will be black.
-If the \rett{Waterfall Automatic:} box is checked
+\rett{Waterfall Low} This is the RX dBm value below which the waterfall will be black.
+If the \rett{Waterfall Automatic} box is checked
 (see below), this spin button has no effect.
 
-\rett{Waterfall Automatic:} If this box is checked, the \rett{Waterfall High} and
+\rett{Waterfall Automatic} If this box is checked, the \rett{Waterfall High} and
 \rett{Waterfall Low} parameters are not used. Instead,
-the waterfall high/low values are determined automatically in each update of 
+the waterfall high/low values are determined automatically in each update of
 the waterfall, and these min/max values
 are then used instead of the waterfall High/Low control values to determine which
 colour belongs to which signal strength.
 
-\rett{Detector:} Here one can choose between Peak, Rosenfell, Average and Sample. The
+\rett{Detector} Here one can choose between Peak, Rosenfell, Average and Sample. The
 Rosenfell detector is probably closest to what one knows from a spectrum analyser.
 The Average detector is usually preferred since it is less ,,nervous''.
 
-\rett{Averaging:} Here the possible choices are None, Recursive, Time Window and
+\rett{Averaging} Here the possible choices are None, Recursive, Time Window and
 Log Recursive. For the details, see the WDSP manual.
 
-\rett{Av. Time (ms):} If averaging is used for the spectrum scope, the time
+\rett{Av. Time (ms)} If averaging is used for the spectrum scope, the time
 constant involved in averaging can be set here.
 
 \rett{Fill Panadapter} This is used to enable/disable the ,,Filling'' option
@@ -1774,7 +1777,7 @@ there will simply be a large ,,hole'' in the \pH window. This makes little sense
 except on machines with very weak CPUs, since \textit{not} displaying neither waterfall
 nor pan-adapter saves some CPU time in the graphics back-end.
 
-\rett{Waterfall Height (\%):} This parameter can be chosen between 20 and 80
+\rett{Waterfall Height (\%)} This parameter can be chosen between 20 and 80
 (percent) with the spin button to the right of this label,
 and only has an effect if \textit{both} the panadapter and the waterfall are displayed.
 In this case, the parameter determines how much vertical space
@@ -1803,14 +1806,14 @@ current filter pass-band  are shown.
 
 \rett{No Labels Below Noise Floor} This suppresses labelling of peaks below the noise floor.
 
-\rett{Number of Peaks to Label:} Set maximum number of peaks to be shown. There can always be less,
+\rett{Number of Peaks to Label} Set maximum number of peaks to be shown. There can always be less,
 but no more than this number. The strongest peaks will be labelled first.
 
-\rett{Ignore Adjacent Peaks:} Determine how close two peaks can be such that both are labelled.
+\rett{Ignore Adjacent Peaks} Determine how close two peaks can be such that both are labelled.
 The higher the number the closer the peaks can be to each other. It's a divisor of the
 full window width so setting it to 1 will mean only one peak can occupy the entire window,
 
-\rett{Noise Floor Percentile:} This is the percentile setting that defines the noise floor. If the
+\rett{Noise Floor Percentile} This is the percentile setting that defines the noise floor. If the
 percentile is 50, then the noise floor is the level of that pixel that is in the middle of the list
 if all pixels are sorted by their dBm value (a safety margin of 3 dBm is added).
 If the \rett{No Labels Below Noise Floor} box is ticked
@@ -1830,7 +1833,7 @@ peaks below this value will not be labelled.
 The \bltt{Meter} can either be opened simply by clicking in the meter
 area, or through the main menu. Only few choices can be made here.
 
-\rett{Meter Type:} Here you can select between a digital and an analog
+\rett{Meter Type} Here you can select between a digital and an analog
 meter. The four different designs (either analog or digital, and during
 RX or TX) have already been shown in Sec. \ref{sec:MeterSection}.
 
@@ -1839,7 +1842,7 @@ refers to peak envelope power and average power. Here averaging is done
 over relatively short times. For a two-tone signal for example, the peak
 reading is 3 dB above the average reading.
 
-\rett{S-Meter Reading:} Here you can choose whether the S-meter reports
+\rett{S-Meter Reading} Here you can choose whether the S-meter reports
 a Peak or an Average value (default is Average).
 Note, however, that in order to make the
 display less ,,nervous'' a moving average with a rather long time constant
@@ -1847,7 +1850,7 @@ display less ,,nervous'' a moving average with a rather long time constant
 S-meter readings.
 
 
-\rett{TX ALC reading:} Here, the possible values are again Peak and Average.
+\rett{TX ALC reading} Here, the possible values are again Peak and Average.
  Normally one uses the peak ALC value. If it is negative, the level
 of the TX audio signal or the Mic gain slider should be increased.
 This is very important since, for example,
@@ -1867,6 +1870,7 @@ For RX-only radios, the TX ALC setting will not be shown in the menu.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The \texttt{XVTR} (Transverter) Menu}
+\label{sec:xvtrmenu}
 
 \begin{figure}[ht]
 \center
@@ -2049,9 +2053,9 @@ In addition to frequency entry, the VFO menu offers a convenient way of changing
 some \pH settings, simply because the VFO menu can be opened by a simple
 mouse click into the VFO bar.
 
-\rett{RIT Step:} In this pop-down menu, the RIT step size can be chosen (1/10/100 Hz).
+\rett{RIT Step} In this pop-down menu, the RIT step size can be chosen (1/10/100 Hz).
 
-\rett{VFO Step:} In this pop-down menu, the VFO step size can be chosen. The VFO step
+\rett{VFO Step} In this pop-down menu, the VFO step size can be chosen. The VFO step
 sizes range from 1 Hz to 1 MHz.
 
 \rett{Lock VFOs} With this check box enabled, VFO frequencies cannot be changed by
@@ -2187,9 +2191,9 @@ receiver settings.
 
 \begin{figure}[ht!]
 \center
-\includegraphics[scale=0.45]{RXMenu.png}
+\includegraphics[scale=0.45]{RXmenu.png}
 \caption{The \bltt{RX} menu.}
-\label{fig:RXMenu}
+\label{fig:RXmenu}
 \end{figure}
 
 Invoking the \bltt{RX} menu through the main menu always implies that the settings
@@ -2198,21 +2202,28 @@ by a secondary click (using the right mouse button) into the receiver panel. Thi
 if \pH is running two receivers, you can open the \bltt{RX} menu for both receivers
 (the active receiver as well as the other one), depending on in which panel you have
 right-clicked. Note secondary clicks are usually not possible with a touch screen.
-The menu is shown in Fig. \ref{fig:RXMenu}.
+The menu is shown in Fig. \ref{fig:RXmenu}.
 
-\rett{Local Audio Output:} If checked, the audio from this radio is sent to a local
-sound card (or virtual audio cable). The sound card itself is selected in the
-pop-down menu below this check box. One line further below, one can select between
-\texttt{Stereo}, \texttt{Left} and \texttt{Right}, and select whether the RX
-audio should be sent to both channels or to the left or right channel only.
+\rett{RX Audio Out}. In the drop-down menu below, you can check the
+audio output device associated with the receiver. \rett{Only Audio to Radio} means
+that no sound output device (sound card) is used, and RX audio is only included
+in the data stream to the radio (if supported). HPSDR radios featuring an audio codec
+typically have jacks where a headphone and a microphone can be plugged in,
+but there are also radios such the barefoot HermesLite-II and all  SoapySDR radios
+where \rett{Only Audio Radio} effectively means ,,no audio''. If the computer
+running \pH has audio output devices (either built-in or USB
+sound cards), one of them can be selected from the drop-down menu. Note that
+if such a device is selected, the RX audio will additionally also be sent to the
+radio.
 
-In the example shown, checking the Local Audio box would send the RX audio
-samples to the HDMI monitor attached to the RaspPi, but one could equally
-well choose the headphone output or a virtual cable, if one wants to use
-digital modes.
+Below the drop-down menu selecting the output device, there is a second one where
+one can choose between
+\rett{Stereo}, \rett{Left} and \rett{Right}. While \rett{Stereo} effectively
+means ,,do nothing'', choosing \rett{Left} means the the audio samples for the right
+channel are muted.
 
 If running two receivers, it depends on the audio output module whether
-it is possible to use the \textit{same} audio output device as local audio output
+it is possible to use the \textit{same} audio output device
 for both receivers. With PulseAudio (and PipeWire), this is possible which gives you an additional
 bonus:
 Choose the same output device for RX1 and RX2 and activate only
@@ -2222,12 +2233,18 @@ one gets the audio output of the first receiver on the left ear and the audio ou
 the second receiver on the right ear. This can be very convenient for hunting DX in split mode,
 because one then hears the hounds and the fox on different ears.
 
-\rett{Sample Rate} This box is only shown for radios running Protocol-2, since only there the
+The audio settings (output device and stereo settings) of RX1 (only RX1!) are part of the RX/TX profile (see Sec. \ref{sec:rxtxprofiles}). Typically, you will choose an audio output device connected to a headphone for
+SSB and CW, but a virtual audio cable or a sound card connected to another computer running a digi program
+for digi modes. \pH then automatically switches the audio output device when switching modes. RX2 audio
+settings are not part of the RX/TX profile: changing RX2 audio settings will not change the profile,
+and changing the mode will not change the RX2 audio settings.
+
+\rett{Sample Rate}. This box is only shown for radios running Protocol-2, since only there the
 receivers can have an individual sample rate. For radios running Protocol-1 or radios accessed
 through the SoapySDR library, the sample rate is a global quantity that is modified
 through the \bltt{Radio} menu (see above).
 
-\rett{Select ADC} This box is only shown if the radio has more than one analog-to-digital
+\rett{Select ADC}. This box is only shown if the radio has more than one analog-to-digital
 converter (ADC), such as Orion, Orion-II and Saturn boards. These radios have two ADCs so
 you can choose whether the receiver gets data from ADC0 or ADC1. For these radios, nearly
 all antenna jacks go to ADC0, while there is a jack denoted "RX2" (or similar) that
@@ -2249,7 +2266,7 @@ or the RadioBerry, or all radios connected through the SoapySDR
 library. For the HermesLite-II, there also is no such function, but these bits
 are hi-jacked for some custom functions, so they appear here in the menu.
 
-\rett{Preamp}. This checkbox is not shown in Fig. \ref{fig:RXMenu}, it only occurs
+\rett{Preamp}. This checkbox is not shown in Fig. \ref{fig:RXmenu}, it only occurs
 for some legacy HPSDR boards which had a switch-able RX preamp.
 
 \rett{Mute when not active}. If checked, local audio (e.g. to a sound card)
@@ -2439,7 +2456,7 @@ suitable in most cases.
 very weak signals are eliminated (that is, treated as noise). In this case one can try to \textit{reduce} the
 T2 value.
 
-\rett{NR2 Post-Processing}. \textbf{New in WDSP 1.27!}
+\rett{NR2 Post-Processing}.
 After noise reduction, processed speech often sounds harsh to listeners, and
 this can be alleviated by mixing in a little bit of white noise at the end, and tapering the frequency
 response of the signal. All of these post-processing features can be enabled/disabled by this check box,
@@ -2480,7 +2497,7 @@ The options to control the noise blanker algorithms are:
 \rett{NB2 Mode}. The available choices for the interpolating NB2 noise blanker here are Zero,
 Sample\&Hold, Mean Hold, Hold Sample, and Interpolate.
 
-\rett{NB Slew time/NB Lag time/NB Lead time/NB Threshold}.\\
+\rett{Slew time}, \rett{Lag time}, \rett{Lead time} and \rett{Threshold}.
 These parameters apply both to NB and NB2.
 \pH currently does not allow to have a separate set of parameters for NB and NB2.
 The times are in the range $0\ldots0.1$ msec, and 0.01 msec is a good starting point. The Threshold
@@ -2549,7 +2566,7 @@ the RX ,,BFO frequency''.
 \section{The \texttt{TX} Menu}
 
 The \bltt{TX} menu can be opened from the main menu, or just by a secondary mouse click
-into the TX pan-adapter (while transmitting). The menu is shown in Fig. \ref{fig:TXMenu}.
+into the TX pan-adapter (while transmitting). The menu is shown in Fig. \ref{fig:TXmenu}.
 This menu has five sub-menus, called the \rett{TX Settings} for general transmitter settings,
 the \rett{CFC settings} for controlling the continuous frequency compressor (CFC),  the
 \rett{DExp Settings} for controlling the downward expander (DEXP),  the \rett{Peak Lables}
@@ -2567,29 +2584,26 @@ time.
 \label{sec:txmenu}
 \begin{figure}[ht!]
 \center
-\includegraphics[scale=0.45]{TXMenu.png}
+\includegraphics[scale=0.45]{TXmenu.png}
 \caption{The \bltt{TX} menu with the TX settings.}
-\label{fig:TXMenu}
+\label{fig:TXmenu}
 \end{figure}
 
-\rett{Local Microphone}. If this box is checked, the TX audio samples come from a sound card
-attached to the host computer, or from a virtual audio cable. The sound device can be
-selected from the pop-down menu to the right.
-This check box, and the pop-down menu, is absent if
-there are no output sound devices available. Note that with PulseAudio/PipeWire, the
-names of audio sources can be quite long, therefore much horizontal space has been
-given to the pop-down menu.
+\rett{TX Audio In}. This selects the audio input device used for the transmitter.
+The choice \rett{From Radio} means that audio samples sent from the radio are used.
+This is only possible for HPSDR radios which have an audio codec, that is, HPSDR
+radios which have a jack for plugging in a microphone. All other radios must use
+a sound device of the computer running \pH (usually, a USB sound card or head-set).
+ Note that with PulseAudio/PipeWire, the
+names of audio input devices can be quite long, therefore much horizontal space has been
+allocated to the drop-down menu.
 
-\textbf{Note:} If the radio has the possibility
-to connect a microphone, and if PTT comes from the radio, the radio microphone samples
-and the local (sound device) microphone samples are mixed (added). This is very convenient
-if one does SSB with a microphone attached to the radio, and digital modes with a
-local sound device or virtual audio cable: when doing SSB, the local sound device normally
-produces no audio, and while pressing PTT at the microphone, you can work SSB normally.
-So you can go from digital mode to SSB without the need to change the microphone setup
-in the TX menu.
+This setting is part of the RX/TX profile (see Sec. \ref{sec:rxtxprofiles}). Most users
+will choose a device connected to a microphone for SSB, while choosing a virtual audio
+cable or a sound card connected to another computer running the digi mode program when doing
+digi. \pH then automatically switches the audio input device when switching modes.
 
-\rett{Radio Mic} The pop-down menu to the right of this text
+\rett{Radio Mic}. The pop-down menu to the right of this text
 lets you choose between \rett{Mic In} which means
 that a microphone can be connected to the microphone input jack, \rett{Mic Boost}, which
 additionally switches on a hardware 20 dB mic amp, and \rett{Line In} which means that the
@@ -2599,20 +2613,20 @@ microphone jack but no line-in input. The optional 20 dB preamp may be necessary
 a dynamic microphone whose input level (few mV) is considerably lower that that of a
 condenser (electret) microphone, or a dynamic microphone with built-in preamp.
 
-\rett{LineIn Lvl (dB)} Here you can adjust the line-in level of the radio, if it
+\rett{LineIn Lvl (dB)}. Here you can adjust the line-in level of the radio, if it
 has one and if \rett{LineIn} is selected with the \rett{Radio Mic} check box.
-
 \textbf{Note:} The controls in the second line (\rett{Radio Mic} and \rett{LineIn Lvl}) only
 apply to (and are only
-shown for) HPSDR (Protocol-1 and Protocol-2) radios.
+shown for) HPSDR (Protocol-1 and Protocol-2) radios. If such a radio does not have an audio codec,
+the controls are shown but will not have any effect.
 
-\rett{TX Filter low} With this spin button you can set the low cut of the TX filter. The
+\rett{TX Filter low}. With this spin button you can set the low cut of the TX filter. The
 frequency refers to the audio domain.
 
-\rett{TX Filter high} With this spin button you can set the high cut of the TX filter. The
+\rett{TX Filter high}. With this spin button you can set the high cut of the TX filter. The
 frequency refers to the audio domain.
 
-\rett{TX uses RX Filter} If this check box is enabled, the TX filter low/high cuts are ignored,
+\rett{TX uses RX Filter}. If this check box is enabled, the TX filter low/high cuts are ignored,
 and the filter edges of the current RX filter are used instead. The \rett{TX Filter Low}
 and \rett{TX Filter High} check boxes will be inactive in this case.
 
@@ -2620,7 +2634,7 @@ and \rett{TX Filter High} check boxes will be inactive in this case.
 All the filter characteristics are then calculated from the deviation for
 a maximum audio frequency of 3000 Hz.
 
-\rett{Compression} With this box the TX compressor can be enabled/disabled.
+\rett{Compression}. With this box the TX compressor can be enabled/disabled.
 The compression level (0-20 dB) can be chosen in the spin button to the right.
 Setting TX compression on/off automatically engages/disengages the auto leveller
 (with a maximum amplification of 8 dB), and using the compressor with a compression
@@ -2633,13 +2647,13 @@ and disabled for digi modes (DIGL/DIGU), and when switching modes, the compresso
 settings for the new mode are automatically restored. The compressor can be used (although
 this might not be recommended together with the CFC).
 
-\rett{CTCSS Enable} (FM only!) This checkbox enables/disables CTCSS (continuous tone coded squelch system).
+\rett{CTCSS Enable}. (FM only!) This checkbox enables/disables CTCSS (continuous tone coded squelch system).
 If enabled, a low-frequency
 tone is transmitted together with the normal TX audio. This can be used to trigger repeaters, or any other
 function implemented
 on the other side. The frequency itself can be chosen with the following menu point:
 
-\rett{CTCSS Frequency} This pop-down menu lets you choose the CTCSS frequency. This choice has no effect if
+\rett{CTCSS Frequency}. This pop-down menu lets you choose the CTCSS frequency. This choice has no effect if
 CTCSS is disabled.
 The frequency list includes 38 standard TIA/EIA-603-D CTCSS frequencies between 67.0 and 250.3 Hz.
 
@@ -2659,30 +2673,30 @@ the TX audio input after applying both the boost and the damping of the pre-emph
 transmitted signal a little more ,,punch''. It is generally recommended to have this box checked
 if doing FM.
 
-\rett{AM carrier level:} This sets the AM carrier level for the AM modulator. If set to zero, there is no
+\rett{AM carrier level}. This sets the AM carrier level for the AM modulator. If set to zero, there is no
 carrier and the
 signal is a DSB signal. A reasonable value is 0.5 which leads to 100\% modulation. Values larger than
 0.5 have less than 100\% modulation. This means too much power goes into the carrier.
 
-\rett{Max Digi Drv} This spin button restricts the range of the drive slider from 0 to the
+\rett{Max Digi Drv}. This spin button restricts the range of the drive slider from 0 to the
 chosen value
 for the DIGU and DIGL modes. If the value is 100, this has no effect. The primary use of this menu point is
 PA protection,
 since many digital modes (unlike SSB voice) are constantly transmitting at full power.
 
-\rett{Panadapter High:} This spin button sets the upper edge (in dBm) of the TX pan-adapter.
+\rett{Panadapter High}. This spin button sets the upper edge (in dBm) of the TX pan-adapter.
 
-\rett{Panadapter Low:} This spin button sets the lower edge (in dBm) of the TX pan-adapter.
+\rett{Panadapter Low}. This spin button sets the lower edge (in dBm) of the TX pan-adapter.
 
-\rett{Panadapter Step:} This spin button determines how many horizontal lines are drawn on the
+\rett{Panadapter Step}. This spin button determines how many horizontal lines are drawn on the
 TX pan-adapter. If set to 10, for example, there will be a horizontal line for every multiple
 of 10 dBm.
 
-\rett{Fill Panadapter} This is used to enable/disable the ,,Filling'' option
+\rett{Fill Panadapter}. This is used to enable/disable the ,,Filling'' option
 for the TX  spectrum scope (see chapter \ref{sec:FillingGradient}). No ,,gradient''
 option is available for the TX scope.
 
-\rett{Frames Per Second:} This spin button determines how many frames per second are drawn for the TX
+\rett{Frames Per Second}. This spin button determines how many frames per second are drawn for the TX
 pan-adapter. The default value, 10, is a good choice.
 
 \subsection{TX Menu: CFC Settings}
@@ -2711,10 +2725,10 @@ overshoot control is \textit{not} enabled automatically.
 \rett{Use Post-Compression Equaliser}. This checkbox is used  to enable/disable the post-compression
 equaliser.
 
-\rett{Add Freq.-Indep. Compression} With this spin button, one can specify an \textit{additional}
+\rett{Add~Freq.-Indep.~Compression}. With this spin button, one can specify an \textit{additional}
 frequency-independent compression that applies to all frequencies.
 
-\rett{Add Freq.-Indep. Gain} If using the post-compression equaliser, this spin button specifies an
+\rett{Add~Freq.-Indep.~Gain}. If using the post-compression equaliser, this spin button specifies an
 \textit{additional} frequency-independent gain applied to all frequencies.
 
 In the lower part of the menu, you find ten groups of three spin buttons that specify a frequency/level/gain
@@ -2742,35 +2756,35 @@ frequencies. This is where a side channel filter comes in: this filter specifies
 used for triggering. For normal human voice for example, one expects that frequencies between 1000 and
 2000 Hz are contained therein so one can only use these for triggering.
 
-\rett{Use Downward Expander} With this check box, the DEXP can be enabled or disabled.
+\rett{Use Downward Expander}. With this check box, the DEXP can be enabled or disabled.
 
-\rett{Use Side Channel Filter} With this check box, the side channel filter can be enabled of disabled.
+\rett{Use Side Channel Filter}. With this check box, the side channel filter can be enabled of disabled.
 With the  side channel filter enabled, only TX audio in the defined frequency  range will trigger the
 noise gate.
 
-\rett{Expansion Factor (dB)} This factor (in dB!) determines how strongly the noise will be damped as long
+\rett{Expansion Factor (dB)}. This factor (in dB!) determines how strongly the noise will be damped as long
 as it is below the trigger. The default (20 dB) should be OK in most cases.
 
-\rett{Hysteresis ratio} If this  value is smaller than 1 (say, 0.75), then the hold time (the time in which the noise
+\rett{Hysteresis ratio}. If this  value is smaller than 1 (say, 0.75), then the hold time (the time in which the noise
 gate is open starts when the input level drops below the trigger level, multiplied with the hysteresis ratio.
 
-\rett{Trigger level (dB)} This spin button specifies the trigger level. It is given in dB relative to
+\rett{Trigger level (dB)}. This spin button specifies the trigger level. It is given in dB relative to
 full-amplitude audio samples. The default level (-25 dB, corresponding to an amplitude of 0.056) should
 be OK in most cases.
 
-\rett{Trigger Attack tau (ms)} This is the time constant (in ms) for averaging the input signal before
+\rett{Trigger Attack tau (ms)}. This is the time constant (in ms) for averaging the input signal before
 it goes to the detector.
 
-\rett{Trigger Attack Time(ms)} This is the time used for opening the noise gate. To avoid plops in the
+\rett{Trigger Attack Time(ms)}. This is the time used for opening the noise gate. To avoid plops in the
 audio, the gate is not opened instantly but with a raised cosine characteristic. This time should not
 be overly long, since otherwise parts of the first word spoken by the operator can get rejected by
 the gate.
 
-\rett{Trigger Release Time (ms)} This is the time used for closing the noise  gate. To avoid plops in the
+\rett{Trigger Release Time (ms)}. This is the time used for closing the noise  gate. To avoid plops in the
 audio, the gate is not opened instantly but with a raised cosine characteristic. The time for closing the
 gate can usually be chosen much larger than for  opening.
 
-\rett{Trigger Hold Time (ms)} After the operator has finished his speaking, the noise gate remains open
+\rett{Trigger Hold Time (ms)}. After the operator has finished his speaking, the noise gate remains open
 for some time (e.g. waiting for the next word). Typical hold times are of the order of 1 second, when no
 new triggering audio arrives within that time, the gate is closed and the noise  thus suppressed.
 
@@ -2791,21 +2805,21 @@ TX panadapter (Fig. \ref{fig:TXPeakMenu}):
 \label{fig:TXPeakMenu}
 \end{figure}
 
-\rett{Label Strongest Peaks} This enables peak detection and labelling.
+\rett{Label Strongest Peaks}. This enables peak detection and labelling.
 
-\rett{Label in Passband Only} If the box is checked only the peaks within the
+\rett{Label in Passband Only}. If the box is checked only the peaks within the
 current filter pass-band  are shown.
 
-\rett{No Labels Below Noise Floor} This suppresses labelling of peaks below the noise floor.
+\rett{No Labels Below Noise Floor}. This suppresses labelling of peaks below the noise floor.
 
-\rett{Number of Peaks to Label:} Set maximum number of peaks to be shown. There can always be less,
+\rett{Number of Peaks to Label}. Set maximum number of peaks to be shown. There can always be less,
 but no more than this number. The strongest peaks will be labelled first.
 
-\rett{Ignore Adjacent Peaks:} Determine how close two peaks can be such that both are labelled.
+\rett{Ignore Adjacent Peaks}. Determine how close two peaks can be such that both are labelled.
 The higher the number the closer the peaks can be to each other. It's a divisor of the
 full window width so setting it to 1 will mean only one peak can occupy the entire window,
 
-\rett{Noise Floor Percentile:} This is the percentile setting that defines the noise floor. If the
+\rett{Noise Floor Percentile}. This is the percentile setting that defines the noise floor. If the
 percentile is 50, then the noise floor is the level of that pixel that is in the middle of the list
 if all pixels are sorted by their dBm value (a safety margin of 3 dBm is added).
 If the \rett{No Labels Below Noise Floor} box is ticked
@@ -2822,22 +2836,22 @@ and reverse power (and thus the SWR), some SWR-dependent controls are added as w
 \label{fig:TXTUNEMenu}
 \end{figure}
 
-\rett{Tune use Drive} If this box is checked, TUNE-ing will be done with the power that corresponds to the
+\rett{Tune use Drive}. If this box is checked, TUNE-ing will be done with the power that corresponds to the
 current position of the drive slider, and the tune drive level is ignored.
 
-\rett{Tune Drive Level} The value that can be adjusted with this spin box is the virtual position of the
+\rett{Tune Drive Level}. The value that can be adjusted with this spin box is the virtual position of the
 drive slider while TUNE-ing. This value is ignored (and the spin-button made inactive)
 if the \rett{Tune use Drive} box is checked.
 
-\rett{SWR protection} If this box is checked, a very simple SWR protection is enabled. If the SWR exceeds
+\rett{SWR protection}. If this box is checked, a very simple SWR protection is enabled. If the SWR exceeds
 the threshold value (see next point), the drive slider is set to zero. The SWR protection is disabled
 while TUNE-ing.
 
-\rett{SWR alarm at} The spin button to the right determines the SWR threshold. If the SWR is beyond the
+\rett{SWR alarm at}. The spin button to the right determines the SWR threshold. If the SWR is beyond the
 threshold, the SWR reported in the meter turns red. If SWR protection is enabled, the drive slider is set to
 zero if the SWR exceeds the threshold.
 
-\rett{SWR-dependent Sidetone with TUNE} If this box is checked, there will be a side tone while TUNE-ing.
+\rett{SWR-dependent Sidetone with TUNE}. If this box is checked, there will be a side tone while TUNE-ing.
 This side tone is similar to a string of dots or dashes, separated by pauses which are 50 msec long.
 The SWR is encoded both in the length and the frequency of the "dashes".  The higher
 the SWR, the higher (with a limit of 5000 Hz) the pitch, an ideal 1:1 SWR results in a minimum pitch
@@ -2847,7 +2861,7 @@ gets larger. So for ideal SWR, the side tones sounds like a string of CW dots at
 and to 500 msec (with a pitch of 1400 Hz) for an SWR of 1:3. The idea of
 this feature is that one can operate a manual antenna tuner without looking at the screen.
 
-\rett{TUNE Sidetone Volume} With this spin-button, one can adjust the volume of the SWR-dependent TUNE side tone
+\rett{TUNE Sidetone Volume}. With this spin-button, one can adjust the volume of the SWR-dependent TUNE side tone
 (allowed range: $0 \ldots 0.5$). \textbf{Attention!} Always start with small values to protect your ears.
 This spin-box is inactive is the \rett{SWR-dependent Sidetone with TUNE} is not active.
 
@@ -3265,7 +3279,7 @@ In either case, this speed is operative when sending CW text via
 CAT commands (KY command), and it can also be changed by CAT
 (KS command).
 
-\rett{CW Break-In} This implements some sort of ,,CW-VOX''. In
+\rett{CW Break-In}. This implements some sort of ,,CW-VOX''. In
 break-in mode, the radio is automatically switched to TX when
 a key or paddle is pressed. The delay, to be set by the spin
 button to the right, is the time the radio goes RX after the
@@ -3288,7 +3302,7 @@ dial frequency, the CW audio signal has this pitch. Note that unless
 one uses XIT, the transmitted CW signal is exactly on the VFO dial
 frequency as well.
 
-\rett{Weight:} If using a iambic keyer (either in the radio or
+\rett{Weight}. If using a iambic keyer (either in the radio or
 the builtin keyer), this value (0-100) determines the dash/dot ratio.
 The normal value is 50, which means that a dash is three times longer
 than a dot. The dash length is proportional to this value, so it can
@@ -3328,7 +3342,7 @@ be from zero to six times the dot length.
 %used for RF) is used when \rett{CW handled in Radio} \textit{not} checked
 %such that \pH shapes the side tone.
 
-\rett{Paddle Mode:} Here the choice is Iambic Mode A, Iambic Mode B,
+\rett{Paddle Mode}. Here the choice is Iambic Mode A, Iambic Mode B,
 and  Straight Key. In Straight Key mode, the key has to be connected
 to the dash paddle, since the built-in keyer implements a bug mode
 there (automatic dots from the dot paddle, straight key behaviour
@@ -3398,7 +3412,7 @@ where it is reduced to 512). The default value of 2048 should be
 fine in almost all cases, if you increase it, you can notice that
 the filter edges become little more ,,brick wall'' like.
 
-\rett{Binaural} The RX audio signal by default is a mono signal. Although
+\rett{Binaural}. The RX audio signal by default is a mono signal. Although
 you have the RX audio signal on both ears if using a headphone, both the
 left and right channel are the same. Checking \rett{Binaural} for a
 receiver implies that its RX audio signal is stereo (left and right channel
@@ -4294,6 +4308,13 @@ converted to a ,,time-stamped event model'', so sending CW is perfectly works sm
 Of course, server to client bandwidth is twice as large (1.5 MBit/sec) if two receivers are running, but still,
 this is perfectly possible even using WiFi.
 
+Client and server communicate using both the TCP and UDP protocols. UDP is used for data periodically sent,
+such as audio data (in both directions) and panadapter data (from the server to the client). Thus sending
+this data cannot stall the sender if the connection ,,hangs'' for a short time. TCP is used for all types
+of commands, user interactions, or CW events since here is should be secured that nothing is lost. The
+port number specified in the \bltt{Server} menu and the discovery screen (see below)
+is used both for TCP and UDP.
+
 Since this is a legal requirement in many countries, access to the server is password protected to prevent
 illegal use of the transmitter. While the password is stored unencrypted on the server side, a challenge/response
 model ensures that a non-encrypted password is never contained in the data stream between the client and
@@ -4328,9 +4349,8 @@ there is nothing one can do from within \pH.
 \rett{Server runs protocol only if client is connected}.
  If this option is checked, the server halts
 the communication with the radio when it starts. It restarts the communication once a client is connected,
-and stop it when the client disconnects. This option has been implemented for a group of amateurs which
-run a remote radio hooked up with several computers running several SDR programs offering remote operation.
-
+and stops it when the client disconnects. This option has been implemented for a group of amateurs which
+run a remote radio hooked up with several computers running several SDR programs offering remote operation:
 Without this option, \pH would connect to and take over the radio when it starts, and then ,,occupies''
 the radio even if no client is connected. With this option checked, the radio can be operated by
 several SDR programs (not at the same time, of course). If the radio is available, \pH resumes
@@ -4411,21 +4431,20 @@ this process is repeated 99999 times to make brute-force attacks compute intensi
 and the last hash generated is then sent back to the server. The server
 does the same with the password entered in the \bltt{Server} menu and then asserts
 that the SHA512 key thus generated matches the one received from the client.
-On a RaspberryPi5, generation of the hash takes about 120 msec, and about 3 times less on powerful desktop
+On a RaspberryPi5, generation of the hash takes about 120 msec, and about 3 times less on
+(more powerful) desktop
 computers. Once a hacker has ``sniffed'' a valid challenge/hash pair, trying to guess the password
-from generating all possible hashes
-from the challenge for, say, passwords of length 8 and consisting of lower-case letters and numbers only
-(2.8 * 10$^{12}$ possibilities) will take about 10$^{11}$ seconds (3500 years) of CPU time, and better
-passwords which also include upper-case letters are even better.
-Although this still  not  top-notch cyber security, it should be good enough
+from generating all possible hashes involves a lot of computation, depending on the quality of the password.
+It must be emphasised that this is \textbf{not}  top-notch cyber security, but it should be good enough
 to fulfil your  (legal) obligations as a radio amateur to prevent your gear from unlawful use.
 If you feel you must go beyond, one option is to set up a VPN \textit{virtual private network} in which
 you can have expert-level (professional) cyber security provided by your network infrastructure, which is
 far beyond the amateur-level security features that I can build into \pH.
 
+\newpage
 \textbf{Auto disconnect feature:}
 
-Equally important is to prevent that your radio stops transmitting if
+Equally important is to ensure that your radio stops transmitting if
 the connection to the client breaks down. To this end, the server closes the connection and goes RX if
 it has not received any command from the client for about 30 seconds, or if the attempt to read the
 next command from the client failed (the client will send a
@@ -4465,9 +4484,11 @@ different VFO step sizes for different modes, and get the step size chosen for t
 mode automatically if one switches to that mode. The same applies to noise reduction
 settings which are very different for CW and SSB. For digital modes (DIGU/DIGL),
 one normally does not want neither noise reduction or equaliser being active on the RX
-side, nor a speech processor for transmitting.
+side, nor a speech processor for transmitting. In addition, one usually uses
+microphone and headphone for USB audio input and output, and wants to automatically
+switch to virtual audio cables for DIGU.
 
-On the other side, one often wants the same settings for USB and LSB, or for DIGU and DIGL.
+\pH assumes that the user ,,wants'' the same settings for USB and LSB, or for DIGU and DIGL.
 Therefore three mode groups have been defined that encompass USB/LSB/DSB, CWU/CWL, and
 DIGU/DIGL. There are two more mode ,,groups'' with AM and FM  as the only one member.
 
@@ -4479,7 +4500,9 @@ that mode overwrites the current settings.
 The RX/TX profile for a specific mode (group) is updated whenever one of the settings
 contained in the profile is updated for RX1 or for the transmitter. Note that the
 mode-specific RX/TX profile is also applied to RX2 if the mode of RX2 is changed,
-but changing the settings for RX2 does not update the profile.
+but changing the settings for RX2 does not update the profile. The exception is the
+RX audio output device, here changes are only stored for RX1 and only the RX2 audio
+output device is possibly changed when the RX1 mode changes.
 
 For example, if you have adjusted the noise reduction settings while operating USB,
 these settings are stored in the RX/TX profiles of the USB, LSB, and DSB modes. Whenever
@@ -4503,12 +4526,14 @@ $\bullet$ RX Spectral  noise blanker (on/off) \cr
 $\bullet$ RX AGC characteristic (slow/medium/fast etc.) \cr
 $\bullet$ RX squelch (on/off, squelch level) \cr
 $\bullet$ RX equaliser (all settings) \cr
+$\bullet$ RX1 audio output device and stereo/mono setting (only RX1, not RX2!)\cr
 $\bullet$ TX equaliser (all settings) \cr
 $\bullet$ TX speech processor (on/off, compression level) \cr
 $\bullet$ TX continuous frequency compressor (CFC, all settings) \cr
 $\bullet$ TX downward expander (DEXP, all settings) \cr
 $\bullet$ TX mic gain slider position \cr
 $\bullet$ TX filter settings (low/high or use RX filter)\cr
+$\bullet$ TX audio input device\cr
 \bottomrule
 \end{tabular}
 \end{center}
@@ -4540,7 +4565,7 @@ all be switched off. If the audio level is constant but below full scale, the in
 amplified via MicGain until the TX ALC value is just below or at 0 dB.
 All what follows is concerned with the potential problems of human speech
 that comes from a microphone. Note that for FM mode, things are slightly more complicated
-because of the FM pre-emphasis, this is explained in chapter \ref{sec:txmenu}, set the
+because of the FM pre-emphasis, this is explained in chapter \ref{sec:txmenu}, see the
 explanation of the \rett{FM PreEmp/ALC} button.
 
 \subsection{Start of the TX chain: The MicLvl indicator}
@@ -4549,12 +4574,15 @@ At the beginning of the signal chain, there invariably is an analog-to-digital c
 in the sound card (or the codec) the microphone is connected to via an analog wire (the ADC may
 be built into the microphone in the case of USB microphones). The ADC has a maximum input amplitude
 beyond which clipping sets on, and the digitised microphone signal at the beginning of the chain
-is usually represented by a finite range of integers (usually a signed 16 bit number). This input signal
+is usually represented by a finite range of integers (usually a signed 16-bit or 24-bit number). This input signal
 may or may not be processed by the computer's operating system and eventually arrives in \pH, where it
-is converted to a floating point number in the range $\-1.0\ldots+1.0$. Here we shall denote a signal
+is converted to a floating point number in the range $-1.0\ldots+1.0$. Here we shall denote a signal
 whose peak amplitudes are $\pm 1.0$ a \textit{full scale} (FS) signal. Due to the clipping of the ADC,
-the signal cannot exceed FS. The adjustment should be such that you reach FS if you violently
-whistle into the microphone, you reach FS but since clipping leads to extreme distortion, most audio
+the signal cannot exceed FS unless there is a sort of volume control in the host operating system.
+No matter whether the adjustment is done in hardware (microphone preamp) or in software (volume control
+in the operating system),
+it should be such that you reach FS if you violently
+whistle into the microphone. Since clipping leads to extreme distortion, most audio
 gear is levelled such that you stay significantly below FS during normal speech. Note that once you
 represent the signal as a floating point number, you can apply virtually any amplification without
 introducing distortion, so from here on until close to the end of the TX chain, clipping is not an issue.
@@ -4564,7 +4592,8 @@ meter that shows up at the top of the meter (to the right of the VFO bar) during
 level that \pH ``sees'' before any processing takes place. The scale of this meter is $-40\ldots 0$ dBFS,
 so at normal speech it should show more than half-deflection. If it stays below, this can be
 compensated by advancing MicGain to positive values. But in this case you may want to first check
-whether  the operating system applies extra attenuation (PulseAudio/PipeWire: \texttt{pavucontrol} program,
+whether  the operating system applies extra attenuation (PulseAudio/PipeWire: \texttt{pavucontrol}
+or \texttt{wpctl} program,
  MacOS: Audio/MIDI setup utility). Dynamic microphones have rather low  output levels, so
 adding a battery powered preamplifier (I have built a small one that could be fitted inside
 the microphone stand) could also be useful. To warn about possible clippings (integer overflows) of the
@@ -4573,8 +4602,8 @@ is shown in green colour if peak levels are below -3 dB FS (71\% of the peak amp
 between -3 and -0.5 dB,  and a red colour if peak microphone levels are above -0.5 dB FS (94\% of the peak amplitude).
  For example, when using a microphone, connected to the radio, with an adjustable preamplifier,
 its gain should be reduced if the \texttt{Mic Lvl} bar regularly flashes yellow or red.
-This can also occur if a microphone is connected to the radio which does not need the extra (20 dB)
-mic level boost (see the \bltt{TX menu}, but the mic boost is engaged  regardless.
+This can also occur if a microphone is connected to the radio has the extra (20 dB)
+mic level boost (see the \bltt{TX menu} engaged but which does not need it.
 On the other hand,
 for digital modes when using a virtual audio cable, the peak level is about 100\% almost constantly
 and here it is no reason to worry if the \texttt{Mic Lvl} bar is constantly red.
@@ -4625,7 +4654,7 @@ The next important part is the auto leveller (AUTOLVL). It solves the problem th
 signal may vary in amplitude, for example because the distance between your mouth and the microphone is
 not really constant. So if the signal is below FS, the auto leveller applies an extra amplification (up
 to 8 dB, this is hard coded in \pH) so it ``levels out'' the signal if the input has varying strength.
-In \pH, there is user-accessible control for the auto leveller, it is automatically engaged if you
+In \pH, there is no user-accessible control for the auto leveller, it is automatically engaged if you
 use the speech processor (CMPR) or the continuous frequency compressor (CFC).  So if you want the auto
 leveller but no compression just activate CMPR with a compression value of 0 dB.
 
@@ -4802,10 +4831,10 @@ pre-distortion (PURESIGNAL), the whole range of these values is used when auto-l
 RX feedback signal.
 
 Normally, the HL2 is used together with the N2ADR  filter
-board (link B) featuring the low-pass filters that are required before connecting the HL2 to an antenna.
-Some have also included the so-called AK4951 companion board (link C) that features, among others,
+board (internet link B) featuring the low-pass filters that are required before connecting the HL2 to an antenna.
+Some have also included the so-called AK4951 companion board (internet link C) that features, among others,
  an audio codec so you can connect a headphone and a microphone. There is also a more recent HL2 I/O-board
- (link D) that offers a variety of I/O resources. All these boards are supported by \pH.
+ (internet link D) that offers a variety of I/O resources. All these boards are supported by \pH.
 
 \subsection{Default PA calibration values}
 
@@ -4831,7 +4860,7 @@ file).
 \end{figure}
 
  Fig \ref{fig:hl2radiomenu} shows the \bltt{Radio} menu as it shows when \pH runs a HL2. To use the N2ADR
- filter board, choose \texttt{N2ADR} in the \rett{Filter Board:} pop-down menu. Using this filter board
+ filter board, choose \texttt{N2ADR} in the \rett{Filter Board} pop-down menu. Using this filter board
  requires a special settings of the open-collector outputs, so to be sure these are set, the safest way
  after playing around in the \bltt{OC} menu
  is to choose another filter board in the \bltt{Radio} menu and then again the \texttt{N2ADR} board
@@ -5840,48 +5869,52 @@ end of the active receiver.}
 
 \section{Other keyboard shortcuts}
 
-\rett{space bar} Hitting the space bar will execute the \bltt{MOX} command, that is, a
+\begin{itemize}
+
+\item[\rett{space}]{ Hitting the space bar will execute the \bltt{MOX} command, that is, a
 transition from RX to TX or from TX to RX. Use this as the last resort for TRX switching
-if your microphone does not have PTT.
+if your microphone does not have PTT.}
 
-\rett{u} Hitting a lower-caps letter ,,u'' moves the VFO frequency up by the current VFO
-step size.
+\item[\rett{u}]{ Hitting a lower-caps letter ,,u'' moves the VFO frequency up by the current VFO
+step size.}
 
-\rett{d} Hitting a lower-caps letter ,,d'' moves the VFO frequency up by the current VFO
-step size.
+\item[\rett{d}]{ Hitting a lower-caps letter ,,d'' moves the VFO frequency up by the current VFO
+step size.}
 
-\rett{U} Hitting a upper-caps letter ,,U'' moves the VFO frequency of the ,,other'' VFO, that is,
-the VFO that is \textit{not} controlling the active receiver, up by 10 times the VFO step size.
+\item[\rett{U}]{ Hitting a upper-caps letter ,,U'' moves the VFO frequency of the ,,other'' VFO, that is,
+the VFO that is \textit{not} controlling the active receiver, up by 10 times the VFO step size.}
 
-\rett{D} Hitting a upper-caps letter ,,D'' moves the VFO frequency of the ,,other'' VFO, that is,
+\item[\rett{D}]{ Hitting a upper-caps letter ,,D'' moves the VFO frequency of the ,,other'' VFO, that is,
 the VFO that is \textit{not} controlling the active receiver, down by 10 times the VFO step size.
 
-This (U/D) is for stations chasing DX and using split mode. One can tune to the DX station,
+The keys \rett{U,D} are for stations chasing DX in split mode. One can tune to the DX station,
 then copy the VFO of the active receiver to the other one using \bltt{A>B} or \bltt{A<B}, then then
-one can  move the TX frequency (in split mode) using these keys in large steps.
+one can  move the TX frequency (in split mode) using \rett{U,D} in large steps.}
 
-\rett{Keypad 0} $\ldots$ \rett{Keypad 9} Hitting a digit on the numerical keypad executes one of the
+\item[\rett{m}, \rett{M}]{ opens the main menu.}
+
+\item[\rett{KP 0-9}]{ Hitting a digit on the numerical keypad executes one of the
 \bltt{NumPad 0} to \bltt{NumPad 9} commands. This can be used for direct frequency entry
-via the keyboard.
+via the keyboard.}
 
-\rett{Keypad Decimal} Hitting the decimal point on the keypad executes the \bltt{NumPad Dec}
-command which will enter a decimal point during direct frequency entry.
+\item[\rett{KP .}]{Hitting the decimal point on the keypad executes the \bltt{NumPad Dec}
+command which will enter a decimal point during direct frequency entry.}
 
-\rett{Keypad Subtract} Hitting the ,,subtract'' (minus) key on the numerical keypad executes the
-\bltt{NumPad BS} (back space) command.
+\item[\rett{KP -}]{ Hitting the ,,minus'' key on the numerical keypad executes the
+\bltt{NumPad BS} (back space) command.}
 
-\rett{Keypad Divide} Hitting the ,,divide'' key on the numerical keypad executes the \bltt{NumPad CL}
-command which will clear any frequency entered so far.
+\item[\rett{KP /}]{ Hitting the ,,divide'' key on the numerical keypad executes the \bltt{NumPad CL}
+command which will clear any frequency entered so far.}
 
-\rett{Keypad Multiply} Hitting the ,,multiply'' key on the numerical keypad executes the \bltt{NumPad Hz}
-command which will transfer the frequency entered (in Hz) to the VFO of the active receiver.
+\item[\rett{KP *}]{ Hitting the ,,multiply'' key on the numerical keypad executes the \bltt{NumPad Hz}
+command which will transfer the frequency entered (in Hz) to the VFO of the active receiver.}
 
-\rett{Keypad Add} Hitting the ,,add'' (plus) key on the numerical keypad executes the \bltt{NumPad kHz}
-command which will transfer the frequency entered (in kHz) to the VFO of the active receiver.
+\item[\rett{KP +}]{ Hitting the ,,plus'' key on the numerical keypad executes the \bltt{NumPad kHz}
+command which will transfer the frequency entered (in kHz) to the VFO of the active receiver.}
 
-\rett{Keypad Enter} Hitting the ,,enter'' key on the numerical keypad executes the \bltt{NumPad MHz}
-command which will enter the frequency entered (in MHz) to the VFO of the active receiver.
-
+\item[\rett{KP enter}]{ Hitting the ,,enter'' key on the numerical keypad executes the \bltt{NumPad MHz}
+command which will enter the frequency entered (in MHz) to the VFO of the active receiver.}
+\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7223,10 +7256,7 @@ In this section, we will cover four different scenarios, namely
 \item{\pH and digi mode program running on the same LINUX computer
 (including RaspPi) using ALSA.}
 \item{\pH and digi mode program running on the same LINUX computer
-(including RaspPi) using PulseAudio or PipeWire. {\color{red} In the most recent Linux distributions,
- PulseAudio has been abandoned and is replaced by
-PipeWire. From the user's perspective the difference is marginal.
-The manual covers both cases separately but they are essentially the same.}}
+(including RaspPi) using PipeWire.}
 \item{\pH and digi mode program running on the same MacOS computer.}
 \end{itemize}
 
@@ -7283,8 +7313,8 @@ flows through the RXcable upon RX and through the TXcable while transmitting. Ha
 it is clear that
 
 \begin{itemize}
-\item{In the \pH \bltt{RX} menu, chose the output device of RXcable for local audio output.}
-\item{In the \pH \bltt{TX} menu, chose the input device of TXcable for local microphone input.}
+\item{In the \pH \bltt{RX} menu, chose the output device of RXcable for audio output.}
+\item{In the \pH \bltt{TX} menu, chose the input device of TXcable for audio input.}
 \item{In the audio menu of the digi mode program, choose the input device of RXcable for audio input.}
 \item{In the audio menu of the digi mode program, choose the output device of TXcable for output output.}
 \end{itemize}
@@ -7293,25 +7323,32 @@ With this, the only question remaining is, how to create virtual audio cables, a
 This is not only different between Linux and MacOS, but also is different on Linux depending on
 whether the ALSA compile time option (see Appendix \ref{sec:compiletime}) was activated during
 compilation of \pH. If compiling from the sources you get the PulseAudio module if you
-do not change the Makefile (see Appendix \ref{sec:compiletime}).
+do not change the Makefile (see Appendix \ref{sec:compiletime}). Note that since some time,
+PulseAudio has been replaced by PipeWire in all relevant LINUX distributions. This does not matter
+to \pH since it makes little difference to the application program. The (user) commands for
+listing available devices, or for creating virtual audio cables, are slightly different between
+PulseAudio and PipeWire. This manual covers the PipeWire case.
 
 
 \subsection[ALSA: virtual audio cables]{Virtual audio cables in ALSA}
 Using the ALSA sound library,
 the command for creating the two virtual cables (put everything in one line) is
 
-\texttt{sudo modprobe snd-aloop index=5,6 id=RXcable,TXcable\\
+\grtt{sudo modprobe snd-aloop index=5,6 id=RXcable,TXcable\\
 enable=1,1 pcm\_substreams=2,2}
 
+For the convenience of the reader a shell script \texttt{LINUX/alsa.vac.sh} is
+provided which contains the command given above.
 The two indices chosen (5, 6) should leave enough head-room for sound devices
-already present. On a ,,naked'' Pi4, indices 0 and 1 refer to the HDMI
+already present. On a ,,naked'' RaspberryPi, indices 0 and 1 refer to the HDMI
 and headphone audio output devices, but more indices may already be assigned
-if you have plugged in additional sound cards. You can verify the existence of
+if you have plugged in additional sound cards (use two larger numbers in
+this case). You can verify the existence of
 the virtual audio cables using the command
 
-\texttt{aplay -l}
+\grtt{aplay -l}
 
-and part of the output, as obtained on my Pi4, is printed here:
+and part of the output, as obtained on my RaspberryPi, is printed here:
 
 \begin{small}
 \begin{verbatim}
@@ -7335,8 +7372,8 @@ card 6: TXcable [Loopback], device 1: Loopback PCM [Loopback PCM]
 \end{small}
 Remember that the device with index 5 is our RXcable and index 6 belongs to TXcable since
 not all programs (including \pH) report the names (RXcable, TXcable) assigned. It is
-important to realise that each ,,cable'' offers two devices: the first one (0) is
-the input device and the second one (1) is the output device.
+important to realise that each ,,cable'' offers two sub-devices: the first one (\#0) is
+the input (,,microphone'') device and the second one (\#1) is the output (,,headphone'') device.
 Note that
 the two devices created by ,,modprobe'' only exist until the next shut-down of the computer and
 you have to re-create them each time after booting. There are ways to make this permanent (search
@@ -7361,8 +7398,8 @@ We begin with the \pH settings in the \bltt{RX} (Fig. \ref{fig:rx_settings_alsa_
 \label{fig:tx_settings_alsa_audio}
 \end{figure}
 
-Is clearly seen that the output device of RXcable (5,1) is used for local RX audio, and the input
-device of TXcable (6,0) is used for local microphone input. The corresponding WSJTX settings audio
+Is clearly seen that the output subdevice of RXcable (5,1) is used RX audio output, and the input
+subdevice of TXcable (6,0) is used for TX audio input. The corresponding WSJTX settings audio
 tab looks similar (Fig. \ref{fig:wsjtx_settings_alsa_audio}, only the upper part of the
 window is shown):
 
@@ -7393,92 +7430,96 @@ the PTT method (TRX transition controlled by CAT commands). Checking \rett{Data/
 takes care WSJTX switches \pH to DIGU mode, and using \rett{Fake It} for the Split
 Operation method is just my personal preference.
 
-\subsection[PulseAudio: NullSink modules]{PulseAudio: Null-Sink modules as virtual audio cables}
+\subsection[PipeWire: NullSink modules]{PipeWire: Null-Sink modules as virtual audio cables}
 
-\textbf{Important:}In nearly all latest LINUX releases, PulseAudio has been replaced by
-PipeWire, the difference is covered in the following section!
+\textbf{Note:} This section is relevant if the PulseAudio audio module has been 
+selected at compile time. Meanwhile PulseAudio has been replaced by PipeWire in
+most recent LINUX distributions. Fortunately, there is a module called
+\texttt{pipewire-pulseaudio} which ensures that programs (such as \pH) using the
+PulseAudio API can run with PipeWire. There are some subtle differences at command
+line level when it comes to creating virtual devices or adjusting volumes. This
+section always discusses the Pipewire variants.
 
-There are no explicit loop-back devices with PulseAudio since they are not needed.
-For \textit{every} PulseAudio output device, there is a corresponding ,,Monitor'' device
+There are no explicit loop-back devices with PipeWire since they are not needed.
+For \textit{every} PipeWire output device, there is a corresponding ,,Monitor'' device
 which can be used for sound input, and where the data sent to the primary (output) device
-can be red. This means, you can send the RX audio to the headphone device as you would do
+can be read. This means, you can send the RX audio to the headphone device as you would do
 for normal SSB operation, and can then use the Monitor of the headphone device as audio
 input in WSJTX. We describe a different setup where we create two dummy
  ("null-sink") output devices. It should be clear how to change this procedure if
  you want to listen (with the headphone) to the digi mode RX signal while it is processed
  in the digi mode program.  We call the two dummy output devices
  RXcable and TXcable just to demonstrate how it works.
-  This is done by the commands (do not enter the line breaks)
+ This is done by the two commands (do not enter the line breaks)
 
-\texttt{pacmd load-module module-null-sink sink\_name=RXcable rate=48000 \\
-sink\_properties="device.description=RXcable"
+\newpage
+{\color{magenta}
+\begin{verbatim}
+pactl load-module module-null-sink sink_name=RXcable rate=48000
+sink_properties="device.description=RXcable"
+
+pactl load-module module-null-sink sink_name=TXcable rate=48000
+sink_properties="device.description=TXcable"
+\end{verbatim}
 }
 
-\texttt{pacmd load-module module-null-sink sink\_name=TXcable rate=48000 \\
-sink\_properties="device.description=TXcable"
-}
+One can likewise execute the script
+\texttt{LINUX/pipewire.vac.sh} in which the two commands above are contained.
 
 To control whether the output devices have been created correctly, we use the command
-\texttt{pacmd list-sinks}, which produces
+\grtt{pactl list sinks}, which produces
 a very long output from which only the relevant parts are reported here:
 
 \begin{small}
 \begin{verbatim}
+...
+Sink #104
+    State: SUSPENDED
+    Name: RXcable
+    Description: RXcable Audio/Sink sink
+    Driver: PipeWire
+    Sample Specification: float32le 2ch 48000Hz
+...
 
-...
-    index: 2
-	name: <RXcable>
-	driver: <module-null-sink.c>
-	flags: DECIBEL_VOLUME LATENCY DYNAMIC_LATENCY
-	state: IDLE
-...
-    index: 3
-	name: <TXcable>
-	driver: <module-null-sink.c>
-	flags: DECIBEL_VOLUME LATENCY DYNAMIC_LATENCY
-	state: IDLE
+Sink #111
+    State: SUSPENDED
+    Name: TXcable
+    Description: TXcable Audio/Sink sink
+    Driver: PipeWire
+    Sample Specification: float32le 2ch 48000Hz
 ...
 \end{verbatim}
 \end{small}
 
-Note the index numbers which are 2 for RXcable and 3 for TXcable, these index numbers my
-be different on your machine. The index number of TXcable (here: 3) is needed in the
-case of FLdigi and qSSTV (see note at the end of this section).
-The state may also be different from IDLE depending on whether
-you (already) make use of that device.
-
 Likewise, check the availability of the input devices using
-the command \texttt{pacmd list-sources}, from the output we quote
+the command \grtt{pactl list sources}, from the output we quote
 
 \begin{small}
 \begin{verbatim}
-
 ...
-    index: 2
-	name: <RXcable.monitor>
-	driver: <module-null-sink.c>
-	flags: DECIBEL_VOLUME LATENCY DYNAMIC_LATENCY
-	state: IDLE
+Source #104
+    State: SUSPENDED
+    Name: RXcable.monitor
+    Description: Monitor of RXcable Audio/Sink sink
+    Driver: PipeWire
+    Sample Specification: float32le 2ch 48000Hz
 ...
-    index: 3
-	name: <TXcable.monitor>
-	driver: <module-null-sink.c>
-	flags: DECIBEL_VOLUME LATENCY DYNAMIC_LATENCY
-	state: IDLE
+Source #111
+    State: SUSPENDED
+    Name: TXcable.monitor
+    Description: Monitor of TXcable Audio/Sink sink
+    Driver: PipeWire
+    Sample Specification: float32le 2ch 48000Hz
 ...
 \end{verbatim}
 \end{small}
 
-Again, note the index numbers, here they are 2 for the Monitor of RXcable and 3 for the Monitor
-of TXcable. The index number of RXcable.monitor (here: 2) is needed in the
-case of FLdigi and qSSTV (see note at the end of this section).
-The state may also be different from IDLE depending on whether
-you (already) make use of that device.
-
-Note that these devices are created once, the commands have to be repeated after rebooting
-the machine or restarting PulseAudio, the devices can be made permanent but you have to
-search the internet on how to do this. My recommendation is to include such command in a
-shell script that is automatically executed when you start the computer.
+These devices only exist until the computer is shut down,
+which means that the commands given above have to be repeated after rebooting
+the machine. They can be made permanent (you will find
+instructions in the internet), but my recommendation is to create a shell script that
+creates these devices and have this script automatically executed each time
+you start the computer.
 
 The necessary configuration for \pH and WSJTX is  almost evident. The
 \pH settings are shown in Fig. \ref{fig:rx_settings_pa_audio} (\bltt{RX} menu)
@@ -7512,90 +7553,38 @@ the same as in the ALSA case.
 \label{fig:wstx_settings_pa_audio}
 \end{figure}
 
-
-
 \begin{center}
 \fbox{
 \parbox{\textwidth - 1cm}{
 \begin{center}
 \textbf{\color{red} -------- Note on FLdigi and qSSTV --------}
 \end{center}
-Some popular programs, including FLdigi and qSSTV, can use PulseAudio but have
-not user interface to choose the PulseAudio device. This means, they will only
-use the default PulseAudio input and output device. So to use FLdigi and/or
+Some popular programs, including FLdigi and qSSTV, can use PipeWire but have
+no user interface to choose the PipeWire input and output devices.
+This means, they will only
+use the default PipeWire input and output device. So to use FLdigi and/or
 qSSTV, you have to make TXcable the default output device and the  monitor of
-RXcable the default input device. This means FLdigi/qSSTV will always read
+RXcable the default input device, so FLdigi/qSSTV will always read
 their audio input from the monitor of RXcable and put the audio they produce
 to TXcable. To achieve this, simply use the two commands
 
 \vspace{0.1cm}
-\texttt{pacmd set-default-sink <index of TXcable>}
+\grtt{pactl set-default-sink TXcable}
 
 \vspace{0.1cm}
-\texttt{pacmd set-default-source <index of RXcable.monitor>}
+\grtt{pactl set-default-source RXcable.monitor}
 
 \vspace{0.1cm}
-where the indices (small integer numbers) are those mentioned above, and are
-take from the output of the \texttt{pacmd list-sinks} and the \texttt{pacmd list-sources}
-commands.
+You can check which audio devices are used by default by PipeWire with the commands
+
+\vspace{0.1cm}
+\grtt{pactl get-default-sink}
+
+\vspace{0.1cm}
+\grtt{pactl get-default-source}
 }
 }
 \end{center}
-
-\subsection[PipeWire: NullSink modules]{PipeWire: Null-Sink modules as virtual audio cables}
-The PipeWire case is very similar to the PulseAudio case, so we concentrate
-on the differences only. Creating the null-sink modules (,,cables'') is
-done in the same way as described in the previous chapter with very slight modifications:
-for example one can use \texttt{pactl} but not \texttt{pacmd}, and to give the sink name
-when loading the module the parameter reads \texttt{sink\_name} (with an underscore)
-instead of \texttt{sink name}.
-
-\texttt{pactl load-module module-null-sink sink\_name=RXcable rate=48000 \\
-sink\_properties="device.description=RXcable"
-}
-
-\texttt{pactl load-module module-null-sink sink\_name=TXcable rate=48000 \\
-sink\_properties="device.description=TXcable"
-}
-
-\texttt{pactl set-sink-volume RXcable 89\%}
-
-\texttt{pactl set-sink-volume TXcable 89\%}
-
-For some unknown reason, the volume of these devices is 3 dB too high on my
-RaspPi test system, so the last two commands adjust this.
-To check the available input (sources) and output (sinks) device, the command
-now reads \texttt{pactl list sources} or \texttt{pactl list sinks}. The numbering
-of the sinks and sources is now somewhat arbitrary, for example, when listing the
-sinks I get
-\begin{verbatim}
-Sink #65
-	State: SUSPENDED
-	Name: alsa_output.platform-107c706400.hdmi.hdmi-stereo
-	Description: Built-in Audio Digital Stereo (HDMI)
-	Driver: PipeWire
-
-...
-
-Sink #76
-	State: SUSPENDED
-	Name: RXcable
-	Description: RXcable
-...
-	Properties:
-		node.name = "RXcable"
-		device.description = "RXcable"
-		audio.rate = "48000"
-\end{verbatim}
-The configuration (see Figs. \ref{fig:rx_settings_pa_audio}--\ref{fig:wstx_settings_pa_audio}) is then the same
-as with PulseAudio. For {\color{red} \textbf{FLdigi}}, one has to specify a default PipeWire input and output device, which is
-then used by FLdigi (there is no device chooser in the GUI for PulseAudio). The commands to make TXcable the default output, and RXcable the default
-input device are, in the PipeWire case
-
-\begin{verbatim}
-pactl set-default-sink TXcable
-pactl set-default-source RXcable
-\end{verbatim}
 
 \subsection[MacOS: LoopBack]{Using the ,,loopback'' program with MacOS}
 The standard audio option for MacOS is PORTAUDIO which has no built-in virtual
@@ -7605,9 +7594,8 @@ to buy a third-party product,  ,,loopback'' from RogueAmoeba
 (\texttt{https://rogueamoeba.com/loopback/}).
 Note I have no connections with that company, I am just using this product and
 can recommend it. It can not only be used to create loop-back devices, but you get
-a patch panel so you can, for example, send the RX audio both to a headphone device
-and to a virtual cable, thus eliminating the need to change \pH menu settings
-when switching between SSB and digi. The following picture just shows my setup
+a patch panel so you can, for example, send the RX audio both to two different
+devices at the same time. The following picture just shows my setup
 (Figs. \ref{fig:loopback_rx} and \ref{fig:loopback_tx}).
 
 \begin{figure}[ht!]
@@ -7898,7 +7886,7 @@ using the screen and keyboard and mouse from that other computer to control the 
 \chapter[Linux: \pH install from sources]{Installation of \pH from the sources (Linux, RaspPi)}
 \label{sec:installsources}
 \textit{This procedure has been with current version of the RaspPi (Pi4B and Pi5) with various versions of a
-fresh and plain vanilla operating system (,,BullsEye'', ,,BookWorm'' and ,,Trixie''). 
+fresh and plain vanilla operating system (,,BullsEye'', ,,BookWorm'' and ,,Trixie'').
 It has also been tested with an Ubuntu (Version 25) LINUX installed on a RaspPi.
 Normally
 I use the 64-bit versions of the operating system since this is the standard option, but it
@@ -8129,7 +8117,7 @@ you want to work with. The example just given clearly states that no such module
 directory in form of installation scripts, these have the name
  \texttt{soapy.}\textit{your-radio}\texttt{.sh}. To give an example, in order to install
  the SoapySDR module for an AdalmPluto, you have to use the commands
- 
+
 \grtt{cd \$HOME/pihpsdr} \\
 \grtt{LINUX/soapy.pluto.sh}
 
@@ -8150,7 +8138,7 @@ At the moment, there is support for the Adalm Pluto, for RTL sticks, for AirSpy 
 for the SDRplay. I have put together and tested scripts for the Pluto and for RTL sticks,
 since I have the hardware and can test it. The other scripts that install support modules
 for SoapySDR radios have been contributed by \pH users who have those radios and managed
-to compose an automatic install script for the required SoapySDR modules. Note that 
+to compose an automatic install script for the required SoapySDR modules. Note that
 I received a report that the SoapySDR module for SDRplay does not implement the Soapy API
 correctly,
 for example when setting the overall RF gain. I cannot confirm this
@@ -8189,7 +8177,7 @@ OS onto the SD card and start from scratch.
 
 \clearpage
 If the SoapySDR library has been correctly installed, \pH has to be compiled with
-the SOAPYSDR compile-time option enabled (see Sec. \ref{sec:compiletime}). This can 
+the SOAPYSDR compile-time option enabled (see Sec. \ref{sec:compiletime}). This can
 easily be achieved with the commands
 
 \grtt{cd \$HOME/pihpsdr} \\
