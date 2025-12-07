@@ -304,7 +304,7 @@ void vfo_num_pad(int action, int id) {
     // The "locale" stuff is no longer needed (but does no harm)
     // since we now force the "C" locale in the program.
     //
-    if (index(buffer, *(locale->decimal_point)) == NULL &&
+    if (strchr(buffer, *(locale->decimal_point)) == NULL &&
         len <= sizeof(vfo[id].entered_frequency) - 2) {
       buffer[len++] = *(locale->decimal_point);
       buffer[len] = 0;

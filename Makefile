@@ -169,6 +169,7 @@ endif
 ifeq ($(UNAME_S), Windows)
 # Disable MIDI on Windows for MVP (implement later with Windows MIDI API)
 MIDI=OFF
+MIDI_OPTIONS=
 # TODO: Implement src/windows_midi.c using Windows Multimedia API (mmsystem.h, -lwinmm)
 endif
 endif
@@ -448,8 +449,8 @@ SYSLIBS=-framework IOKit
 endif
 
 ifeq ($(UNAME_S), Windows)
-# Winsock2 for network sockets, iphlpapi for network interface info
-SYSLIBS=-lws2_32 -liphlpapi
+# Winsock2 for network sockets, iphlpapi for network interface info, avrt for Multimedia threads
+SYSLIBS=-lws2_32 -liphlpapi -lavrt
 endif
 
 ##############################################################################
@@ -563,7 +564,7 @@ src/server_menu.c \
 src/server_thread.c \
 src/sintab.c \
 src/sliders.c \
-src/sliders_menu.h \
+src/sliders_menu.c \
 src/startup.c \
 src/store.c \
 src/store_menu.c \

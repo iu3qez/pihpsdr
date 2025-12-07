@@ -193,7 +193,7 @@ int audio_open_input(TRANSMITTER *tx) {
   }
 
   g_mutex_lock(&tx->audio_mutex);
-  bzero(&inputParameters, sizeof(inputParameters)); //not necessary if you are filling in all the fields
+  memset(&inputParameters, 0, sizeof(inputParameters)); //not necessary if you are filling in all the fields
   inputParameters.channelCount = 1;   // MONO
   inputParameters.device = padev;
   inputParameters.hostApiSpecificStreamInfo = NULL;
@@ -340,7 +340,7 @@ static int pa_in_cb(const void *inputBuffer, void *outputBuffer, unsigned long f
         tx->audio_flag = 0;
         tx->audio_buffer_outpt = 0;
         tx->audio_buffer_inpt  = 960;
-        bzero(tx->audio_buffer, 960 * sizeof(float));
+        memset(tx->audio_buffer, 0, 960 * sizeof(float));
       }
     } else {
       tx->audio_flag = 1;
@@ -432,7 +432,7 @@ int audio_open_output(RECEIVER *rx) {
   }
 
   g_mutex_lock(&rx->audio_mutex);
-  bzero(&outputParameters, sizeof(outputParameters)); //not necessary if you are filling in all the fields
+  memset(&outputParameters, 0, sizeof(outputParameters)); //not necessary if you are filling in all the fields
   outputParameters.channelCount = 2;   // audio output is stereo
   outputParameters.device = padev;
   outputParameters.hostApiSpecificStreamInfo = NULL;
@@ -684,7 +684,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
       // discard audio buffer and insert *a little bit of* silence
       // (currently, 128 samples = 2.6 msec)
       //
-      bzero(rx->audio_buffer, 2 * MY_CW_LOW_WATER * sizeof(float));
+      memset(rx->audio_buffer, 0, 2 * MY_CW_LOW_WATER * sizeof(float));
       MEMORY_BARRIER;
       rx->audio_buffer_inpt = MY_CW_LOW_WATER;
       MEMORY_BARRIER;

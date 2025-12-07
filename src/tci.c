@@ -876,7 +876,7 @@ static gpointer tci_listener(gpointer data) {
       break;
     }
 
-    numbytes = recv(client->fd, buff + offset, MAXDATASIZE - offset, 0);
+    numbytes = recv(client->fd, (char *)(buff + offset), MAXDATASIZE - offset, 0);
 
     if (numbytes <= 0) {
       usleep(100000);

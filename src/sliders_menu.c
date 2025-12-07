@@ -16,6 +16,7 @@
 *
 */
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
 
 #include "action_dialog.h"

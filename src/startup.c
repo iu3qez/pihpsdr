@@ -59,6 +59,10 @@
   #include <IOKit/pwr_mgt/IOPMLib.h>
 #endif
 
+#ifndef S_ISLNK
+#define S_ISLNK(mode) 0
+#endif
+
 #include "message.h"
 
 void startup(const char *path) {
@@ -160,13 +164,21 @@ void startup(const char *path) {
   snprintf(workdir, sizeof(workdir), "%s/.config", homedir);
 
   if (stat(workdir, &statbuf) < 0) {
-    mkdir (workdir, 0700);
+#ifdef _WIN32
+    mkdir(workdir);
+#else
+    mkdir(workdir, 0700);
+#endif
   }
 
   snprintf(workdir, sizeof(workdir), "%s/.config/pihpsdr", homedir);
 
   if (stat(workdir, &statbuf) < 0) {
-    mkdir (workdir, 0700);
+#ifdef _WIN32
+    mkdir(workdir);
+#else
+    mkdir(workdir, 0700);
+#endif
   }
 
 #endif
