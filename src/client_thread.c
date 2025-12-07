@@ -239,7 +239,7 @@ int radio_connect_remote(char *host, int port, const char *pwd) {
     t_perror("Client UDP connect");
   }
 
-  if (send(cl_sock_udp, sha, SHA512_DIGEST_LENGTH, 0) < 0) {
+  if (send(cl_sock_udp, (const char *)sha, SHA512_DIGEST_LENGTH, 0) < 0) {
     t_perror("Client: UDP test packet");
     close(cl_sock_tcp);
     close(cl_sock_udp);
@@ -286,7 +286,7 @@ void server_tx_audio(short sample) {
       txaudio_data.header.data_type = to_16(INFO_TXAUDIO);
       txaudio_data.numsamples = to_16(txaudio_buffer_index);
 
-      if (send(cl_sock_udp, &txaudio_data, sizeof(TXAUDIO_DATA), 0) < 0) {
+      if (send(cl_sock_udp, (const char *)&txaudio_data, sizeof(TXAUDIO_DATA), 0) < 0) {
         perror("TXAUDIO:UDP:SEND");
       }
 

@@ -163,8 +163,9 @@ typedef int socklen_t;
 static inline void sleep_compat(unsigned int seconds) {
     Sleep(seconds * 1000);
 }
-static inline void usleep_compat(unsigned int microseconds) {
+static inline int usleep_compat(unsigned int microseconds) {
     Sleep(microseconds / 1000);
+    return 0;
 }
 // Only define macros if not already defined
 #ifndef sleep

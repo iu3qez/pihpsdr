@@ -31,6 +31,7 @@
 //
 //////////////////////////////////////////////////////////////
 
+#include "windows_compat.h"
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <errno.h>
@@ -47,7 +48,9 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#ifndef PLATFORM_WINDOWS
 #include <arpa/inet.h>
+#endif
 #include <net/if.h>
 #include <semaphore.h>
 #include <sys/stat.h>

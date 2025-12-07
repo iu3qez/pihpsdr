@@ -25,7 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <semaphore.h>
+#ifndef PLATFORM_WINDOWS
 #include <arpa/inet.h>
+#endif
 
 #include "actions.h"
 #include "agc.h"

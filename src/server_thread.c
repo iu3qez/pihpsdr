@@ -53,7 +53,9 @@
 #include "windows_compat.h"
 #include <gtk/gtk.h>
 
+#ifndef PLATFORM_WINDOWS
 #include <arpa/inet.h>
+#endif
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 #include <errno.h>

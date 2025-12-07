@@ -26,7 +26,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#ifndef PLATFORM_WINDOWS
 #include <arpa/inet.h>
+#endif
 #include <netdb.h>
 #include <net/if_arp.h>
 #include <net/if.h>
