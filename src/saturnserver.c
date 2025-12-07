@@ -47,13 +47,17 @@
 #include <pthread.h>
 #include <termios.h>
 #include <sys/time.h>
+#ifndef PLATFORM_WINDOWS
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 #ifndef PLATFORM_WINDOWS
 #include <arpa/inet.h>
 #endif
+#ifndef PLATFORM_WINDOWS
 #include <net/if.h>
+#endif
 #include <semaphore.h>
 
 #include "message.h"
@@ -461,7 +465,7 @@ static void* saturn_server(void *arg) {
 
         memset(&UDPInBuffer, 0, VDISCOVERYREPLYSIZE);
         memcpy(&UDPInBuffer, DiscoveryReply, VDISCOVERYREPLYSIZE);
-        sendto(SocketData[0].Socketid, &UDPInBuffer, VDISCOVERYREPLYSIZE, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
+        sendto(SocketData[0].Socketid, (const char *)&UDPInBuffer, VDISCOVERYREPLYSIZE, 0, (struct sockaddr *)&addr_from, sizeof(addr_from));
         break;
 
       case 3:

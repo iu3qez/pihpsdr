@@ -25,14 +25,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef PLATFORM_WINDOWS
 #include <netinet/in.h>
+#endif
 #ifndef PLATFORM_WINDOWS
 #include <arpa/inet.h>
 #endif
+#ifndef PLATFORM_WINDOWS
 #include <netdb.h>
 #include <net/if_arp.h>
 #include <net/if.h>
 #include <ifaddrs.h>
+#endif
 
 #include "appearance.h"
 #include "audio.h"

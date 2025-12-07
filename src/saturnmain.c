@@ -45,13 +45,17 @@
 #include <pthread.h>
 #include <termios.h>
 #include <sys/time.h>
+#ifndef PLATFORM_WINDOWS
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 #ifndef PLATFORM_WINDOWS
 #include <arpa/inet.h>
 #endif
+#ifndef PLATFORM_WINDOWS
 #include <net/if.h>
+#endif
 #include <semaphore.h>
 #include <sys/stat.h>
 

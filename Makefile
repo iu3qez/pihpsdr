@@ -12,9 +12,9 @@
 #
 #######################################################################################
 
-GPIO=ON
+GPIO=OFF
 MIDI=ON
-SATURN=ON
+SATURN=OFF
 USBOZY=OFF
 SOAPYSDR=OFF
 STEMLAB=OFF
@@ -207,6 +207,11 @@ CPP_SOURCES += src/tts.c
 ##############################################################################
 
 ifeq ($(SATURN),ON)
+# Saturn support relies on features not readily available on Windows (e.g. specific drivers)
+# Disable it for Windows builds
+ifeq ($(UNAME_S), Windows)
+SATURN=OFF
+else
 SATURN_OPTIONS=-D SATURN
 SATURN_SOURCES= \
 src/saturndrivers.c \
@@ -227,9 +232,12 @@ src/saturnserver.o \
 src/saturnmain.o \
 src/saturn_menu.o
 endif
+endif
+ifneq ($(SATURN),OFF)
 CPP_DEFINES += -DSATURN
 CPP_SOURCES += src/saturndrivers.c  src/saturnregisters.c src/saturnserver.c
 CPP_SOURCES += src/saturnmain.c src/saturn_menu.c
+endif
 
 
 ##############################################################################

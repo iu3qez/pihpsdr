@@ -123,7 +123,7 @@ static int send_periodic_data(gpointer arg) {
       tx_ps_getmx(transmitter);
       ps_data.ps_getmx = to_double(transmitter->ps_getmx);
 
-      if (sendto(remoteclient.sock_udp, &ps_data, sizeof(PS_DATA), 0,
+      if (sendto(remoteclient.sock_udp, (const char *)&ps_data, sizeof(PS_DATA), 0,
                  (struct sockaddr *)&remoteclient.address, sizeof(remoteclient.address))  < 0) {
         perror("PSDAT:UDP:SEND");
       }
@@ -155,7 +155,7 @@ static int send_periodic_data(gpointer arg) {
   disp_data.capture_replay_pointer = to_32(capture_replay_pointer);
   disp_data.tx_oob = can_transmit ? transmitter->out_of_band : 0;
 
-  if (sendto(remoteclient.sock_udp, &disp_data, sizeof(DISPLAY_DATA), 0,
+  if (sendto(remoteclient.sock_udp, (const char *)&disp_data, sizeof(DISPLAY_DATA), 0,
              (struct sockaddr *)&remoteclient.address, sizeof(remoteclient.address))  < 0) {
     perror("DISPDAT:UDP:SEND");
   }
@@ -229,7 +229,7 @@ void send_rxspectrum(int id) {
 
     spectrum_data.header.s1 = to_16(payload);
 
-    if (sendto(remoteclient.sock_udp, &spectrum_data, xferlen, 0,
+    if (sendto(remoteclient.sock_udp, (const char *)&spectrum_data, xferlen, 0,
                (struct sockaddr *)&remoteclient.address, sizeof(remoteclient.address))  < 0) {
       perror("RXSPEC:UDP:SEND");
     }
@@ -293,7 +293,7 @@ void send_txspectrum() {
 
     spectrum_data.header.s1 = to_16(payload);
 
-    if (sendto(remoteclient.sock_udp, &spectrum_data, xferlen, 0,
+    if (sendto(remoteclient.sock_udp, (const char *)&spectrum_data, xferlen, 0,
                (struct sockaddr *)&remoteclient.address, sizeof(remoteclient.address))  < 0) {
       perror("TXSPEC:UDP:SEND");
     }
@@ -317,7 +317,7 @@ void remote_rxaudio(const RECEIVER *rx, short left_sample, short right_sample) {
     rxaudio_data[id].rx = id;
     rxaudio_data[id].numsamples = to_16(rxaudio_buffer_index[id]);
 
-    if (sendto(remoteclient.sock_udp, &rxaudio_data[id], sizeof(RXAUDIO_DATA), 0,
+    if (sendto(remoteclient.sock_udp, (const char *)&rxaudio_data[id], sizeof(RXAUDIO_DATA), 0,
                (struct sockaddr *)&remoteclient.address, sizeof(remoteclient.address))  < 0) {
       perror("RXAUDIO:UDP:SEND");
     }
@@ -803,7 +803,7 @@ static void server_loop() {
 static void *udp_thread(void * arg) {
   while (remoteclient.running) {
     TXAUDIO_DATA data;
-    int bytes_read = recvfrom(remoteclient.sock_udp,  &data, sizeof(TXAUDIO_DATA), 0, NULL, NULL);
+    int bytes_read = recvfrom(remoteclient.sock_udp, (char *)&data, sizeof(TXAUDIO_DATA), 0, NULL, NULL);
 
     if (bytes_read < 0 && errno != EAGAIN) {
       break;
@@ -997,7 +997,7 @@ static void *listen_thread(void *arg) {
     //
     // Receive test packet
     //
-    rc = recvfrom(remoteclient.sock_udp, s, SHA512_DIGEST_LENGTH, 0,
+    rc = recvfrom(remoteclient.sock_udp, (char *)s, SHA512_DIGEST_LENGTH, 0,
                   (struct sockaddr *)&remoteclient.address, &addrlen);
 
     if (rc != SHA512_DIGEST_LENGTH) {

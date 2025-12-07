@@ -791,6 +791,81 @@ static inline void freeifaddrs(struct ifaddrs *ifa) {
     }
 }
 
+
+/*
+ * Scatter/Gather I/O support (struct iovec, struct msghdr)
+ * These are POSIX standard but often missing from generic Windows headers
+ */
+#if !defined(_IOVEC_DEFINED)
+#define _IOVEC_DEFINED
+struct iovec {
+    void  *iov_base;    /* Starting address */
+    size_t iov_len;     /* Number of bytes to transfer */
+};
+#endif
+
+#if !defined(_MSGHDR_DEFINED)
+#define _MSGHDR_DEFINED
+struct msghdr {
+    void         *msg_name;       /* optional address */
+    socklen_t     msg_namelen;    /* size of address */
+    struct iovec *msg_iov;        /* scatter/gather array */
+    size_t        msg_iovlen;     /* # elements in msg_iov */
+    void         *msg_control;    /* ancillary data, see below */
+    size_t        msg_controllen; /* ancillary data buffer len */
+    int           msg_flags;      /* flags on received message */
+};
+#endif
+
+/*
+ * sendto/recvfrom wrappers to handle char* casting automatically
+ */
+static inline int sendto_compat(SOCKET s, const void *buf, int len, int flags, const struct sockaddr *to, int tolen) {
+    return sendto(s, (const char *)buf, len, flags, to, tolen);
+}
+
+static inline int recvfrom_compat(SOCKET s, void *buf, int len, int flags, struct sockaddr *from, int *fromlen) {
+    return recvfrom(s, (char *)buf, len, flags, from, fromlen);
+}
+
+/*
+ * recvmsg/sendmsg compatibility
+ * These map to recvfrom/sendto, assuming a single iovec (common case)
+ * This allows code using these POSIX functions to work on Windows without rewriting.
+ */
+static inline int recvmsg_compat(SOCKET s, struct msghdr *msg, int flags) {
+    if (msg->msg_iovlen != 1) {
+        // We only support exactly 1 iovec in this shim
+        errno = EINVAL;
+        return -1;
+    }
+    int res = recvfrom_compat(s, msg->msg_iov[0].iov_base, (int)msg->msg_iov[0].iov_len, flags, 
+                              (struct sockaddr *)msg->msg_name, (int *)&msg->msg_namelen);
+    if (res >= 0) {
+        msg->msg_iov[0].iov_len = res; // Update length? POSIX recvmsg doesn't usually update iov_len but returns bytes read
+    }
+    return res;
+}
+
+static inline int sendmsg_compat(SOCKET s, const struct msghdr *msg, int flags) {
+    if (msg->msg_iovlen != 1) {
+        errno = EINVAL;
+        return -1;
+    }
+    // Note: sendto takes const sockaddr*, but msghdr has void* msg_name
+    return sendto_compat(s, msg->msg_iov[0].iov_base, (int)msg->msg_iov[0].iov_len, flags, 
+                         (const struct sockaddr *)msg->msg_name, (int)msg->msg_namelen);
+}
+
+/*
+ * Define macros to map standard function names to our compat versions
+ * Use #undef first to be safe, though not strictly necessary if they aren't macros.
+ */
+#define sendto sendto_compat
+#define recvfrom recvfrom_compat
+#define recvmsg recvmsg_compat
+#define sendmsg sendmsg_compat
+
 #endif /* PLATFORM_WINDOWS */
 
 #endif /* WINDOWS_COMPAT_H */
