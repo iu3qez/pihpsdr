@@ -47,15 +47,15 @@
 #include <pthread.h>
 #include <termios.h>
 #include <sys/time.h>
-#ifndef PLATFORM_WINDOWS
+#ifndef _WIN32
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #endif
-#ifndef PLATFORM_WINDOWS
+#ifndef _WIN32
 #include <arpa/inet.h>
 #endif
-#ifndef PLATFORM_WINDOWS
+#ifndef _WIN32
 #include <net/if.h>
 #endif
 #include <semaphore.h>

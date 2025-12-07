@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <semaphore.h>
-#ifndef PLATFORM_WINDOWS
+#ifndef _WIN32
 #include <arpa/inet.h>
 #endif
 

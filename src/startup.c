@@ -50,7 +50,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifndef _WIN32
 #include <pwd.h>
+#endif
 
 #ifdef __APPLE__
   #include <IOKit/IOKitLib.h>
@@ -67,7 +69,9 @@ void startup(const char *path) {
   int found;
   int rc;
   const char *homedir;
+#ifndef _WIN32
   const struct passwd *pwd;
+#endif
 #ifdef __APPLE__
   static IOPMAssertionID keep_awake = 0;
   //
@@ -122,11 +126,15 @@ void startup(const char *path) {
   homedir = getenv("HOME");
 
   if (homedir == NULL) {
+#ifndef _WIN32
     pwd = getpwuid(getuid());
 
     if (pwd != NULL) {
       homedir = pwd->pw_dir;
     }
+#else
+    homedir = getenv("USERPROFILE");
+#endif
   }
 
   if (homedir == NULL) {
