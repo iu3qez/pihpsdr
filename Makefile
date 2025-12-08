@@ -167,10 +167,11 @@ MIDI_OBJS= src/alsa_midi.o src/midi2.o src/midi3.o src/midi_menu.o
 MIDI_LIBS= -lasound
 endif
 ifeq ($(UNAME_S), Windows)
-# Disable MIDI on Windows for MVP (implement later with Windows MIDI API)
-MIDI=OFF
-MIDI_OPTIONS=
-# TODO: Implement src/windows_midi.c using Windows Multimedia API (mmsystem.h, -lwinmm)
+ifeq ($(UNAME_S), Windows)
+MIDI_SOURCES= src/windows_midi.c src/midi2.c src/midi3.c src/midi_menu.c
+MIDI_OBJS= src/windows_midi.o src/midi2.o src/midi3.o src/midi_menu.o
+MIDI_LIBS= -lwinmm
+endif
 endif
 endif
 CPP_DEFINES += -DMIDI
