@@ -208,9 +208,6 @@ int vfo_snap = 0;
 int protocol;
 int device;
 int new_pa_board = 0; // Indicates Rev.24 PA board for HERMES/ANGELIA/ORION
-int ozy_software_version;
-int mercury_software_version[2] = {0, 0};
-int penelope_software_version;
 
 int tx_fifo_underrun = 0;
 int tx_fifo_overrun = 0;
@@ -3407,7 +3404,6 @@ static void radio_restore_state() {
     GetPropI0("mute_spkr_amp",                               mute_spkr_amp);
     GetPropI0("mute_spkr_xmit",                              mute_spkr_xmit);
 #ifdef SATURN
-    GetPropI0("client_enable_tx",                            client_enable_tx);
     GetPropI0("saturn_server_en",                            saturn_server_en);
 #endif
 
@@ -3631,7 +3627,6 @@ void radio_save_state() {
     SetPropI0("mute_spkr_amp",                               mute_spkr_amp);
     SetPropI0("mute_spkr_xmit",                              mute_spkr_xmit);
 #ifdef SATURN
-    SetPropI0("client_enable_tx",                            client_enable_tx);
     SetPropI0("saturn_server_en",                            saturn_server_en);
 #endif
 

@@ -69,7 +69,6 @@ bool SkipExitCheck = false;                 // true to skip "exit checking", if 
 bool ThreadError = false;                   // true if a thread reports an error
 bool ServerActive = false;
 bool saturn_server_en = false;
-bool client_enable_tx = false;
 bool HW_Timer_Enable = true;
 
 #define VDISCOVERYSIZE 60                   // discovery packet

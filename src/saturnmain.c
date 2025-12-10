@@ -69,7 +69,6 @@ bool IsTXMode;                              // true if in TX
 bool SDRActive;                             // true if this SDR is running at the moment
 bool Exiting = false;
 extern bool saturn_server_en;
-extern bool client_enable_tx;
 extern bool ServerActive;
 extern bool MOXAsserted;
 
@@ -1417,9 +1416,6 @@ void saturn_handle_high_priority(bool FromNetwork, const unsigned char *UDPInBuf
     // for now just return until client TX issues can be worked out
     return;
 
-    if (TXActive == 1) { return; }
-
-    TXActive = (IsTXMode && client_enable_tx) ? 2 : 0;
   } else {
     if (RunBit) {
       SDRActive = true;
@@ -1724,7 +1720,7 @@ void saturn_handle_duc_specific(bool FromNetwork, const unsigned char *UDPInBuff
 
   //t_print("DUC specific %sbuffer received\n", (FromNetwork)?"network ":"");
   if (FromNetwork) {
-    if (TXActive == 1 || !client_enable_tx) { return; }
+    if (TXActive == 1) { return; }
   } else {
     if (TXActive == 2) { return; }
   }

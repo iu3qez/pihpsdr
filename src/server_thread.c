@@ -867,6 +867,7 @@ static void *listen_thread(void *arg) {
     }
 
     if (listen_socket >= 0) {
+      shutdown(listen_socket, SHUT_RDWR);
       close(listen_socket);
       listen_socket = -1;
     }
@@ -886,6 +887,7 @@ static void *listen_thread(void *arg) {
 
     setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
     setsockopt(listen_socket, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
+
     // bind to listening port
     memset(&addr, 0, addrlen);
     addr.sin_family = AF_INET;
@@ -910,9 +912,8 @@ static void *listen_thread(void *arg) {
                                         &remoteclient.address_length)) < 0) {
       //
       // We arrive here if either the internet connection failed, or destroy_hpsdr_server()
-      // has been invoked which closes the listen socket
+      // has been invoked which does shutdown/close on the listen socket
       //
-      t_print("%s: accept() failed\n", __FUNCTION__);
       break;
     }
 
@@ -1095,6 +1096,7 @@ int destroy_hpsdr_server() {
   remoteclient.running = FALSE;
 
   if (listen_socket >= 0) {
+    shutdown(listen_socket, SHUT_RDWR);
     close(listen_socket);
     listen_socket = -1;
   }
