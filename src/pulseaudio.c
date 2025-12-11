@@ -396,7 +396,7 @@ int cw_audio_write(RECEIVER *rx, float sample) {
         rx->cwcount--;
       }
 
-      if (latency > AUDIO_LAT_HIGH && rx->cwcount == 0) {
+      if (rx->cwcount == 0 || latency < AUDIO_LAT_LOW) {
         int rc = pa_simple_write(rx->audio_handle,
                                  rx->audio_buffer,
                                  out_buffer_size * sizeof(float) * 2,
