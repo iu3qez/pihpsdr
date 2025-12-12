@@ -62,7 +62,7 @@ AUDIO_DEVICE output_devices[MAX_AUDIO_DEVICES];
 // If the buffer falls below 1800, half a buffer length of silence is
 // inserted. This usually only happens after TX/RX transitions
 //
-// If we go TX in CW mode, cw_audio_write() is called. If it is called for
+// During TX (no duplex), tx_audio_write() is called. If it is called for
 // the first time with a non-zero sidetone volume,
 // the ring buffer is cleared and only few (stereo) samples of silence
 // are put into it. This is probably the minimum amount necessary to avoid
@@ -561,24 +561,18 @@ void audio_close_output(RECEIVER *rx) {
 //
 // Note that the check on radio_is_transmitting() takes care that "blocking"
 // by the mutex can only occur in the moment of a RX/TX transition if
-// both audio_write() and cw_audio_write() get a "go".
+// both audio_write() and tx_audio_write() get a "go".
 //
 // So mutex locking/unlocking should only cost few CPU cycles in
 // normal operation.
 //
 int audio_write (RECEIVER *rx, float left, float right) {
-  int txmode = vfo_get_tx_mode();
   float *buffer = rx->audio_buffer;
 
   //
-  // If a CW/TUNE side tone may occur, quickly return
+  // If transmitting without duplex, quickly return
   //
-  if (rx == active_receiver && radio_is_transmitting()) {
-    // radio_is_transmitting() ensures we have a transmitter
-    if (txmode == modeCWU || txmode == modeCWL) { return 0; }
-
-    if (transmitter->tune && transmitter->swrtune) { return 0; }
-  }
+  if (rx == active_receiver && radio_is_transmitting() && !duplex) { return 0; }
 
   g_mutex_lock(&rx->audio_mutex);
   rx->cwaudio = 0;
@@ -660,15 +654,15 @@ int audio_write (RECEIVER *rx, float left, float right) {
 }
 
 //
-// During CW, between the elements the side tone contains "true" silence.
+// Since the main use of tx_audio_write() is to produce a CW side tone,
+// do active latency (buffer filling) management:
+// During CW, between the elements the side tone contain "true" silence.
 // We detect a sequence of 16 subsequent zero samples, and insert or delete
 // a zero sample depending on the buffer water mark:
 // If there are more than two portaudio buffers available, delete one sample,
 // if it drops down to less than one portaudio buffer, insert one sample
 //
-// Thus we have an active latency management.
-//
-int cw_audio_write(RECEIVER *rx, float sample) {
+int tx_audio_write(RECEIVER *rx, float sample) {
   g_mutex_lock(&rx->audio_mutex);
 
   if (rx->audio_handle != NULL && rx->audio_buffer != NULL) {
@@ -681,14 +675,28 @@ int cw_audio_write(RECEIVER *rx, float sample) {
     if (rx->cwaudio == 0) {
       //
       // First time producing CW audio after RX/TX transition:
-      // discard audio buffer and insert *a little bit of* silence
-      // (currently, 128 samples = 2.6 msec)
+      // keep the oldest samples (until MY_CW_LOW_WATER) in the audio buffer
+      // and discard the rest. Apply a down-slew on the samples
+      // kept.
       //
-      bzero(rx->audio_buffer, 2 * MY_CW_LOW_WATER * sizeof(float));
+      double damp = 1.000;
+      newpt = rx->audio_buffer_outpt;
+      for (int i = 0; i < MY_CW_LOW_WATER; i++) {
+        if (i >= avail) {
+          rx->audio_buffer[2 * newpt] = 0;
+          rx->audio_buffer[2 * newpt + 1] = 0;
+        } else {
+          rx->audio_buffer[2 * newpt] *= damp;
+          rx->audio_buffer[2 * newpt + 1] *= damp;
+          damp = damp * 0.975;
+        }
+        newpt++;
+
+        MEMORY_BARRIER;
+        if (newpt >= MY_RING_BUFFER_SIZE) { newpt = 0; }
+      }
+      rx->audio_buffer_inpt = newpt;
       MEMORY_BARRIER;
-      rx->audio_buffer_inpt = MY_CW_LOW_WATER;
-      MEMORY_BARRIER;
-      rx->audio_buffer_outpt = 0;
       avail = MY_CW_LOW_WATER;
       rx->cwcount = 0;
       rx->cwaudio = 1;

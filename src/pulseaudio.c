@@ -362,7 +362,20 @@ float audio_get_next_mic_sample(TRANSMITTER *tx) {
   return sample;
 }
 
-int cw_audio_write(RECEIVER *rx, float sample) {
+//
+// In the PulseAudio module, tx_audio_write() is essentially a copy
+// of audio_write(). Normally we would try here to "rewind" the output
+// buffer and keep it a lower filling while transmitting, but I do now
+// know whether this is possible with the "simple" API.
+//
+// In principle one can use pa_simple_flush() to flush the entire
+// output buffer, but keeping the buffer at low filling might not
+// be compatible with the buffer attributs set when creating the stream.
+//
+// So for the time being, using the internal keyer might not be
+// reasonable when running the PulseAudio module.
+//
+int tx_audio_write(RECEIVER *rx, float sample) {
   int result = 0;
   int err;
   g_mutex_lock(&rx->audio_mutex);
@@ -418,16 +431,11 @@ int cw_audio_write(RECEIVER *rx, float sample) {
 int audio_write(RECEIVER *rx, float left_sample, float right_sample) {
   int result = 0;
   int err;
-  int txmode = vfo_get_tx_mode();
 
   //
-  // If a CW/TUNE side tone may occur, quickly return
+  // If transmitting without duplex, quickly return
   //
-  if (rx == active_receiver && radio_is_transmitting()) {
-    if (txmode == modeCWU || txmode == modeCWL) { return 0; }
-
-    if (can_transmit && transmitter->tune && transmitter->swrtune) { return 0; }
-  }
+  if (rx == active_receiver && radio_is_transmitting() && !duplex) { return 0; }
 
   g_mutex_lock(&rx->audio_mutex);
 
