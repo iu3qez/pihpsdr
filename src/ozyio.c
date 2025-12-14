@@ -702,6 +702,56 @@ static void filePath (char *sOut, const char *sIn, size_t len) {
 
 #endif
 
+#ifdef _WIN32
+//
+// Windows version of filePath - searches for files in common Windows locations
+//
+static void filePath (char *sOut, const char *sIn, size_t len) {
+  // a) cwd/sIn
+  snprintf(sOut, len, "%s", sIn);
+
+  if (file_exists(sOut)) { return; }
+
+  // b) cwd/release/sIn
+  snprintf(sOut, len, "release/%s", sIn);
+
+  if (file_exists(sOut)) { return; }
+
+  // c) cwd/release/pihpsdr/sIn
+  snprintf(sOut, len, "release/pihpsdr/%s", sIn);
+
+  if (file_exists(sOut)) { return; }
+
+  // d) Directory where executable resides (Windows-specific method)
+  char xPath[MAX_PATH] = {0};
+  DWORD rc = GetModuleFileNameA(NULL, xPath, MAX_PATH);
+
+  if (rc > 0 && rc < MAX_PATH) {
+    char *p;
+
+    if ((p = strrchr(xPath, '\\'))) { *p = '\0'; }
+
+    t_print("Path of executable: %s\n", xPath);
+    // e) <exedir>/sIn
+    snprintf(sOut, len, "%s\\%s", xPath, sIn);
+
+    if (file_exists(sOut)) { return; }
+
+    // f) <exedir>/release/sIn
+    snprintf(sOut, len, "%s\\release\\%s", xPath, sIn);
+
+    if (file_exists(sOut)) { return; }
+
+    // g) <exedir>/release/pihpsdr/sIn
+    snprintf(sOut, len, "%s\\release\\pihpsdr\\%s", xPath, sIn);
+
+    if (file_exists(sOut)) { return; }
+  }
+
+  t_print("File %s could not be found!\n", sIn);
+}
+#endif
+
 //
 // initialise a USB ozy device.
 // renamed as "initialise" and combined with the "ozyinit" code
