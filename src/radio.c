@@ -209,9 +209,6 @@ int vfo_snap = 0;
 int protocol;
 int device;
 int new_pa_board = 0; // Indicates Rev.24 PA board for HERMES/ANGELIA/ORION
-int ozy_software_version;
-int mercury_software_version[2] = {0, 0};
-int penelope_software_version;
 
 int tx_fifo_underrun = 0;
 int tx_fifo_overrun = 0;
@@ -229,21 +226,6 @@ unsigned int alex_forward_power = 0;
 unsigned int alex_reverse_power = 0;
 unsigned int ADC1 = 0;
 unsigned int ADC0 = 0;
-
-//
-// At the moment we have "late mox update", this means:
-// in a RX/TX or TX/RX transition, mox is updated after
-// rxtx has completed (which may take a while during
-// down- and up-slew).
-// Sometimes one wants to know before, that a RX/TX
-// change is being initiated. So rxtx() sets the pre_mox
-// variable immediatedly after it has been called to the new
-// state.
-// This variable is used to suppress audio samples being
-// sent to the radio while shutting down the receivers,
-// so it shall not be used in DUPLEX mode.
-//
-int pre_mox = 0;
 
 int ptt = 0;
 int mox = 0;
@@ -1938,8 +1920,6 @@ static void rxtx(int state) {
     }
   }
 
-  pre_mox = state && !duplex;
-
   if (state) {
     //
     // Perform RX->TX transition
@@ -3412,7 +3392,6 @@ static void radio_restore_state() {
     GetPropI0("mute_spkr_amp",                               mute_spkr_amp);
     GetPropI0("mute_spkr_xmit",                              mute_spkr_xmit);
 #ifdef SATURN
-    GetPropI0("client_enable_tx",                            client_enable_tx);
     GetPropI0("saturn_server_en",                            saturn_server_en);
 #endif
 
@@ -3636,7 +3615,6 @@ void radio_save_state() {
     SetPropI0("mute_spkr_amp",                               mute_spkr_amp);
     SetPropI0("mute_spkr_xmit",                              mute_spkr_xmit);
 #ifdef SATURN
-    SetPropI0("client_enable_tx",                            client_enable_tx);
     SetPropI0("saturn_server_en",                            saturn_server_en);
 #endif
 

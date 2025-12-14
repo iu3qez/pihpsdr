@@ -144,9 +144,6 @@ int rigctl_tcp_running() {
 }
 
 void shutdown_tcp_rigctl() {
-  struct linger linger = { 0 };
-  linger.l_onoff = 1;
-  linger.l_linger = 0;
   t_print("%s: server_socket=%d\n", __FUNCTION__, server_socket);
   tcp_running = 0;
 
@@ -154,6 +151,8 @@ void shutdown_tcp_rigctl() {
   // Gracefully terminate all active TCP connections
   //
   for (int id = 0; id < MAX_TCP_CLIENTS; id++) {
+    tcp_client[id].running = 0;
+
     if (tcp_client[id].andromeda_timer != 0) {
       g_source_remove(tcp_client[id].andromeda_timer);
       tcp_client[id].andromeda_timer = 0;
@@ -164,14 +163,9 @@ void shutdown_tcp_rigctl() {
       tcp_client[id].auto_timer = 0;
     }
 
-    tcp_client[id].running = 0;
-
     if (tcp_client[id].fd != -1) {
-      if (setsockopt(tcp_client[id].fd, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
-        t_perror("setsockopt(...,SO_LINGER,...) failed for client");
-      }
-
       t_print("%s: closing client socket: %d\n", __FUNCTION__, tcp_client[id].fd);
+      shutdown(tcp_client[id].fd, SHUT_RDWR);
       close(tcp_client[id].fd);
       tcp_client[id].fd = -1;
     }
@@ -186,17 +180,17 @@ void shutdown_tcp_rigctl() {
   // Close server socket
   //
   if (server_socket >= 0) {
-    if (setsockopt(server_socket, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
-      t_perror("setsockopt(...,SO_LINGER,...) failed for server");
-    }
-
     t_print("%s: closing server_socket: %d\n", __FUNCTION__, server_socket);
+    shutdown(server_socket, SHUT_RDWR);
     close(server_socket);
     server_socket = -1;
   }
 
-  // TODO: join with the server thread, but this requires to make the accept() there
-  //       non-blocking (use select())
+  if (rigctl_server_thread_id != NULL) {
+    g_thread_join(rigctl_server_thread_id);
+    rigctl_server_thread_id = NULL;
+  }
+
 }
 
 //
@@ -223,9 +217,9 @@ static void send_dash() {
   if (cw_key_hit) { return; }
 
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  tx_queue_cw_event(1, 0);
-  tx_queue_cw_event(0, dashsamples);
-  tx_queue_cw_event(0, dotsamples);
+  tx_queue_cw_event(1, 0);             // immediate key-down
+  tx_queue_cw_event(0, dashsamples);   // wait a dash length, then key-up
+  tx_queue_cw_event(0, dotsamples);    // wait a dot length, then key-up
   ts.tv_nsec += (dashsamples + dotsamples) * 20833;
 
   while (ts.tv_nsec > NSEC_PER_SEC) {
@@ -242,9 +236,9 @@ static void send_dot() {
   if (cw_key_hit) { return; }
 
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  tx_queue_cw_event(1, 0);
-  tx_queue_cw_event(0, dotsamples);
-  tx_queue_cw_event(0, dotsamples);
+  tx_queue_cw_event(1, 0);            // immediate key-down
+  tx_queue_cw_event(0, dotsamples);   // wait dot length, then key-up
+  tx_queue_cw_event(0, dotsamples);   // wait dash length, then key-up
   ts.tv_nsec += (2 * dotsamples) * 20833;
 
   while (ts.tv_nsec > NSEC_PER_SEC) {
@@ -261,7 +255,7 @@ static void send_space(int len) {
   if (cw_key_hit) { return; }
 
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  tx_queue_cw_event(0, len * dotsamples);
+  tx_queue_cw_event(0, len * dotsamples);  // wait, then key-up
   ts.tv_nsec += (len * dotsamples) * 20833;
 
   while (ts.tv_nsec > NSEC_PER_SEC) {
@@ -1148,7 +1142,7 @@ static gpointer rigctl_server(gpointer data) {
                                   &tcp_client[spare].address_length);
 
     if (tcp_client[spare].fd < 0) {
-      t_perror("rigctl_server: client accept failed");
+      // no error reporting, this could be because rigtcl is being shut down
       tcp_client[spare].fd = -1;
       continue;
     }
@@ -1264,14 +1258,9 @@ static gpointer rigctl_client (gpointer data) {
   // If rigctl is disabled via the GUI, the connections are closed by shutdown_rigctl_ports()
   // but even the we should decrement cat_control
   //
-  if (client->fd != -1) {
-    struct linger linger = { 0 };
-    linger.l_onoff = 1;
-    linger.l_linger = 0;
+  client->running = 0;
 
-    if (setsockopt(client->fd, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger)) == -1) {
-      t_perror("setsockopt(...,SO_LINGER,...) failed for client");
-    }
+  if (client->fd != -1) {
 
     if (client->andromeda_timer != 0) {
       g_source_remove(client->andromeda_timer);
@@ -1283,7 +1272,7 @@ static gpointer rigctl_client (gpointer data) {
       client->auto_timer = 0;
     }
 
-    client->running = 0;
+    shutdown(client->fd, SHUT_RDWR);
     close(client->fd);
     client->fd = -1;
   }
