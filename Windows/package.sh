@@ -91,6 +91,15 @@ for gcc_dll in libgcc_s_seh-1.dll libstdc++-6.dll libwinpthread-1.dll; do
     fi
 done
 
+# Copy common missing dependencies that objdump might miss
+echo ""
+echo "Adding additional common dependencies..."
+for extra_dll in libbz2-1.dll; do
+    if [ -f "$MINGW_BIN/$extra_dll" ]; then
+        copy_dll_deps "$MINGW_BIN/$extra_dll"
+    fi
+done
+
 # Also recursively check dependencies of copied DLLs
 echo ""
 echo "Checking dependencies of copied DLLs..."
