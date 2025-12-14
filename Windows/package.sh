@@ -29,6 +29,7 @@ cp pihpsdr.exe "$DIST_DIR/"
 # MinGW base directory
 MINGW_PREFIX="/usr/x86_64-w64-mingw32"
 MINGW_BIN="$MINGW_PREFIX/bin"
+GCC_LIBDIR="/usr/lib/gcc/x86_64-w64-mingw32/10-win32"
 
 echo "Analyzing dependencies with objdump..."
 
@@ -70,12 +71,23 @@ for dll in $DEPS; do
     dll_path=""
     if [ -f "$MINGW_BIN/$dll" ]; then
         dll_path="$MINGW_BIN/$dll"
+    elif [ -f "$GCC_LIBDIR/$dll" ]; then
+        dll_path="$GCC_LIBDIR/$dll"
     elif [ -f "$MINGW_PREFIX/lib/$dll" ]; then
         dll_path="$MINGW_PREFIX/lib/$dll"
     fi
 
     if [ -n "$dll_path" ]; then
         copy_dll_deps "$dll_path"
+    fi
+done
+
+# Also copy essential GCC runtime libraries explicitly
+echo ""
+echo "Adding GCC runtime libraries..."
+for gcc_dll in libgcc_s_seh-1.dll libstdc++-6.dll libwinpthread-1.dll; do
+    if [ -f "$GCC_LIBDIR/$gcc_dll" ]; then
+        copy_dll_deps "$GCC_LIBDIR/$gcc_dll"
     fi
 done
 
@@ -99,6 +111,8 @@ for copied_dll in "$DIST_DIR"/*.dll; do
             dll_path=""
             if [ -f "$MINGW_BIN/$dll" ]; then
                 dll_path="$MINGW_BIN/$dll"
+            elif [ -f "$GCC_LIBDIR/$dll" ]; then
+                dll_path="$GCC_LIBDIR/$dll"
             elif [ -f "$MINGW_PREFIX/lib/$dll" ]; then
                 dll_path="$MINGW_PREFIX/lib/$dll"
             fi
