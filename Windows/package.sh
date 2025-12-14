@@ -61,7 +61,7 @@ DEPS=$(x86_64-w64-mingw32-objdump -p pihpsdr.exe | grep "DLL Name:" | awk '{prin
 for dll in $DEPS; do
     # Skip Windows system DLLs
     case $dll in
-        KERNEL32.dll|USER32.dll|ADVAPI32.dll|msvcrt.dll|GDI32.dll|SHELL32.dll|ole32.dll|OLEAUT32.dll|WS2_32.dll|WSOCK32.dll|COMDLG32.dll|IMM32.dll|COMCTL32.dll|VERSION.dll|WINMM.dll|CRYPT32.dll|IPHLPAPI.dll|AVRT.dll|SAPI.dll|uuid.dll)
+        KERNEL32.dll|USER32.dll|ADVAPI32.dll|msvcrt.dll|GDI32.dll|SHELL32.dll|ole32.dll|OLEAUT32.dll|WS2_32.dll|WSOCK32.dll|COMDLG32.dll|IMM32.dll|COMCTL32.dll|VERSION.dll|WINMM.dll|CRYPT32.dll|IPHLPAPI.dll|IPHLPAPI.DLL|AVRT.dll|SAPI.dll|uuid.dll|RPCRT4.dll|SETUPAPI.dll|bcrypt.dll|ntdll.dll|DNSAPI.dll|DWrite.dll|HID.DLL|MSIMG32.dll|SHLWAPI.dll|USP10.dll|WINSPOOL.DRV|WLDAP32.dll|comdlg32.dll|dwmapi.dll|gdiplus.dll)
             # Skip Windows system DLLs
             continue
             ;;
@@ -94,7 +94,7 @@ done
 # Copy common missing dependencies that objdump might miss
 echo ""
 echo "Adding additional common dependencies..."
-for extra_dll in libbz2-1.dll; do
+for extra_dll in libbz2-1.dll libbrotlidec.dll libexpat-1.dll libgraphite2.dll libiconv-2.dll libpangoft2-1.0-0.dll libthai-0.dll; do
     if [ -f "$MINGW_BIN/$extra_dll" ]; then
         copy_dll_deps "$MINGW_BIN/$extra_dll"
     fi
@@ -111,7 +111,7 @@ for copied_dll in "$DIST_DIR"/*.dll; do
         for dll in $SUB_DEPS; do
             # Skip Windows system DLLs
             case $dll in
-                KERNEL32.dll|USER32.dll|ADVAPI32.dll|msvcrt.dll|GDI32.dll|SHELL32.dll|ole32.dll|OLEAUT32.dll|WS2_32.dll|WSOCK32.dll|COMDLG32.dll|IMM32.dll|COMCTL32.dll|VERSION.dll|WINMM.dll|CRYPT32.dll|IPHLPAPI.dll|AVRT.dll|SAPI.dll|uuid.dll)
+                KERNEL32.dll|USER32.dll|ADVAPI32.dll|msvcrt.dll|GDI32.dll|SHELL32.dll|ole32.dll|OLEAUT32.dll|WS2_32.dll|WSOCK32.dll|COMDLG32.dll|IMM32.dll|COMCTL32.dll|VERSION.dll|WINMM.dll|CRYPT32.dll|IPHLPAPI.dll|IPHLPAPI.DLL|AVRT.dll|SAPI.dll|uuid.dll|RPCRT4.dll|SETUPAPI.dll|bcrypt.dll|ntdll.dll|DNSAPI.dll|DWrite.dll|HID.DLL|MSIMG32.dll|SHLWAPI.dll|USP10.dll|WINSPOOL.DRV|WLDAP32.dll|comdlg32.dll|dwmapi.dll|gdiplus.dll)
                     continue
                     ;;
             esac
