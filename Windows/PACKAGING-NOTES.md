@@ -77,7 +77,7 @@ dist-windows/
 ├── pihpsdr.exe              # Main executable (11 MB)
 ├── setup-env.bat            # Launcher with environment setup (RECOMMENDED)
 ├── README.txt               # User instructions
-├── *.dll                    # 28 runtime libraries (~46 MB)
+├── *.dll                    # 37 runtime libraries (~49 MB)
 ├── etc/
 │   └── gtk-3.0/
 │       └── settings.ini     # GTK configuration
@@ -90,7 +90,7 @@ dist-windows/
     ├── glib-2.0/schemas/    # GSettings schemas
     └── icons/Adwaita/       # Icon theme
 
-Total size: ~58 MB uncompressed, ~20 MB in ZIP
+Total size: ~60 MB uncompressed, ~21 MB in ZIP
 ```
 
 ## Distribution
