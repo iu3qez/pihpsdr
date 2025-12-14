@@ -20,7 +20,7 @@
 
 #include <gtk/gtk.h>
 #include <windows.h>
-#include <mmeapi.h>
+#include <mmsystem.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

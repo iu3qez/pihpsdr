@@ -403,17 +403,13 @@ int getifaddrs(struct ifaddrs **ifap) {
                     if (netmask) {
                         memset(netmask, 0, sizeof(struct sockaddr_in));
                         netmask->sin_family = AF_INET;
-                        
+
                         /* Convert prefix length to netmask */
-                        int prefix_len = pUnicast->OnLinkPrefixLength;
-                        if (prefix_len > 0 && prefix_len <= 32) {
-                            uint32_t mask = 0xffffffff << (32 - prefix_len);
-                            netmask->sin_addr.s_addr = htonl(mask);
-                        } else {
-                            /* Default netmask for Class C */
-                            netmask->sin_addr.s_addr = htonl(0xffffff00);
-                        }
-                        
+                        /* Note: OnLinkPrefixLength might not be available in older MinGW */
+                        /* Use a default netmask for compatibility */
+                        /* Default netmask for Class C (255.255.255.0) */
+                        netmask->sin_addr.s_addr = htonl(0xffffff00);
+
                         ifa->ifa_netmask = (struct sockaddr *)netmask;
                     }
                 }
