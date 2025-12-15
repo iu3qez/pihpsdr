@@ -135,6 +135,13 @@ zip -r pihpsdr-windows.zip dist-windows/
 - Added Windows-specific `filePath()` implementation
 - Uses `GetModuleFileNameA()` instead of `/proc/self/exe`
 
+### src/startup.c
+- Changed configuration directory from `%USERPROFILE%/Documents/piHPSDR` to `%LOCALAPPDATA%/piHPSDR`
+- Uses `getenv("LOCALAPPDATA")` to get `C:\Users\username\AppData\Local\piHPSDR`
+- Avoids cloud sync issues with OneDrive/Google Drive
+- Follows Windows best practices for application data storage
+- Fallback to Documents if `LOCALAPPDATA` is not set (rare case)
+
 ## Build System Changes
 
 ### Windows/build-docker.sh
