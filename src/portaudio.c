@@ -563,14 +563,21 @@ int audio_open_output(RECEIVER *rx) {
     return -1;
   }
 
+  // Debug: show device info including native sample rate
+  const PaDeviceInfo *devInfo = Pa_GetDeviceInfo(padev);
+  if (devInfo) {
+    t_print("%s: Device native sample rate: %.0f Hz, defaultLowOutputLatency: %.4f sec\n",
+            __FUNCTION__, devInfo->defaultSampleRate, devInfo->defaultLowOutputLatency);
+  }
+
   g_mutex_lock(&rx->local_audio_mutex);
   bzero(&outputParameters, sizeof(outputParameters)); //not necessary if you are filling in all the fields
   outputParameters.channelCount = 2;   // audio output is stereo
   outputParameters.device = padev;
   outputParameters.hostApiSpecificStreamInfo = NULL;
   outputParameters.sampleFormat = paFloat32;
-  // use a zero for the latency to get the minimum value
-  outputParameters.suggestedLatency = 0.0; //Pa_GetDeviceInfo(padev)->defaultLowOutputLatency ;
+  // use the device's default low latency for better compatibility
+  outputParameters.suggestedLatency = Pa_GetDeviceInfo(padev)->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
   err = Pa_OpenStream(&(rx->playstream), NULL, &outputParameters, 48000.0, MY_AUDIO_BUFFER_SIZE,
                       paNoFlag, pa_out_cb, rx);
