@@ -53,14 +53,17 @@ void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance,
             BYTE status = (BYTE)(dwParam1 & 0xFF);
             BYTE data1 = (BYTE)((dwParam1 >> 8) & 0xFF);
             BYTE data2 = (BYTE)((dwParam1 >> 16) & 0xFF);
-            
+
+            t_print("MIDI IN: status=0x%02X data1=%d data2=%d\n", status, data1, data2);
+
             // Create MIDI event
             if ((status & 0xF0) == 0x90 || (status & 0xF0) == 0x80) {
                 // Note on/off message
                 int channel = status & 0x0F;
                 int note = data1;
                 int velocity = data2;
-                
+
+                t_print("MIDI NOTE: ch=%d note=%d vel=%d\n", channel, note, velocity);
                 // Process the MIDI message
                 NewMidiEvent(MIDI_NOTE, channel, note, velocity);
             } else if ((status & 0xF0) == 0xB0) {
@@ -68,7 +71,8 @@ void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance,
                 int channel = status & 0x0F;
                 int controller = data1;
                 int value = data2;
-                
+
+                t_print("MIDI CTRL: ch=%d ctrl=%d val=%d\n", channel, controller, value);
                 // Process the MIDI control change
                 NewMidiEvent(MIDI_CTRL, channel, controller, value);
             }
@@ -106,40 +110,54 @@ void close_midi_device(int index) {
 }
 
 void register_midi_device(int index) {
-    t_print("%s: index=%d\n", __FUNCTION__, index);
-    
+    t_print("%s: index=%d n_midi_devices=%d\n", __FUNCTION__, index, n_midi_devices);
+    fflush(stdout);
+
     if (index < 0 || index >= n_midi_devices) {
+        t_print("%s: index out of range!\n", __FUNCTION__);
+        fflush(stdout);
         return;
     }
-    
+
     if (midi_device_opened[index]) {
+        t_print("%s: device already open, closing first\n", __FUNCTION__);
+        fflush(stdout);
         close_midi_device(index);
     }
-    
+
+    t_print("%s: calling midiInOpen...\n", __FUNCTION__);
+    fflush(stdout);
+
     // Open the MIDI input device
-    MMRESULT result = midiInOpen(&hMidiIn[index], index, (DWORD_PTR)MidiInProc, 
+    MMRESULT result = midiInOpen(&hMidiIn[index], index, (DWORD_PTR)MidiInProc,
                                 index, CALLBACK_FUNCTION);
-    
+
     if (result != MMSYSERR_NOERROR) {
         char error_msg[256];
         midiInGetErrorText(result, error_msg, sizeof(error_msg));
         t_print("Failed to open MIDI device %d: %s\n", index, error_msg);
+        fflush(stdout);
         return;
     }
-    
+
+    t_print("%s: midiInOpen OK, calling midiInStart...\n", __FUNCTION__);
+    fflush(stdout);
+
     // Start recording MIDI input
     result = midiInStart(hMidiIn[index]);
     if (result != MMSYSERR_NOERROR) {
         char error_msg[256];
         midiInGetErrorText(result, error_msg, sizeof(error_msg));
         t_print("Failed to start MIDI device %d: %s\n", index, error_msg);
+        fflush(stdout);
         midiInClose(hMidiIn[index]);
         return;
     }
-    
+
     midi_device_opened[index] = TRUE;
     midi_devices[index].active = 1;
     t_print("MIDI device %d successfully opened and started\n", index);
+    fflush(stdout);
 }
 
 void midi_save_state() {
