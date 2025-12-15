@@ -132,7 +132,7 @@ void startup(const char *path) {
   // Try to locate
   // - on LINUX: $HOME/.config/pihpsdr
   // - on MacOS: $HOME/Library/Application Support/piHPSDR
-  // - on Windows: %USERPROFILE%/Documents/piHPSDR
+  // - on Windows: %LOCALAPPDATA%/piHPSDR (C:\Users\username\AppData\Local\piHPSDR)
   // and if this exists, chdir to that directory.
   //
   homedir = getenv("HOME");
@@ -172,14 +172,17 @@ void startup(const char *path) {
   }
 
 #elif defined(_WIN32)
-  // On Windows, use %USERPROFILE%/Documents/piHPSDR
-  snprintf(workdir, sizeof(workdir), "%s/Documents", homedir);
+  // On Windows, use %LOCALAPPDATA%/piHPSDR
+  // This avoids cloud sync issues with OneDrive/Google Drive
+  const char *localappdata = getenv("LOCALAPPDATA");
 
-  if (stat(workdir, &statbuf) < 0) {
-    mkdir (workdir, 0700);
+  if (localappdata != NULL) {
+    // Preferred: Use LOCALAPPDATA (e.g., C:\Users\username\AppData\Local\piHPSDR)
+    snprintf(workdir, sizeof(workdir), "%s/piHPSDR", localappdata);
+  } else {
+    // Fallback: Use Documents if LOCALAPPDATA is not set (rare case)
+    snprintf(workdir, sizeof(workdir), "%s/Documents/piHPSDR", homedir);
   }
-
-  snprintf(workdir, sizeof(workdir), "%s/Documents/piHPSDR", homedir);
 
   if (stat(workdir, &statbuf) < 0) {
     mkdir (workdir, 0700);
