@@ -169,7 +169,11 @@ Ogni modifica al codice originale deve essere registrata qui.
 
 | File | Tipo | Descrizione | Data |
 |------|------|-------------|------|
-| (da popolare durante il porting) | | | |
+| wdsp/comm.h:36 | Case fix | `Windows.h` → `windows.h` (cross-compile Linux case-sensitive) | 2025-12-16 |
+| src/actions.h:241-244 | Rename | `RELATIVE`→`MODE_RELATIVE`, `ABSOLUTE`→`MODE_ABSOLUTE`, `PRESSED`→`MODE_PRESSED`, `RELEASED`→`MODE_RELEASED` (conflitto Windows) | 2025-12-16 |
+| 16 file src/*.c | Rename | Aggiornati riferimenti a ACTION_MODE enum | 2025-12-16 |
+| src/client_server.h:26 | Include | Aggiunto `#include <endian.h>` per htobe64/be64toh | 2025-12-16 |
+| Windows/sys/resource.h | Nuovo | Wrapper per getrlimit/setrlimit (stub) | 2025-12-16 |
 
 ---
 

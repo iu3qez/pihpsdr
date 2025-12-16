@@ -130,7 +130,7 @@ void i2c_interrupt() {
     unsigned int ints = read_word_data(0x10);
 
     // only those bits in "ints" matter where the corresponding position
-    // in "flags" is set. We have a PRESSED or RELEASED event depending on
+    // in "flags" is set. We have a MODE_PRESSED or MODE_RELEASED event depending on
     // whether the bit in "ints" is set or clear.
 
     for (i = 0; i < 16; i++) {
@@ -141,7 +141,7 @@ void i2c_interrupt() {
         // The input line associated with switch #i has triggered an interrupt
         // clear *this* bit in flags to make it zero when all events have been processed
         flags &= ~i2c_sw[i];
-        schedule_action(switches[i].function, (ints & i2c_sw[i]) ? PRESSED : RELEASED, 0);
+        schedule_action(switches[i].function, (ints & i2c_sw[i]) ? MODE_PRESSED : MODE_RELEASED, 0);
       }
     }
   }

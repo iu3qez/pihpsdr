@@ -4,9 +4,15 @@
 cmake_minimum_required(VERSION 3.16)
 project(pihpsdr C)
 
-# Only for Windows target
-if(NOT WIN32 AND NOT MINGW)
-    message(FATAL_ERROR "This CMakeLists.txt is only for Windows cross-compilation. Use Makefile for Linux/macOS.")
+# Check if we're cross-compiling for Windows or building natively on Windows
+if(NOT CMAKE_CROSSCOMPILING AND NOT WIN32)
+    message(FATAL_ERROR "This CMakeLists.txt is only for Windows builds. Use Makefile for Linux/macOS native builds.\nFor cross-compilation, use: cmake -DCMAKE_TOOLCHAIN_FILE=Windows/mingw-toolchain.cmake ..")
+endif()
+
+# Force Windows target when cross-compiling
+if(CMAKE_CROSSCOMPILING)
+    set(WIN32 TRUE)
+    set(MINGW TRUE)
 endif()
 
 #######################################################################################
@@ -80,8 +86,8 @@ find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 pkg_check_modules(FFTW3 REQUIRED fftw3)
-pkg_check_modules(OPENSSL REQUIRED openssl)
 pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
+pkg_check_modules(OPENSSL REQUIRED openssl)
 
 if(USBOZY)
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)

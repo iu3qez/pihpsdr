@@ -21,12 +21,10 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 # pkg-config for cross-compilation
-set(ENV{PKG_CONFIG_PATH} "")
-set(ENV{PKG_CONFIG_LIBDIR} "/usr/x86_64-w64-mingw32/lib/pkgconfig:/usr/x86_64-w64-mingw32/share/pkgconfig")
-set(PKG_CONFIG_EXECUTABLE /usr/bin/x86_64-w64-mingw32-pkg-config)
+# Include both lib and lib64 for pkgconfig paths
+set(ENV{PKG_CONFIG_PATH} "/usr/x86_64-w64-mingw32/lib/pkgconfig:/usr/x86_64-w64-mingw32/lib64/pkgconfig")
+set(ENV{PKG_CONFIG_LIBDIR} "/usr/x86_64-w64-mingw32/lib/pkgconfig:/usr/x86_64-w64-mingw32/lib64/pkgconfig")
+# NOTE: Do NOT set PKG_CONFIG_SYSROOT_DIR - it causes path duplication
 
-# If pkg-config wrapper doesn't exist, we may need to set these manually
-if(NOT EXISTS ${PKG_CONFIG_EXECUTABLE})
-    set(PKG_CONFIG_EXECUTABLE /usr/bin/pkg-config)
-    set(ENV{PKG_CONFIG_SYSROOT_DIR} "/usr/x86_64-w64-mingw32")
-endif()
+# Use standard pkg-config with MinGW paths
+set(PKG_CONFIG_EXECUTABLE /usr/bin/pkg-config)

@@ -117,7 +117,7 @@ static void toolbar_button_press_cb(GtkWidget *widget, GdkEventButton *event, gp
 
     update_toolbar_labels();
   } else {
-    schedule_action(tb_actions[tb_function[row]][btn], PRESSED, 0);
+    schedule_action(tb_actions[tb_function[row]][btn], MODE_PRESSED, 0);
   }
 }
 
@@ -128,7 +128,7 @@ static void toolbar_button_released_cb(GtkWidget *widget, GdkEventButton *event,
 
   if (btn != MAX_TB_BUTTONS - 1) {
     int row = val / 100;
-    schedule_action(tb_actions[tb_function[row]][btn], RELEASED, 0);
+    schedule_action(tb_actions[tb_function[row]][btn], MODE_RELEASED, 0);
   }
 }
 

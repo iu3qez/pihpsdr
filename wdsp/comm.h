@@ -33,7 +33,7 @@ warren@wpratt.com
 #endif
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>  /* lowercase for cross-compile on Linux (case-sensitive) */
 #include <process.h>
 #include <intrin.h>
 #endif

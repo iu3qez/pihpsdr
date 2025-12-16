@@ -362,7 +362,7 @@ static const SWITCH switches_controller2_v1[MAX_SWITCHES] = {
   {FALSE, FALSE, 0, BAND_PLUS,        0L},
   {FALSE, FALSE, 0, XIT_ENABLE,       0L},
   {FALSE, FALSE, 0, NB,               0L},
-  {FALSE, FALSE, 0, SNB,              0L},
+  {FALSE, FALSE, 0, selection_SNB,              0L},
   {FALSE, FALSE, 0, LOCK,             0L},
   {FALSE, FALSE, 0, CTUN,             0L}
 };
@@ -374,7 +374,7 @@ static const SWITCH switches_controller2_v2[MAX_SWITCHES] = {
   {FALSE, FALSE, 0, TWO_TONE,         0L},  //GPB4 SW5
   {FALSE, FALSE, 0, NR,               0L},  //GPA3 SW6
   {FALSE, FALSE, 0, NB,               0L},  //GPB3 SW14
-  {FALSE, FALSE, 0, SNB,              0L},  //GPB2 SW15
+  {FALSE, FALSE, 0, selection_SNB,              0L},  //GPB2 SW15
   {FALSE, FALSE, 0, XIT_ENABLE,       0L},  //GPA7 SW13
   {FALSE, FALSE, 0, BAND_PLUS,        0L},  //GPA6 SW12
   {FALSE, FALSE, 0, MODE_PLUS,        0L},  //GPA5 SW11
@@ -497,7 +497,7 @@ static gpointer rotary_encoder_thread(gpointer data) {
     for (i = 0; i < MAX_ENCODERS; i++) {
       if (encoders[i].bottom.enabled && encoders[i].bottom.pos != 0) {
         action = encoders[i].bottom.function;
-        mode = RELATIVE;
+        mode = MODE_RELATIVE;
         g_mutex_lock(&encoder_mutex);
         val = encoders[i].bottom.pos;
         encoders[i].bottom.pos = 0;
@@ -512,7 +512,7 @@ static gpointer rotary_encoder_thread(gpointer data) {
 
       if (encoders[i].top.enabled && encoders[i].top.pos != 0) {
         action = encoders[i].top.function;
-        mode = RELATIVE;
+        mode = MODE_RELATIVE;
         g_mutex_lock(&encoder_mutex);
         val = encoders[i].top.pos;
         encoders[i].top.pos = 0;
@@ -625,19 +625,19 @@ static void process_edge(int offset, int value) {
   } else if (action == OffI2CIRQ) {
     if (value) { i2c_interrupt(); }
   } else if (action == OffSpecial) {
-    schedule_action(num, value ? PRESSED : RELEASED, 0);
+    schedule_action(num, value ? MODE_PRESSED : MODE_RELEASED, 0);
   } else if (action == OffEncSwitch) {
 #ifdef GPIOV1
     t = millis();
 
     if (t > encoders[num].button.debounce) {
       encoders[num].button.debounce = t + 50; // 50 msec settle time
-      schedule_action(encoders[num].button.function, value ? PRESSED : RELEASED, 0);
+      schedule_action(encoders[num].button.function, value ? MODE_PRESSED : MODE_RELEASED, 0);
     }
 
 #endif
 #ifdef GPIOV2
-    schedule_action(encoders[num].button.function, value ? PRESSED : RELEASED, 0);
+    schedule_action(encoders[num].button.function, value ? MODE_PRESSED : MODE_RELEASED, 0);
 #endif
   } else if (action == OffSwitch) {
 #ifdef GPIOV1
@@ -645,12 +645,12 @@ static void process_edge(int offset, int value) {
 
     if (t > switches[num].debounce) {
       switches[num].debounce = t + 50; // 50 msec settle time
-      schedule_action(switches[num].function, value ? PRESSED : RELEASED, 0);
+      schedule_action(switches[num].function, value ? MODE_PRESSED : MODE_RELEASED, 0);
     }
 
 #endif
 #ifdef GPIOV2
-    schedule_action(switches[num].function, value ? PRESSED : RELEASED, 0);
+    schedule_action(switches[num].function, value ? MODE_PRESSED : MODE_RELEASED, 0);
 #endif
   } else {
     t_print("%s: No action defined for GPIO line %d\n", offset);

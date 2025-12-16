@@ -2176,11 +2176,11 @@ static int server_command(void *data) {
     break;
 
   case CMD_REPLAY:
-    schedule_action(REPLAY, PRESSED, 0);
+    schedule_action(REPLAY, MODE_PRESSED, 0);
     break;
 
   case CMD_CAPTURE:
-    schedule_action(CAPTURE, PRESSED, 0);
+    schedule_action(CAPTURE, MODE_PRESSED, 0);
     break;
 
   case CMD_PSONOFF:

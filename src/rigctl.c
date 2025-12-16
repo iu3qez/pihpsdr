@@ -2796,7 +2796,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
   //
   //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
   //      if (command[4] == ';') {
-  //        schedule_action(RIT_CLEAR, PRESSED, 0);
+  //        schedule_action(RIT_CLEAR, MODE_PRESSED, 0);
   //      }
   //
   //      break;
@@ -3097,7 +3097,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
     switch (command[3]) {
     //    case 'C': //ZZXC
     //      //DO NOT DOCUMENT, THIS WILL BE REMOVED
-    //      schedule_action(XIT_CLEAR, PRESSED, 0);
+    //      schedule_action(XIT_CLEAR, MODE_PRESSED, 0);
     //      break;
     //
     //    case 'F': //ZZXF
@@ -3290,7 +3290,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         int v = atoi(&command[4]);
 
         if (v >= 0 && v < receivers) {
-          schedule_action(v == 0 ? RX1 : RX2, PRESSED, 0);
+          schedule_action(v == 0 ? RX1 : RX2, MODE_PRESSED, 0);
         } else {
           implemented = FALSE;
         }
@@ -3330,7 +3330,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           steps *= andromeda_vfo_speedup[31];
         }
 
-        schedule_action(VFO, RELATIVE, -steps);
+        schedule_action(VFO, MODE_RELATIVE, -steps);
       } else {
         // unexpected command format
         implemented = FALSE;
@@ -3421,9 +3421,9 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
         // between a short and a long press but "long" buttons may generate different actions for short
         // and long presses.
         //
-        // "Normal" buttons should generate a "PRESSED" upon tr01 and (if required) a "RELEASED" upon (tr10 || tr20).
-        // "Long" buttons generate a "PRESSED" for the short-press event upon tr10,
-        // and a "PRESSED" for the long-press event upon tr12.
+        // "Normal" buttons should generate a "MODE_PRESSED" upon tr01 and (if required) a "MODE_RELEASED" upon (tr10 || tr20).
+        // "Long" buttons generate a "MODE_PRESSED" for the short-press event upon tr10,
+        // and a "MODE_PRESSED" for the long-press event upon tr12.
         //
         // ATTENTION: no RELEASE event is ever triggered for a "long" button. Such events are currently required
         //            only for PTT, RIT_PLUS, RIT_MINS, XIT_PLUS, XIT_MINUS, and CW keyer actions, which may be associated
@@ -3543,7 +3543,7 @@ static gboolean parse_extended_cmd (const char *command, CLIENT *client) {
           steps *= andromeda_vfo_speedup[31];
         }
 
-        schedule_action(VFO, RELATIVE, steps);
+        schedule_action(VFO, MODE_RELATIVE, steps);
       }
 
       break;
@@ -3920,7 +3920,7 @@ static int parse_cmd(void *data) {
         int id = SET(command[2] == '1');
 
         if (receivers > id) {
-          schedule_action(id == 0 ? RX1 : RX2, PRESSED, 0);
+          schedule_action(id == 0 ? RX1 : RX2, MODE_PRESSED, 0);
         }
 
         g_idle_add(ext_vfo_update, NULL);

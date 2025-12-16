@@ -22,3 +22,5 @@ release/LatexManual/piHPSDR-Manual.pdf
 wdsp/WDSP_Guide.pdf
 pihpsdr-windows/
 
+build/
+build-windows/

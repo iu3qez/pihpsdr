@@ -23,6 +23,7 @@
 #include <gtk/gtk.h>
 #include <stdint.h>
 #include <netinet/in.h>
+#include <endian.h>
 
 #include "mode.h"
 #include "receiver.h"

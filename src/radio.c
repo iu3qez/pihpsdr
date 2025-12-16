@@ -1900,17 +1900,17 @@ static void rxtx(int state) {
     switch (capture_state) {
     case CAP_RECORDING:
       capture_state = CAP_RECORD_DONE;
-      schedule_action(CAPTURE, PRESSED, 0);
+      schedule_action(CAPTURE, MODE_PRESSED, 0);
       break;
 
     case CAP_XMIT:
       capture_state = CAP_XMIT_DONE;
-      schedule_action(CAPTURE, PRESSED, 0);
+      schedule_action(CAPTURE, MODE_PRESSED, 0);
       break;
 
     case CAP_REPLAY:
       capture_state = CAP_REPLAY_DONE;
-      schedule_action(CAPTURE, PRESSED, 0);
+      schedule_action(CAPTURE, MODE_PRESSED, 0);
       break;
     }
   }

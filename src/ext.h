@@ -46,7 +46,7 @@ extern int ext_radio_reconfigure_screen(void *data);
 //
 // can/should be replaced by
 //
-// schedule_action(MENU_FILTER, PRESSED, 0);
+// schedule_action(MENU_FILTER, MODE_PRESSED, 0);
 //
 // to avoid duplicate code
 //
