@@ -151,22 +151,18 @@ Windows definisce già alcune macro che confliggono con quelle del progetto.
 |-----------|------------|--------|
 | `SNB` | `selection_SNB` | Conflitto con Windows headers |
 
-### Conflitti WDSP Identificati
+### Conflitti WDSP - Chiarimento
 
-La libreria WDSP in `wdsp/` ha conflitti con Windows headers:
+WDSP è **originariamente Windows** → `linux_port.h` emula i tipi Windows su Linux.
 
-| Macro | File | Riga | Gravità | Gestione |
-|-------|------|------|---------|----------|
-| `DWORD` | wdsp/wdsp.h | 11 | CRITICA | Gestito in windows_compat.h |
-| `DWORD` | wdsp/linux_port.h | 41 | CRITICA | Gestito in wdsp_wrapper.h |
-| `TRUE` | wdsp/linux_port.h | 45 | CRITICA | Da gestire |
-| `FALSE` | wdsp/linux_port.h | 44 | CRITICA | Da gestire |
-| `HANDLE` | wdsp/linux_port.h | 42 | CRITICA | Parzialmente gestito |
-| `LONG` | wdsp/linux_port.h | 40 | MODERATA | Da gestire |
-| `LPCRITICAL_SECTION` | wdsp/wdsp.h | 67 | MODERATA | Gestito in wdsp_wrapper.h |
-| `__stdcall` | wdsp/wdsp.h | 66 | MINORE | Da verificare |
+| Macro | File | Su Windows | Azione |
+|-------|------|------------|--------|
+| `DWORD` | linux_port.h | Già in windows.h | linux_port.h NON incluso su Windows |
+| `TRUE/FALSE` | linux_port.h | Già in windows.h | linux_port.h NON incluso su Windows |
+| `HANDLE` | linux_port.h | Già in windows.h | linux_port.h NON incluso su Windows |
+| `LONG` | linux_port.h | Già in windows.h | linux_port.h NON incluso su Windows |
 
-**Nota**: `wdsp/linux_port.h` è SOLO per Linux/macOS. Su Windows serve un equivalente `windows_port.h`.
+**Nota**: `linux_port.h` è protetto con `#if defined(linux) || defined(__APPLE__)` quindi su Windows NON viene incluso. I tipi vengono da `<windows.h>` direttamente.
 
 ### REGISTRO MODIFICHE
 Ogni modifica al codice originale deve essere registrata qui.
@@ -179,23 +175,28 @@ Ogni modifica al codice originale deve essere registrata qui.
 
 ## Analisi WDSP
 
-La libreria WDSP (`wdsp/`) è **Linux-first** con supporto Windows parziale (~25-30%).
+**IMPORTANTE**: WDSP è originariamente una libreria **Windows** portata su Linux/macOS!
+
+Questo significa:
+- `linux_port.h/c` emula i tipi Windows (DWORD, HANDLE, etc.) su Linux
+- Su Windows questi tipi **esistono già nativamente**
+- I conflitti sono causati da `linux_port.h` che ridefinisce cose già presenti in Windows
+- Su Windows NON serve `windows_port.h` - la libreria è nel suo ambiente nativo
 
 ### Stato Attuale
-- `linux_port.h/c`: Layer compatibilità SOLO per Linux/macOS
-- 7 blocchi `#ifdef _WIN32` sparsi in 3 file
-- Supporto audio real-time Windows (AVRT) presente
-- **MANCA**: `windows_port.h/c` equivalente
+- `linux_port.h/c`: Emula Windows API su Linux/macOS (mapping inverso!)
+- Su Windows: usare direttamente le API native, **escludere** linux_port.h
+- 7 blocchi `#ifdef _WIN32` già presenti per audio real-time (AVRT)
 
 ### Cosa Serve per Windows
-1. Creare `wdsp/windows_port.h` e `wdsp/windows_port.c`
-2. Aggiornare `wdsp/comm.h` per includere windows_port.h su Windows
-3. Mappare funzioni POSIX → Windows API
+1. **NON includere** `linux_port.h` su Windows (già fatto con `#if defined(linux) || defined(__APPLE__)`)
+2. Verificare che `comm.h` gestisca correttamente il caso Windows
+3. I tipi DWORD, HANDLE, etc. vengono da `<windows.h>` direttamente
 
 ### File WDSP Critici
-- `wdsp/comm.h` - Include management (riga 27-33)
-- `wdsp/linux_port.h` - Modello per windows_port.h
-- `wdsp/main.c` - Audio priority (già ha #ifdef _WIN32)
+- `wdsp/comm.h` - Include management (riga 27-33: esclude linux_port.h su Windows)
+- `wdsp/linux_port.h` - Solo per Linux/macOS, NON usare su Windows
+- `wdsp/main.c` - Audio priority (già ha #ifdef _WIN32 per AVRT)
 - `wdsp/wisdom.c` - Console allocation (già ha #ifdef _WIN32)
 
 ---
@@ -227,11 +228,10 @@ GPIO, SATURN, simulatori, ALSA
 
 ## TODO Porting
 
-- [ ] Creare CMakeLists.txt per Windows (cross-compile)
-- [ ] Creare `wdsp/windows_port.h` e `wdsp/windows_port.c`
+- [x] Creare CMakeLists.txt per Windows (cross-compile) - FATTO
 - [ ] Verificare wrapper in `Windows/` coprono tutti i casi
-- [ ] Gestire conflitti TRUE/FALSE/HANDLE in WDSP
-- [ ] Implementare wrapper per `getpwuid()`, `readlink()`
+- [ ] Verificare WDSP compila su Windows (linux_port.h già escluso)
+- [ ] Implementare wrapper per `getpwuid()`, `readlink()` se mancanti
 - [ ] Testare compilazione cross-compile
 - [ ] Documentare ogni modifica nel REGISTRO MODIFICHE
 
