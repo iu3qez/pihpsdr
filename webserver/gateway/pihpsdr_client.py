@@ -10,12 +10,12 @@ from protocol import (
 
 logger = logging.getLogger(__name__)
 
-# Packet sizes (after header)
-SPECTRUM_EXTRA_SIZE = 8*8 + 6*8 + 2 + 2 + 4096  # doubles + uint64s + width + id/avail + samples
-RXAUDIO_EXTRA_SIZE = 2 + 512*2 + 1  # numsamples + samples + rx
-VFO_EXTRA_SIZE = 7*8 + 2*2 + 9  # frequencies + shorts + bytes
+# Packet sizes (after header) - calculated from client_server.h struct definitions
+SPECTRUM_EXTRA_SIZE = 4212  # SPECTRUM_DATA: 8*8 + 6*8 + 2 + 2 + 4096 = 4212 bytes (total 4224 - header 12)
+VFO_EXTRA_SIZE = 69  # VFO_DATA: 7*8 + 2*2 + 9 = 69 bytes (total 81 - header 12)
 RECEIVER_EXTRA_SIZE = 800  # approximate, varies
 RADIO_EXTRA_SIZE = 2500  # approximate
+# Note: RXAUDIO is variable length - read numsamples first, then samples
 
 class PihpsdrClient:
     """Async TCP client for piHPSDR."""
@@ -127,7 +127,7 @@ class PihpsdrClient:
         """Dispatch packet to appropriate handler."""
         dtype = header.data_type
 
-        if dtype == InfoType.INFO_SPECTRUM:
+        if dtype == InfoType.INFO_RX_SPECTRUM:
             await self._handle_spectrum(header)
         elif dtype == InfoType.INFO_RXAUDIO:
             await self._handle_audio(header)
@@ -142,7 +142,7 @@ class PihpsdrClient:
             await self._skip_packet(dtype)
 
     async def _handle_spectrum(self, header: Header):
-        """Parse INFO_SPECTRUM packet."""
+        """Parse INFO_RX_SPECTRUM packet."""
         data = await self._read_exact(SPECTRUM_EXTRA_SIZE)
 
         # Parse key fields
@@ -174,12 +174,18 @@ class PihpsdrClient:
             })
 
     async def _handle_audio(self, header: Header):
-        """Parse INFO_RXAUDIO packet."""
-        data = await self._read_exact(RXAUDIO_EXTRA_SIZE)
+        """Parse INFO_RXAUDIO packet (variable length)."""
+        # Read numsamples first
+        numsamples_data = await self._read_exact(2)
+        numsamples = struct.unpack('>H', numsamples_data)[0]
 
-        numsamples = struct.unpack_from('>H', data, 0)[0]
-        samples = struct.unpack_from(f'>{numsamples}h', data, 2)
-        rx = data[2 + numsamples*2]
+        # Read samples (numsamples * 2 bytes each)
+        samples_data = await self._read_exact(numsamples * 2)
+        samples = struct.unpack(f'>{numsamples}h', samples_data)
+
+        # Read rx byte
+        rx_data = await self._read_exact(1)
+        rx = rx_data[0]
 
         if self.on_audio:
             await self.on_audio({

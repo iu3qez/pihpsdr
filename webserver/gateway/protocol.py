@@ -8,32 +8,32 @@ SYNC_BYTES = bytes([0xFA, 0xFA, 0xAF, 0xAF])
 
 class CmdType(IntEnum):
     """Command types (client -> server)."""
-    CMD_ADC = 34
-    CMD_AGC = 35
-    CMD_AGC_GAIN = 36
-    CMD_FREQ = 58
-    CMD_HEARTBEAT = 59
-    CMD_MODE = 63
-    CMD_MOX = 66
-    CMD_MUTE_RX = 67
-    CMD_FILTER_SEL = 56
-    CMD_VOLUME = 122
-    CMD_ZOOM = 126
-    CMD_START_RADIO = 103
-    CMD_RX_SPECTRUM = 93
-    CMD_TX_SPECTRUM = 117
+    CMD_ADC = 0
+    CMD_AGC = 1
+    CMD_AGC_GAIN = 2
+    CMD_FREQ = 25
+    CMD_HEARTBEAT = 26
+    CMD_MODE = 30
+    CMD_MOX = 33
+    CMD_MUTE_RX = 34
+    CMD_FILTER_SEL = 23
+    CMD_VOLUME = 89
+    CMD_ZOOM = 93
+    CMD_START_RADIO = 70
+    CMD_RX_SPECTRUM = 60
+    CMD_TX_SPECTRUM = 84
 
 class InfoType(IntEnum):
     """Info types (server -> client)."""
-    INFO_ADC = 127
-    INFO_BAND = 128
-    INFO_BANDSTACK = 129
-    INFO_RADIO = 133
-    INFO_RECEIVER = 134
-    INFO_RXAUDIO = 135
-    INFO_SPECTRUM = 136
-    INFO_TRANSMITTER = 138
-    INFO_VFO = 140
+    INFO_ADC = 94
+    INFO_BAND = 95
+    INFO_BANDSTACK = 96
+    INFO_RADIO = 100
+    INFO_RECEIVER = 101
+    INFO_RXAUDIO = 102
+    INFO_RX_SPECTRUM = 103
+    INFO_TRANSMITTER = 105
+    INFO_VFO = 107
 
 # Header: sync(4) + data_type(2) + b1(1) + b2(1) + s1(2) + s2(2) = 12 bytes
 HEADER_SIZE = 12
