@@ -6,7 +6,7 @@
   import Waterfall from './components/Waterfall.svelte';
   import VfoDisplay from './components/VfoDisplay.svelte';
 
-  let gatewayUrl = 'ws://localhost:8765';
+  let gatewayUrl = `ws://${window.location.hostname}:8765`;
   let sMeter = -120;
 
   meter.subscribe(m => {

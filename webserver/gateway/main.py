@@ -68,7 +68,7 @@ class Gateway:
         # Force MOX off for safety
         try:
             await self.pihpsdr.send_mox(False)
-        except:
+        except Exception:
             pass
 
         if self.heartbeat_task:

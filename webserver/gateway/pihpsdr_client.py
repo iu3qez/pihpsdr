@@ -224,6 +224,6 @@ class PihpsdrClient:
 
     async def _skip_packet(self, dtype: int):
         """Skip unknown packet types."""
-        # For unknown types, we need a size map or protocol knowledge
-        # This is a simplified approach
-        pass
+        # Disconnect on unknown packet type to avoid protocol desync
+        logger.warning(f"Unknown packet type {dtype}, disconnecting for safety")
+        self.running = False
