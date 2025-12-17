@@ -10,11 +10,20 @@
 echo "piHPSDR Windows Packaging Script"
 echo "================================="
 
-# Check if pihpsdr.exe exists
-if [ ! -f "pihpsdr.exe" ]; then
-    echo "Error: pihpsdr.exe not found. Please build first with ./Windows/build-docker.sh"
+# Check if pihpsdr.exe exists (support both old Makefile and new CMake build locations)
+EXE_PATH=""
+if [ -f "pihpsdr.exe" ]; then
+    EXE_PATH="pihpsdr.exe"
+elif [ -f "build-windows/pihpsdr.exe" ]; then
+    EXE_PATH="build-windows/pihpsdr.exe"
+else
+    echo "Error: pihpsdr.exe not found."
+    echo "Please build first with one of:"
+    echo "  - CMake: cd build-windows && cmake -DCMAKE_TOOLCHAIN_FILE=../Windows/mingw-toolchain.cmake .. && make"
+    echo "  - Docker: ./Windows/build-docker.sh"
     exit 1
 fi
+echo "Found executable: $EXE_PATH"
 
 # Create dist directory
 DIST_DIR="dist-windows"
@@ -24,7 +33,7 @@ mkdir -p "$DIST_DIR"
 
 # Copy the executable
 echo "Copying pihpsdr.exe..."
-cp pihpsdr.exe "$DIST_DIR/"
+cp "$EXE_PATH" "$DIST_DIR/pihpsdr.exe"
 
 # MinGW base directory
 MINGW_PREFIX="/usr/x86_64-w64-mingw32"
@@ -55,7 +64,7 @@ echo ""
 echo "Collecting required DLLs..."
 
 # Use objdump to find dependencies
-DEPS=$(x86_64-w64-mingw32-objdump -p pihpsdr.exe | grep "DLL Name:" | awk '{print $3}')
+DEPS=$(x86_64-w64-mingw32-objdump -p "$EXE_PATH" | grep "DLL Name:" | awk '{print $3}')
 
 # Copy each dependency
 for dll in $DEPS; do
