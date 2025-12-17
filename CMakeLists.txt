@@ -89,6 +89,14 @@ pkg_check_modules(FFTW3 REQUIRED fftw3)
 pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
 pkg_check_modules(OPENSSL REQUIRED openssl)
 
+# Add library directories for all packages (especially lib64 for OpenSSL)
+link_directories(
+    ${GTK3_LIBRARY_DIRS}
+    ${FFTW3_LIBRARY_DIRS}
+    ${PORTAUDIO_LIBRARY_DIRS}
+    ${OPENSSL_LIBRARY_DIRS}
+)
+
 if(USBOZY)
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 endif()
@@ -344,6 +352,9 @@ target_link_libraries(pihpsdr
     ws2_32      # Winsock2
     winmm       # Windows Multimedia (MIDI)
     iphlpapi    # IP Helper API (getifaddrs replacement)
+    crypt32     # Windows Crypto API (for OpenSSL)
+    gdi32       # GDI (for OpenSSL)
+    avrt        # Audio Video Runtime (for WDSP)
 )
 
 if(USBOZY)
