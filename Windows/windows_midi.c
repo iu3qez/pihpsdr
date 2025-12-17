@@ -160,13 +160,7 @@ void register_midi_device(int index) {
     fflush(stdout);
 }
 
-void midi_save_state() {
-    // Save MIDI configuration (implementation can be added later)
-}
-
-void midi_restore_state() {
-    // Restore MIDI configuration (implementation can be added later)
-}
+/* midi_save_state and midi_restore_state are in midi2.c */
 
 void get_midi_devices() {
     int devices;
