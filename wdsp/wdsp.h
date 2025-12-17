@@ -1,4 +1,7 @@
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -8,7 +11,9 @@ extern "C" {
 #define OUTREAL   float
 #define dINREAL   float
 #define dOUTREAL  float
+#ifndef _WIN32
 #define DWORD     unsigned long
+#endif
 
 // analyzer
 #define DETECTOR_MODE_PEAK         0
@@ -62,9 +67,12 @@ enum txaMeterType {
 
 //
 // Take care of some "Windows specialities"
+// On Windows these are already defined, so only define for Linux/macOS
 //
+#ifndef _WIN32
 #define __stdcall
 #define LPCRITICAL_SECTION void*
+#endif
 
 //
 // To make the interface simpler, use "void *" for
