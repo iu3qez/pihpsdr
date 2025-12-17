@@ -439,8 +439,8 @@ int audio_open_output(RECEIVER *rx) {
   outputParameters.device = padev;
   outputParameters.hostApiSpecificStreamInfo = NULL;
   outputParameters.sampleFormat = paFloat32;
-  // use a zero for the latency to get the minimum value
-  outputParameters.suggestedLatency = 0.0; //Pa_GetDeviceInfo(padev)->defaultLowOutputLatency ;
+  // Use default low latency - 0.0 causes issues on Windows
+  outputParameters.suggestedLatency = Pa_GetDeviceInfo(padev)->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
   err = Pa_OpenStream(&(rx->audio_handle), NULL, &outputParameters, 48000.0, MY_AUDIO_BUFFER_SIZE,
                       paNoFlag, pa_out_cb, rx);
