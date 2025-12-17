@@ -241,6 +241,10 @@ void freeifaddrs(struct ifaddrs *ifa);
 #define GETSOCKOPT(sockfd, level, optname, optval, optlen) \
     getsockopt(sockfd, level, optname, (GETSOCKOPT_TYPE*)(optval), optlen)
 
+/* Andromeda hardware stubs - hardware not available on Windows */
+void andromeda_execute_button(int action, int state);
+void andromeda_execute_encoder(int action, int val);
+
 #else
 /* Unix/Linux includes */
 #include <sys/socket.h>

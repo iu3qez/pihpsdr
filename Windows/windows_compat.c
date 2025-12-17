@@ -603,4 +603,28 @@ uid_t getuid(void) {
 gid_t getgid(void) {
     return 1000;  /* Fake GID for Windows */
 }
+
+/*
+ * STUB: Andromeda hardware functions
+ *
+ * andromeda.c is excluded from Windows build because it requires GPIO/I2C
+ * hardware specific to Raspberry Pi. These stubs allow rigctl.c to compile.
+ *
+ * The Andromeda is a hardware controller panel that doesn't exist on Windows,
+ * so these functions simply do nothing.
+ *
+ * Approved stub - documented in claude.md
+ */
+void andromeda_execute_button(int action, int state) {
+    (void)action;
+    (void)state;
+    /* No-op on Windows - Andromeda hardware not available */
+}
+
+void andromeda_execute_encoder(int action, int val) {
+    (void)action;
+    (void)val;
+    /* No-op on Windows - Andromeda hardware not available */
+}
+
 #endif /* _WIN32 */
