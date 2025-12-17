@@ -221,6 +221,7 @@ set(CORE_SOURCES
     src/server_thread.c
     src/sintab.c
     src/sliders.c
+    src/sliders_menu.c
     src/startup.c
     src/store.c
     src/store_menu.c
@@ -355,6 +356,7 @@ target_link_libraries(pihpsdr
     crypt32     # Windows Crypto API (for OpenSSL)
     gdi32       # GDI (for OpenSSL)
     avrt        # Audio Video Runtime (for WDSP)
+    pthread     # POSIX threads (provides clock_gettime/nanosleep)
 )
 
 if(USBOZY)

@@ -8,6 +8,10 @@
 
 #ifdef _WIN32
 
+/* Prevent winsock.h from being included by windows.h - we use winsock2.h */
+#ifndef _WINSOCKAPI_
+#define _WINSOCKAPI_
+#endif
 #include <windows.h>
 #include <io.h>
 

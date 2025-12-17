@@ -615,10 +615,11 @@ gid_t getgid(void) {
  *
  * Approved stub - documented in claude.md
  */
-void andromeda_execute_button(int action, int state) {
+int andromeda_execute_button(int action, int state) {
     (void)action;
     (void)state;
     /* No-op on Windows - Andromeda hardware not available */
+    return 0;
 }
 
 void andromeda_execute_encoder(int action, int val) {

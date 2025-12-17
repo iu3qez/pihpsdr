@@ -242,7 +242,7 @@ void freeifaddrs(struct ifaddrs *ifa);
     getsockopt(sockfd, level, optname, (GETSOCKOPT_TYPE*)(optval), optlen)
 
 /* Andromeda hardware stubs - hardware not available on Windows */
-void andromeda_execute_button(int action, int state);
+int andromeda_execute_button(int action, int state);
 void andromeda_execute_encoder(int action, int val);
 
 #else
